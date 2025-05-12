@@ -16,8 +16,6 @@ from .entities import (
 )
 from .utils import GameConfig, Images, Sounds, Window
 
-class Main:
-    pass
     
 class Flappy:
     def __init__(self):

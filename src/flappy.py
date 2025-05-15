@@ -8,6 +8,8 @@ from .entities import (
     Background,
     Floor,
     GameOver,
+    ScoreBoard,
+    Medal,
     Pipes,
     Player,
     PlayerMode,
@@ -40,9 +42,11 @@ class Flappy:
             self.floor = Floor(self.config)
             self.player = Player(self.config)
             self.welcome_message = WelcomeMessage(self.config)
-            self.game_over_message = GameOver(self.config)
             self.pipes = Pipes(self.config)
+            self.game_over_message = GameOver(self.config)
+            self.scoreboard = ScoreBoard(self.config)
             self.score = Score(self.config)
+            self.medal = Medal(self.config, self.score)
             await self.splash()
             await self.play()
             await self.game_over()
@@ -123,12 +127,16 @@ class Flappy:
                     if self.player.y + self.player.h >= self.floor.y - 1:
                         return
 
+            #x, y = pygame.mouse.get_pos()
+            #print(x,y)   
             self.background.tick()
             self.floor.tick()
             self.pipes.tick()
             self.score.tick()
             self.player.tick()
             self.game_over_message.tick()
+            self.scoreboard.tick()
+            self.medal.tick()
 
             self.config.tick()
             pygame.display.update()

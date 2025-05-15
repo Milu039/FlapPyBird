@@ -2,6 +2,8 @@ from .background import Background
 from .entity import Entity
 from .floor import Floor
 from .game_over import GameOver
+from .scoreboard import ScoreBoard
+from .medal import Medal
 from .pipe import Pipe, Pipes
 from .player import Player, PlayerMode
 from .score import Score

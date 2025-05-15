@@ -9,11 +9,14 @@ from .constants import BACKGROUNDS, PLAYERS
 class Images:
     numbers: List[pygame.Surface]
     game_over: pygame.Surface
+    scoreboard: pygame.Surface
     welcome_message: pygame.Surface
     base: pygame.Surface
     background: pygame.Surface
     player: Tuple[pygame.Surface]
     pipe: pygame.Surface
+    medals: dict
+    buttons: dict
 
     def __init__(self, screen_width, screen_height) -> None:
         self.numbers = list(
@@ -27,6 +30,20 @@ class Images:
         self.game_over = pygame.image.load(
             "assets/sprites/gameover.png"
         ).convert_alpha()
+
+        # scoreboard sprite
+        self.scoreboard = pygame.image.load(
+            "assets/sprites/scoreboard.png"
+        ).convert_alpha()
+
+        # medals sprite
+        self.medals = {
+            "bronze": pygame.image.load("assets/sprites/bronze.png").convert_alpha(),
+            "silver": pygame.image.load("assets/sprites/silver.png").convert_alpha(),
+            "gold": pygame.image.load("assets/sprites/gold.png").convert_alpha(),
+            "plat": pygame.image.load("assets/sprites/plat.png").convert_alpha(),
+        }
+
         # welcome_message sprite for welcome screen
         self.welcome_message = pygame.image.load(
             "assets/sprites/message.png"
@@ -51,7 +68,6 @@ class Images:
         
         original_pipe = pygame.image.load("assets/sprites/pipe-green.png").convert_alpha()
         pipe_resized = pygame.transform.scale(original_pipe, (original_pipe.get_width(), original_pipe.get_height()+200))
-        print(original_pipe.get_height)
         self.pipe = (
             pygame.transform.flip(
                 #upper pipe

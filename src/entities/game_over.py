@@ -1,7 +1,6 @@
 from ..utils import GameConfig
 from .entity import Entity
 
-
 class GameOver(Entity):
     def __init__(self, config: GameConfig) -> None:
         super().__init__(

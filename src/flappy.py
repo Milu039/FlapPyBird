@@ -23,7 +23,7 @@ class Flappy:
         pygame.display.set_caption("Flappy Bird")
         window = Window(1024, 768)
         screen = pygame.display.set_mode((window.width, window.height))
-        images = Images()
+        images = Images(window.width, window.height)
 
         self.config = GameConfig(
             screen=screen,

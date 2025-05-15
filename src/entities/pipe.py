@@ -21,7 +21,8 @@ class Pipes(Entity):
 
     def __init__(self, config: GameConfig) -> None:
         super().__init__(config)
-        self.pipe_gap = 120
+        # the middle space between the upper and lower pipe
+        self.pipe_gap = 200
         self.top = 0
         self.bottom = self.config.window.viewport_height
         self.upper = []
@@ -81,7 +82,7 @@ class Pipes(Entity):
         """returns a randomly generated pipe"""
         # y of gap between upper and lower pipe
         base_y = self.config.window.viewport_height
-
+        # gap_y is the y coordinate of the gap between upper and lower pipe
         gap_y = random.randrange(0, int(base_y * 0.6 - self.pipe_gap))
         gap_y += int(base_y * 0.2)
         pipe_height = self.config.images.pipe[0].get_height()

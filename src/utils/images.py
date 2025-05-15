@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import pygame
 
-from .constants import BACKGROUNDS, PIPES, PLAYERS
+from .constants import BACKGROUNDS, PLAYERS
 
 
 class Images:
@@ -13,9 +13,9 @@ class Images:
     base: pygame.Surface
     background: pygame.Surface
     player: Tuple[pygame.Surface]
-    pipe: Tuple[pygame.Surface]
+    pipe: pygame.Surface
 
-    def __init__(self) -> None:
+    def __init__(self, screen_width, screen_height) -> None:
         self.numbers = list(
             (
                 pygame.image.load(f"assets/sprites/{num}.png").convert_alpha()
@@ -32,7 +32,8 @@ class Images:
             "assets/sprites/message.png"
         ).convert_alpha()
         # base (ground) sprite
-        self.base = pygame.image.load("assets/sprites/base.png").convert_alpha()
+        original_base = pygame.image.load("assets/sprites/base.png").convert_alpha()
+        self.base = pygame.transform.scale(original_base, (screen_width+170, original_base.get_height()+143))
         self.randomize()
 
     def randomize(self):
@@ -40,8 +41,6 @@ class Images:
         rand_bg = random.randint(0, len(BACKGROUNDS) - 1)
         # select random player sprites
         rand_player = random.randint(0, len(PLAYERS) - 1)
-        # select random pipe sprites
-        rand_pipe = random.randint(0, len(PIPES) - 1)
 
         self.background = pygame.image.load(BACKGROUNDS[rand_bg]).convert()
         self.player = (
@@ -49,11 +48,17 @@ class Images:
             pygame.image.load(PLAYERS[rand_player][1]).convert_alpha(),
             pygame.image.load(PLAYERS[rand_player][2]).convert_alpha(),
         )
+        
+        original_pipe = pygame.image.load("assets/sprites/pipe-green.png").convert_alpha()
+        pipe_resized = pygame.transform.scale(original_pipe, (original_pipe.get_width(), original_pipe.get_height()+200))
+        print(original_pipe.get_height)
         self.pipe = (
             pygame.transform.flip(
-                pygame.image.load(PIPES[rand_pipe]).convert_alpha(),
+                #upper pipe
+                pipe_resized,
                 False,
                 True,
             ),
-            pygame.image.load(PIPES[rand_pipe]).convert_alpha(),
+            #lower pipe
+            pipe_resized,
         )

@@ -25,9 +25,3 @@ BACKGROUNDS = (
     "assets/sprites/background-day.png",
     "assets/sprites/background-night.png",
 )
-
-# list of pipes
-PIPES = (
-    "assets/sprites/pipe-green.png",
-    "assets/sprites/pipe-red.png",
-)

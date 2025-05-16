@@ -17,6 +17,7 @@ class Images:
     pipe: pygame.Surface
     medals: dict
     buttons: dict
+    title: pygame.Surface
 
     def __init__(self, screen_width, screen_height) -> None:
         self.numbers = list(
@@ -36,6 +37,7 @@ class Images:
             "assets/sprites/scoreboard.png"
         ).convert_alpha()
 
+        
         # medals sprite
         self.medals = {
             "bronze": pygame.image.load("assets/sprites/bronze.png").convert_alpha(),
@@ -48,6 +50,12 @@ class Images:
         self.welcome_message = pygame.image.load(
             "assets/sprites/message.png"
         ).convert_alpha()
+        
+        # welcome_message sprite for welcome screen
+        self.title = pygame.image.load(
+            "assets/sprites/Title.png"
+        ).convert_alpha()
+        
         # base (ground) sprite
         original_base = pygame.image.load("assets/sprites/base.png").convert_alpha()
         self.base = pygame.transform.scale(original_base, (screen_width+170, original_base.get_height()+143))

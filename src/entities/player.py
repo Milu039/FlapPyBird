@@ -18,7 +18,7 @@ class PlayerMode(Enum):
 class Player(Entity):
     def __init__(self, config: GameConfig) -> None:
         image = config.images.player[0]
-        x = int(config.window.width * 0.5)
+        x = int(config.window.width * 0.2)
         y = int((config.window.height - image.get_height()) / 2)
         super().__init__(config, image, x, y)
         self.min_y = -2 * self.h

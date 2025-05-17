@@ -6,8 +6,9 @@ class Medal(Entity):
     def __init__(self, config: GameConfig, score: Score) -> None:
         super().__init__(config)
         self.score_ref = score
+        # set default position of medal
         self.x = 389.5
-        self.y = 399
+        self.y = 349
 
     def draw(self):
         # draw image based on score gained
@@ -17,7 +18,7 @@ class Medal(Entity):
             image = self.config.images.medals["plat"]
         elif current_score >= 30:
             image = self.config.images.medals["gold"]
-        elif current_score >= 0:
+        elif current_score >= 20:
             image = self.config.images.medals["silver"]
         elif current_score >= 10:
             image = self.config.images.medals["bronze"]

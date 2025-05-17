@@ -7,5 +7,5 @@ class ScoreBoard(Entity):
             config=config,
             image=config.images.scoreboard,
             x=(config.window.width - config.images.scoreboard.get_width()) // 2,
-            y=int(config.window.height - config.images.scoreboard.get_height()) // 2,
+            y=int(config.window.height - config.images.scoreboard.get_height()) // 2 - 50,
         )

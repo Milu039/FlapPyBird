@@ -6,6 +6,7 @@ from pygame.locals import K_ESCAPE, K_SPACE, K_UP, KEYDOWN, QUIT
 
 from .entities import (
     Background,
+    Title,
     Floor,
     GameOver,
     ScoreBoard,
@@ -15,9 +16,9 @@ from .entities import (
     PlayerMode,
     Score,
     WelcomeMessage,
+    Button,
 )
 from .utils import GameConfig, Images, Sounds, Window
-
     
 class Flappy:
     def __init__(self):
@@ -38,18 +39,40 @@ class Flappy:
 
     async def start(self):
         while True:
-            self.background = Background(self.config)
-            self.floor = Floor(self.config)
-            self.player = Player(self.config)
-            self.welcome_message = WelcomeMessage(self.config)
-            self.pipes = Pipes(self.config)
-            self.game_over_message = GameOver(self.config)
-            self.scoreboard = ScoreBoard(self.config)
-            self.score = Score(self.config)
-            self.medal = Medal(self.config, self.score)
-            await self.splash()
-            await self.play()
-            await self.game_over()
+            self.restart()
+            await self.main_interface()
+
+    #first interface 
+    async def main_interface(self):
+        while True:
+            
+            # Get both surface and rect
+            solo_text_surf, solo_button_rect = self.solo_button()
+            
+            for event in pygame.event.get():
+                self.check_quit_event(event)
+                #click the solo button , run splash screen
+                if event.type == pygame.MOUSEBUTTONDOWN and solo_button_rect.collidepoint(event.pos):
+                    await self.splash()
+                    
+            self.background.tick()
+            self.floor.tick()
+            self.title.tick()
+            
+            # Draw the button
+            self.config.screen.blit(solo_text_surf, solo_button_rect)
+            
+            pygame.display.update()
+            await asyncio.sleep(0)
+            self.config.tick()
+            
+     #create the solo button 
+    def solo_button(self):
+        FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
+        WHITE = (255,255,255)
+        text_surf = FONT.render("SOLO", True, WHITE)
+        text_rect = text_surf.get_rect(topleft=(self.config.window.width*0.45, self.config.window.height*0.5))
+        return text_surf, text_rect
 
     async def splash(self):
         """Shows welcome splash screen animation of flappy bird"""
@@ -60,7 +83,8 @@ class Flappy:
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 if self.is_tap_event(event):
-                    return
+                    #after click run the play() and start the game
+                    await self.play()
 
             self.background.tick()
             self.floor.tick()
@@ -92,7 +116,8 @@ class Flappy:
 
         while True:
             if self.player.collided(self.pipes, self.floor):
-                return
+                #if flappy hit ground or pipe, end this and run the game over()
+                await self.game_over()
 
             for i, pipe in enumerate(self.pipes.upper):
                 if self.player.crossed(pipe):
@@ -124,20 +149,36 @@ class Flappy:
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 if self.is_tap_event(event):
-                    if self.player.y + self.player.h >= self.floor.y - 1:
-                        return
-
-            #x, y = pygame.mouse.get_pos()
-            #print(x,y)   
+                    if self.button.restart_rect.collidepoint(event.pos):
+                        self.restart()
+                        await self.splash()
+                    elif self.button.quit_rect.collidepoint(event.pos):
+                        #after click back to main(for now)
+                        await self.main_interface()
+   
             self.background.tick()
             self.floor.tick()
             self.pipes.tick()
-            self.score.tick()
             self.player.tick()
             self.game_over_message.tick()
             self.scoreboard.tick()
+            self.score.tick()
             self.medal.tick()
+            self.button.tick()
 
             self.config.tick()
             pygame.display.update()
             await asyncio.sleep(0)
+
+    def restart(self):
+        self.background = Background(self.config)
+        self.title = Title(self.config)
+        self.floor = Floor(self.config)
+        self.player = Player(self.config)
+        self.welcome_message = WelcomeMessage(self.config)
+        self.pipes = Pipes(self.config)
+        self.game_over_message = GameOver(self.config)
+        self.scoreboard = ScoreBoard(self.config)
+        self.score = Score(self.config, self.player)
+        self.medal = Medal(self.config, self.score)
+        self.button = Button(self.config)

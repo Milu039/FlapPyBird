@@ -17,6 +17,7 @@ class Images:
     pipe: pygame.Surface
     medals: dict
     buttons: dict
+    title: pygame.Surface
 
     def __init__(self, screen_width, screen_height) -> None:
         self.numbers = list(
@@ -25,6 +26,10 @@ class Images:
                 for num in range(10)
             )
         )
+        # title sprite
+        self.title = pygame.image.load(
+            "assets/sprites/title.png"
+        ).convert_alpha()
 
         # game over sprite
         self.game_over = pygame.image.load(
@@ -44,13 +49,19 @@ class Images:
             "plat": pygame.image.load("assets/sprites/plat.png").convert_alpha(),
         }
 
+        # buttons sprite
+        self.buttons = {
+            "restart": pygame.image.load("assets/sprites/restart.png").convert_alpha(),
+            "quit": pygame.image.load("assets/sprites/quit.png").convert_alpha(),
+        }
+
         # welcome_message sprite for welcome screen
         self.welcome_message = pygame.image.load(
             "assets/sprites/message.png"
         ).convert_alpha()
         # base (ground) sprite
-        original_base = pygame.image.load("assets/sprites/base.png").convert_alpha()
-        self.base = pygame.transform.scale(original_base, (screen_width+170, original_base.get_height()+143))
+        self.base = pygame.image.load("assets/sprites/base.png").convert_alpha()
+
         self.randomize()
 
     def randomize(self):
@@ -65,16 +76,12 @@ class Images:
             pygame.image.load(PLAYERS[rand_player][1]).convert_alpha(),
             pygame.image.load(PLAYERS[rand_player][2]).convert_alpha(),
         )
-        
-        original_pipe = pygame.image.load("assets/sprites/pipe-green.png").convert_alpha()
-        pipe_resized = pygame.transform.scale(original_pipe, (original_pipe.get_width(), original_pipe.get_height()+200))
+
         self.pipe = (
             pygame.transform.flip(
-                #upper pipe
-                pipe_resized,
+                pygame.image.load("assets/sprites/pipe-green.png").convert_alpha(),
                 False,
                 True,
             ),
-            #lower pipe
-            pipe_resized,
+            pygame.image.load("assets/sprites/pipe-green.png").convert_alpha(),
         )

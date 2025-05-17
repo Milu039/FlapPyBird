@@ -7,5 +7,5 @@ class GameOver(Entity):
             config=config,
             image=config.images.game_over,
             x=(config.window.width - config.images.game_over.get_width()) // 2,
-            y=int(config.window.height * 0.2),
+            y=int(config.window.height * 0.1),
         )

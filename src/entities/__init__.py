@@ -21,4 +21,5 @@ __all__ = [
     "Score",
     "Entity",
     "WelcomeMessage",
+    "Title",
 ]

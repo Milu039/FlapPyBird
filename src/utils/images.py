@@ -41,6 +41,7 @@ class Images:
             "assets/sprites/scoreboard.png"
         ).convert_alpha()
 
+        
         # medals sprite
         self.medals = {
             "bronze": pygame.image.load("assets/sprites/bronze.png").convert_alpha(),
@@ -59,6 +60,12 @@ class Images:
         self.welcome_message = pygame.image.load(
             "assets/sprites/message.png"
         ).convert_alpha()
+        
+        # welcome_message sprite for welcome screen
+        self.title = pygame.image.load(
+            "assets/sprites/Title.png"
+        ).convert_alpha()
+        
         # base (ground) sprite
         self.base = pygame.image.load("assets/sprites/base.png").convert_alpha()
 

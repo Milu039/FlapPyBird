@@ -48,11 +48,14 @@ class Flappy:
             
             # Get both surface and rect
             solo_text_surf, solo_button_rect = self.solo_button()
+            multi_text_surf, multi_button_rect = self.multi_button()
             
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 #click the solo button , run splash screen
                 if event.type == pygame.MOUSEBUTTONDOWN and solo_button_rect.collidepoint(event.pos):
+                    await self.splash()
+                if event.type == pygame.MOUSEBUTTONDOWN and multi_button_rect.collidepoint(event.pos):
                     await self.splash()
                     
             self.background.tick()
@@ -61,6 +64,7 @@ class Flappy:
             
             # Draw the button
             self.config.screen.blit(solo_text_surf, solo_button_rect)
+            self.config.screen.blit(multi_text_surf, multi_button_rect)
             
             pygame.display.update()
             await asyncio.sleep(0)
@@ -71,9 +75,17 @@ class Flappy:
         FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
         WHITE = (255,255,255)
         text_surf = FONT.render("SOLO", True, WHITE)
-        text_rect = text_surf.get_rect(topleft=(self.config.window.width*0.45, self.config.window.height*0.5))
+        text_rect = text_surf.get_rect(topleft=(self.config.window.width*0.45, self.config.window.height*0.4))
         return text_surf, text_rect
 
+     #create the solo button 
+    def multi_button(self):
+        FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 22)
+        WHITE = (255,255,255)
+        text_surf = FONT.render("MULTI", True, WHITE)
+        text_rect = text_surf.get_rect(topleft=(self.config.window.width*0.45, self.config.window.height*0.45))
+        return text_surf, text_rect
+    
     async def splash(self):
         """Shows welcome splash screen animation of flappy bird"""
 
@@ -153,6 +165,7 @@ class Flappy:
                         self.restart()
                         await self.splash()
                     elif self.button.quit_rect.collidepoint(event.pos):
+                        self.restart()
                         #after click back to main(for now)
                         await self.main_interface()
    

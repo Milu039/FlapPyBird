@@ -172,7 +172,7 @@ class Flappy:
             
      #create the solo button 
     def solo_button(self):
-        FONT = pygame.font.SysFont("Press Start 2P", 36)
+        FONT = pygame.font.Font("assets/sprites/PressStart2P-Regular.ttf", 24)
         WHITE = (255,255,255)
         text_surf = FONT.render("SOLO", True, WHITE)
         text_rect = text_surf.get_rect(topleft=(self.config.window.width*0.45, self.config.window.height*0.5))

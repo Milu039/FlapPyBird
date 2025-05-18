@@ -53,6 +53,8 @@ class Images:
         self.buttons = {
             "restart": pygame.image.load("assets/sprites/restart.png").convert_alpha(),
             "quit": pygame.image.load("assets/sprites/quit.png").convert_alpha(),
+            "join": pygame.image.load("assets/sprites/join.png").convert_alpha(),
+            "create": pygame.image.load("assets/sprites/create.png").convert_alpha(),
         }
 
         # welcome_message sprite for welcome screen

@@ -56,7 +56,7 @@ class Flappy:
                 if event.type == pygame.MOUSEBUTTONDOWN and solo_button_rect.collidepoint(event.pos):
                     await self.splash()
                 if event.type == pygame.MOUSEBUTTONDOWN and multi_button_rect.collidepoint(event.pos):
-                    await self.splash()
+                    pass
                     
             self.background.tick()
             self.floor.tick()

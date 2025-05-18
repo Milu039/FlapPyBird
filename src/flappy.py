@@ -166,7 +166,7 @@ class Flappy:
                         await self.splash()
                     elif self.button.quit_rect.collidepoint(event.pos):
                         self.restart()
-                        #after click back to main(for now)
+                        #after click back to main
                         await self.main_interface()
    
             self.background.tick()

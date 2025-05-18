@@ -56,6 +56,7 @@ class Flappy:
                 if event.type == pygame.MOUSEBUTTONDOWN and solo_button_rect.collidepoint(event.pos):
                     await self.splash()
                 if event.type == pygame.MOUSEBUTTONDOWN and multi_button_rect.collidepoint(event.pos):
+                    #wrong interface 
                     await self.splash()
                     
             self.background.tick()
@@ -166,7 +167,7 @@ class Flappy:
                         await self.splash()
                     elif self.button.quit_rect.collidepoint(event.pos):
                         self.restart()
-                        #after click back to main(for now)
+                        #after click back to main
                         await self.main_interface()
    
             self.background.tick()

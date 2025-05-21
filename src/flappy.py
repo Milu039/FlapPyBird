@@ -225,6 +225,8 @@ class Flappy:
                 if self.is_tap_event(event):
                     if self.button.restart_rect.collidepoint(event.pos):
                         self.restart()
+                        self.game_mode.set_mode("solo")
+                        self.button.game_mode = self.game_mode.get_mode()
                         await self.splash()
                     elif self.button.quit_rect.collidepoint(event.pos):
                         self.restart()

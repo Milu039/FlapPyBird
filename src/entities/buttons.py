@@ -17,8 +17,8 @@ class Button(Entity):
             restart_pos = (325, self.config.window.height // 2 + 100)
             quit_pos = (540, self.config.window.height // 2 + 100)
 
-            self.config.screen.blit(restart_button, restart_pos)
-            self.config.screen.blit(quit_button, quit_pos)
+            self.draw_button(restart_button, restart_pos)
+            self.draw_button(quit_button, quit_pos)
 
             self.restart_rect = self.create_button_rect(restart_pos, restart_button)
             self.quit_rect = self.create_button_rect(quit_pos, quit_button)
@@ -30,11 +30,14 @@ class Button(Entity):
             create_pos = (325, self.config.window.height // 2 + 100)
             join_pos = (540, self.config.window.height // 2 + 100)
 
-            self.config.screen.blit(create_button, create_pos)
-            self.config.screen.blit(join_button, join_pos)
+            self.draw_button(create_button, create_pos)
+            self.draw_button(join_button, join_pos)
 
             self.create_rect = self.create_button_rect(create_pos, create_button)
             self.join_rect = self.create_button_rect(join_pos, join_button)
 
+    def draw_button(self,image,pos) -> None:
+        self.config.screen.blit(image, pos)
+    
     def create_button_rect(self, pos, image) -> pygame.Rect:
         return pygame.Rect(pos[0], pos[1], image.get_width(), image.get_height())

@@ -148,6 +148,27 @@ class Flappy:
             await asyncio.sleep(0)
             self.config.tick()
 
+    async def multi_interface(self):
+        #show lobby game room interface 
+
+        self.player.set_mode(PlayerMode.SHM)
+
+        while True:
+            for event in pygame.event.get():
+                self.check_quit_event(event)
+                if self.is_tap_event(event):
+                    #after click run the play() and start the game
+                    await self.play()
+
+            self.background.tick()
+            self.floor.tick()
+            self.player.tick()
+            self.welcome_message.tick()
+
+            pygame.display.update()
+            await asyncio.sleep(0)
+            self.config.tick()
+
     def check_quit_event(self, event):
         if event.type == QUIT or (
             event.type == KEYDOWN and event.key == K_ESCAPE
@@ -209,7 +230,7 @@ class Flappy:
                         self.restart()
                         #after click back to main
                         await self.main_interface()
-   
+
             self.background.tick()
             self.floor.tick()
             self.pipes.tick()

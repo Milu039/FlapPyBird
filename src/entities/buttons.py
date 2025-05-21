@@ -1,6 +1,7 @@
 import pygame
 from ..utils import GameConfig, GameMode
 from .entity import Entity
+from .player import PlayerMode
 
 class Button(Entity):
     def __init__(self, config: GameConfig, game_mode : GameMode) -> None:

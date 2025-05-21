@@ -80,10 +80,17 @@ class Flappy:
 
      #create the solo button 
     def multi_button(self):
-        FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 22)
+        FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
         WHITE = (255,255,255)
         text_surf = FONT.render("MULTI", True, WHITE)
         text_rect = text_surf.get_rect(topleft=(self.config.window.width*0.45, self.config.window.height*0.45))
+        return text_surf, text_rect
+
+    def skill_button(self):
+        FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
+        WHITE = (255, 255, 255)
+        text_surf = FONT.render("SKILL TUTORIAL", True, WHITE)
+        text_rect = text_surf.get_rect(topleft=(self.config.window.width * 0.45, self.config.window.height * 0.45))
         return text_surf, text_rect
     
     async def splash(self):

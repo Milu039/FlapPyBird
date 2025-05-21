@@ -1,6 +1,7 @@
 import pygame
 from ..utils import GameConfig
 from .entity import Entity
+from .player import PlayerMode
 
 class Button(Entity):
     def __init__(self, config: GameConfig) -> None:
@@ -9,7 +10,7 @@ class Button(Entity):
     def draw(self) -> None:
         restart_button = self.config.images.buttons["restart"]
         quit_button = self.config.images.buttons["quit"]
-
+        #Posotion x n y
         restart_pos = (325, self.config.window.height // 2 + 100)
         quit_pos = (540, self.config.window.height // 2 + 100)
 

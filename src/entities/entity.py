@@ -77,7 +77,7 @@ class Entity:
                     rect.y - text.get_height(),
                 ),
             )
-
+    #display image dlm interface
     def draw(self) -> None:
         if self.image:
             self.config.screen.blit(self.image, self.rect)

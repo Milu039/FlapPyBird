@@ -56,8 +56,9 @@ class Flappy:
                 if event.type == pygame.MOUSEBUTTONDOWN and solo_button_rect.collidepoint(event.pos):
                     await self.splash()
                 if event.type == pygame.MOUSEBUTTONDOWN and multi_button_rect.collidepoint(event.pos):
-                    pass
-                    
+                    pass 
+                #click the multi buttonnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+                #if event.type == pygame.    
             self.background.tick()
             self.floor.tick()
             self.title.tick()
@@ -88,6 +89,27 @@ class Flappy:
     
     async def splash(self):
         """Shows welcome splash screen animation of flappy bird"""
+
+        self.player.set_mode(PlayerMode.SHM)
+
+        while True:
+            for event in pygame.event.get():
+                self.check_quit_event(event)
+                if self.is_tap_event(event):
+                    #after click run the play() and start the game
+                    await self.play()
+
+            self.background.tick()
+            self.floor.tick()
+            self.player.tick()
+            self.welcome_message.tick()
+
+            pygame.display.update()
+            await asyncio.sleep(0)
+            self.config.tick()
+
+    async def multi_interface(self):
+        #show lobby game room interface 
 
         self.player.set_mode(PlayerMode.SHM)
 
@@ -168,7 +190,7 @@ class Flappy:
                         self.restart()
                         #after click back to main
                         await self.main_interface()
-   
+
             self.background.tick()
             self.floor.tick()
             self.pipes.tick()

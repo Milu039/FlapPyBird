@@ -3,3 +3,5 @@ from .images import Images
 from .sounds import Sounds
 from .utils import clamp, get_hit_mask, pixel_collision
 from .window import Window
+from .gamemode import GameMode
+from .multiplayer import MultiplayerManager

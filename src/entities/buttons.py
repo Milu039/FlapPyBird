@@ -1,28 +1,39 @@
 import pygame
-from ..utils import GameConfig
+from ..utils import GameConfig, GameMode
 from .entity import Entity
 
 class Button(Entity):
-    def __init__(self, config: GameConfig) -> None:
+    def __init__(self, config: GameConfig, game_mode : GameMode) -> None:
         super().__init__(config)
+        self.game_mode = game_mode
 
     def draw(self) -> None:
-        restart_button = self.config.images.buttons["restart"]
-        quit_button = self.config.images.buttons["quit"]
+        #print(self.game_mode)
+        if self.game_mode == "solo":
+            restart_button = self.config.images.buttons["restart"]
+            quit_button = self.config.images.buttons["quit"]
 
-        restart_pos = (325, self.config.window.height // 2 + 100)
-        quit_pos = (540, self.config.window.height // 2 + 100)
+            restart_pos = (325, self.config.window.height // 2 + 100)
+            quit_pos = (540, self.config.window.height // 2 + 100)
 
-        self.config.screen.blit(restart_button, restart_pos)
-        self.config.screen.blit(quit_button, quit_pos)
+            self.config.screen.blit(restart_button, restart_pos)
+            self.config.screen.blit(quit_button, quit_pos)
 
-        # Store rectangles for click detection
-        self.restart_rect = pygame.Rect(
-            restart_pos[0], restart_pos[1],
-            restart_button.get_width(), restart_button.get_height()
-        )
-        self.quit_rect = pygame.Rect(
-            quit_pos[0], quit_pos[1],
-            quit_button.get_width(), quit_button.get_height()
-        )
-       
+            self.restart_rect = self.create_button_rect(restart_pos, restart_button)
+            self.quit_rect = self.create_button_rect(quit_pos, quit_button)
+
+        elif self.game_mode == "multi":
+            create_button = self.config.images.buttons["create"]
+            join_button = self.config.images.buttons["join"]
+
+            create_pos = (325, self.config.window.height // 2 + 100)
+            join_pos = (540, self.config.window.height // 2 + 100)
+
+            self.config.screen.blit(create_button, create_pos)
+            self.config.screen.blit(join_button, join_pos)
+
+            self.create_rect = self.create_button_rect(create_pos, create_button)
+            self.join_rect = self.create_button_rect(join_pos, join_button)
+
+    def create_button_rect(self, pos, image) -> pygame.Rect:
+        return pygame.Rect(pos[0], pos[1], image.get_width(), image.get_height())

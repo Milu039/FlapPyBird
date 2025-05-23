@@ -9,7 +9,7 @@ from .pipe import Pipe, Pipes
 from .player import Player, PlayerMode
 from .score import Score
 from .welcome_message import WelcomeMessage
-from .buttons import Button
+from .buttons import Button, ButtonMode
 
 __all__ = [
     "Background",
@@ -21,5 +21,5 @@ __all__ = [
     "Score",
     "Entity",
     "WelcomeMessage",
-    "Title",
+    "Button",
 ]

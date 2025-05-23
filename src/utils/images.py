@@ -51,6 +51,8 @@ class Images:
 
         # buttons sprite
         self.buttons = {
+            "back": pygame.image.load("assets/sprites/back.png").convert_alpha(),
+            "resume": pygame.image.load("assets/sprites/resume.png").convert_alpha(),
             "restart": pygame.image.load("assets/sprites/restart.png").convert_alpha(),
             "quit": pygame.image.load("assets/sprites/quit.png").convert_alpha(),
             "join": pygame.image.load("assets/sprites/join.png").convert_alpha(),

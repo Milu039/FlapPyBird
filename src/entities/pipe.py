@@ -8,7 +8,8 @@ from .entity import Entity
 class Pipe(Entity):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.vel_x = -5
+        # speed of the pipe
+        self.vel_x = -8
 
     def draw(self) -> None:
         self.x += self.vel_x
@@ -41,6 +42,10 @@ class Pipes(Entity):
     def stop(self) -> None:
         for pipe in self.upper + self.lower:
             pipe.vel_x = 0
+
+    def resume(self) -> None:
+        for pipe in self.upper + self.lower:
+            pipe.vel_x = -8
 
     def can_spawn_pipes(self) -> bool:
         last = self.upper[-1]

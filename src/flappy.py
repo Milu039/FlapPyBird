@@ -16,8 +16,9 @@ from .entities import (
     Score,
     WelcomeMessage,
     Button,
+    ButtonMode,
 )
-from .utils import GameConfig, Images, Sounds, Window, GameMode
+from .utils import GameConfig, Images, Sounds, Window
     
 class Flappy:
     def __init__(self):
@@ -36,12 +37,15 @@ class Flappy:
             sounds=Sounds(),
         )
 
-        self.game_mode = GameMode("none")
-
     async def start(self):
         while True:
-            self.restart()
-            await self.main_interface()
+                self.background = Background(self.config)
+                self.title = Title(self.config)
+                self.welcome_message = WelcomeMessage(self.config)
+                self.game_over_message = GameOver(self.config)
+                self.scoreboard = ScoreBoard(self.config)
+                self.restart()
+                await self.main_interface()
 
     #first interface 
     async def main_interface(self):
@@ -54,19 +58,15 @@ class Flappy:
             
             for event in pygame.event.get():
                 self.check_quit_event(event)
-                #click the solo button , run splash screen
-                if event.type == pygame.MOUSEBUTTONDOWN and solo_button_rect.collidepoint(event.pos):
-                    self.game_mode.set_mode("solo")
-                    self.button.game_mode = self.game_mode.get_mode()
-                    await self.splash()
-                if event.type == pygame.MOUSEBUTTONDOWN and multi_button_rect.collidepoint(event.pos):
-                    self.game_mode.set_mode("multi")
-                    self.button.game_mode = self.game_mode.get_mode()
-                    await self.game_room_interface()
-                if event.type == pygame.MOUSEBUTTONDOWN and skill_button_rect.collidepoint(event.pos):
-                    # Run the skill tutorial
-                    self.game_mode.set_mode("skill")
-                    pass
+                if self.is_tap_event(event):
+                    #click the solo button , run splash screen
+                    if solo_button_rect.collidepoint(event.pos):
+                        await self.splash()
+                    if multi_button_rect.collidepoint(event.pos):
+                        await self.game_room_interface()
+                    if skill_button_rect.collidepoint(event.pos):
+                        # Run the skill tutorial
+                        pass
                     
             self.background.tick()
             self.floor.tick()
@@ -82,13 +82,16 @@ class Flappy:
             self.config.tick()
           
     async def game_room_interface(self):
+        self.button.set_mode(ButtonMode.MULTI)
+        
         while True:  
-
+            back_button_surf, back_button_rect = self.back_button()
             for event in pygame.event.get():
                 self.check_quit_event(event)
 
             self.background.tick()
             self.floor.tick()
+            self.config.screen.blit(back_button_surf, back_button_rect)
             self.button.tick()
             
             pygame.display.update()
@@ -127,15 +130,24 @@ class Flappy:
         )
         return text_surf, text_rect
     
+    def back_button(self):
+        back_button = self.config.images.buttons["back"]
+        back_pos = (30, 30)
+        back_rect = pygame.Rect(back_pos[0], back_pos[1], back_button.get_width(), back_button.get_height())
+        return back_button, back_rect
+    
     async def splash(self):
         """Shows welcome splash screen animation of flappy bird"""
-
         self.player.set_mode(PlayerMode.SHM)
 
         while True:
+            back_button_surf, back_button_rect = self.back_button()
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 if self.is_tap_event(event):
+                    if back_button_rect.collidepoint(event.pos):
+                        self.restart()
+                        await self.main_interface()
                     #after click run the play() and start the game
                     await self.play()
 
@@ -143,7 +155,8 @@ class Flappy:
             self.floor.tick()
             self.player.tick()
             self.welcome_message.tick()
-
+            self.config.screen.blit(back_button_surf, back_button_rect)
+            
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
@@ -154,6 +167,7 @@ class Flappy:
         self.player.set_mode(PlayerMode.SHM)
 
         while True:
+            
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 if self.is_tap_event(event):
@@ -186,31 +200,42 @@ class Flappy:
 
     async def play(self):
         self.score.reset()
-        self.player.set_mode(PlayerMode.NORMAL)
+        await self.solo_gameplay()
+
+    async def game_pause(self):
+        self.player.set_mode(PlayerMode.PAUSE)
+        self.pipes.stop()
+        self.floor.stop()
+        self.button.set_mode(ButtonMode.PAUSE)
 
         while True:
-            if self.player.collided(self.pipes, self.floor):
-                #if flappy hit ground or pipe, end this and run the game over()
-                await self.game_over()
-
-            for i, pipe in enumerate(self.pipes.upper):
-                if self.player.crossed(pipe):
-                    self.score.add()
-
             for event in pygame.event.get():
-                self.check_quit_event(event)
                 if self.is_tap_event(event):
-                    self.player.flap()
-
+                    if self.button.resume_rect and self.button.resume_rect.collidepoint(event.pos):
+                        await self.game_resume()
+                    elif self.button.restart_rect and self.button.restart_rect.collidepoint(event.pos):
+                        self.restart()
+                        await self.splash()
+                    elif self.button.quit_rect and self.button.quit_rect.collidepoint(event.pos):
+                        self.restart()
+                        #after click back to main
+                        await self.main_interface()
+            
             self.background.tick()
             self.floor.tick()
             self.pipes.tick()
             self.score.tick()
             self.player.tick()
+            self.button.tick()
 
+            self.config.tick()
             pygame.display.update()
             await asyncio.sleep(0)
-            self.config.tick()
+    
+    async def game_resume(self):
+        self.pipes.resume()
+        self.floor.resume()
+        await self.solo_gameplay()
 
     async def game_over(self):
         """crashes the player down and shows gameover image"""
@@ -218,6 +243,7 @@ class Flappy:
         self.player.set_mode(PlayerMode.CRASH)
         self.pipes.stop()
         self.floor.stop()
+        self.button.set_mode(ButtonMode.SOLO_GAME_OVER)
 
         while True:
             for event in pygame.event.get():
@@ -225,8 +251,6 @@ class Flappy:
                 if self.is_tap_event(event):
                     if self.button.restart_rect.collidepoint(event.pos):
                         self.restart()
-                        self.game_mode.set_mode("solo")
-                        self.button.game_mode = self.game_mode.get_mode()
                         await self.splash()
                     elif self.button.quit_rect.collidepoint(event.pos):
                         self.restart()
@@ -248,14 +272,43 @@ class Flappy:
             await asyncio.sleep(0)
 
     def restart(self):
-        self.background = Background(self.config)
-        self.title = Title(self.config)
         self.floor = Floor(self.config)
         self.player = Player(self.config)
-        self.welcome_message = WelcomeMessage(self.config)
-        self.pipes = Pipes(self.config)
-        self.game_over_message = GameOver(self.config)
-        self.scoreboard = ScoreBoard(self.config)
         self.score = Score(self.config, self.player)
+        self.pipes = Pipes(self.config)
         self.medal = Medal(self.config, self.score)
-        self.button = Button(self.config, "none")
+        self.button = Button(self.config)
+
+    async def solo_gameplay(self):
+        self.player.set_mode(PlayerMode.NORMAL)
+        self.button.set_mode(ButtonMode.DEFAULT)
+
+        while True:
+            back_button_surf, back_button_rect = self.back_button()
+            if self.player.collided(self.pipes, self.floor):
+                #if flappy hit ground or pipe, end this and run the game over()
+                await self.game_over()
+
+            for i, pipe in enumerate(self.pipes.upper):
+                if self.player.crossed(pipe):
+                    self.score.add()
+
+            for event in pygame.event.get():
+                if event.type == KEYDOWN and event.key == K_ESCAPE:
+                    await self.game_pause()
+                if self.is_tap_event(event):
+                    if back_button_rect.collidepoint(event.pos):
+                        await self.game_pause()
+                    self.player.flap()
+
+            self.background.tick()
+            self.floor.tick()
+            self.pipes.tick()
+            self.score.tick()
+            self.player.tick()
+            self.config.screen.blit(back_button_surf, back_button_rect)
+            self.button.tick()
+            
+            pygame.display.update()
+            await asyncio.sleep(0)
+            self.config.tick()

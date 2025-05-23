@@ -1,33 +1,24 @@
 import pygame
-from enum import Enum
-from ..utils import GameConfig
+from ..utils import GameConfig, Mode
 from .entity import Entity
 
-class ButtonMode(Enum):
-    DEFAULT = "default"
-    PAUSE = "PAUSE"
-    SOLO_GAME_OVER = "solo_game_over"
-    MULTI = "multi"
-    SKILL = "skill"
-
 class Button(Entity):
-    def __init__(self, config: GameConfig) -> None:
+    def __init__(self, config: GameConfig, mode: Mode) -> None:
         super().__init__(config)
-        self.set_mode(ButtonMode.DEFAULT)
+        self.mode = mode
         self.resume_button = self.config.images.buttons["resume"]
         self.restart_button = self.config.images.buttons["restart"]
         self.quit_button = self.config.images.buttons["quit"]
         self.create_button = self.config.images.buttons["create"]
         self.join_button = self.config.images.buttons["join"]
-        self.restart_rect = None
-        self.quit_rect = None
+        self.ready_button = self.config.images.buttons["ready"]
 
-    def set_mode(self, mode: ButtonMode) -> None:
-        self.game_mode = mode
+    def set_mode(self, mode) -> None:
+        self.mode = mode
 
     def draw(self) -> None:
         # Draw the buttons based on the game mode
-        if self.game_mode == ButtonMode.PAUSE:
+        if self.mode == "Pause":
             self.resume_pos = ((self.config.window.width - self.resume_button.get_width()) // 2, (self.config.window.height - self.restart_button.get_height()) // 3)
             self.restart_pos = ((self.config.window.width - self.restart_button.get_width()) // 2, (self.config.window.height - self.restart_button.get_height()) * 1.5 // 3)
             self.quit_pos = ((self.config.window.width - self.quit_button.get_width()) // 2, (self.config.window.height - self.restart_button.get_height()) * 2 // 3)
@@ -40,10 +31,7 @@ class Button(Entity):
             self.restart_rect = self.create_button_rect(self.restart_pos, self.restart_button)
             self.quit_rect = self.create_button_rect(self.quit_pos, self.quit_button)
 
-        if self.game_mode == ButtonMode.DEFAULT:
-            pass
-
-        if self.game_mode == ButtonMode.SOLO_GAME_OVER:
+        if self.mode == "Solo GameOver" or self.mode == "Leaderboard":
             self.restart_pos = (325, self.config.window.height // 2 + 100)
             self.quit_pos = (540, self.config.window.height // 2 + 100)
 
@@ -53,15 +41,25 @@ class Button(Entity):
             self.restart_rect = self.create_button_rect(self.restart_pos, self.restart_button)
             self.quit_rect = self.create_button_rect(self.quit_pos, self.quit_button)
 
-        if self.game_mode == ButtonMode.MULTI:
-            self.create_pos = (325, self.config.window.height // 2 + 100)
-            self.join_pos = (540, self.config.window.height // 2 + 100)
+        if self.mode == "Game Room":
+            self.create_pos = (325, self.config.window.height // 2 + 150)
+            self.join_pos = (540, self.config.window.height // 2 + 150)
 
             self.draw_button(self.create_button, self.create_pos)
             self.draw_button(self.join_button, self.join_pos)
 
             self.create_rect = self.create_button_rect(self.create_pos, self.create_button)
             self.join_rect = self.create_button_rect(self.join_pos, self.join_button)
+        
+        if self.mode == "Create Room":
+            self.create_pos = ((self.config.window.width - self.create_button.get_width()) // 2, self.config.window.height // 2 + 150)
+            self.draw_button(self.create_button, self.create_pos)
+            self.create_rect = self.create_button_rect(self.create_pos, self.create_button)
+        
+        if self.mode == "Room Lobby":
+            self.ready_pos = ((self.config.window.width - self.ready_button.get_width()) // 2, self.config.window.height // 2 + 150)
+            self.draw_button(self.ready_button, self.ready_pos)
+            self.ready_rect = self.create_button_rect(self.ready_pos, self.ready_button)
 
     def draw_button(self,image,pos) -> None:
         self.config.screen.blit(image, pos)

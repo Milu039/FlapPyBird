@@ -51,7 +51,7 @@ class Score(Entity):
     def draw(self) -> None:
         """displays score in center of screen"""
         if(self.player.mode == PlayerMode.NORMAL or self.player.mode == PlayerMode.PAUSE):
-            score_digits = [int(x) for x in list(str(self.score))]
+            score_digits = [int(d) for d in list(str(self.score))]
             images = [self.config.images.numbers[digit] for digit in score_digits]
             digits_width = sum(image.get_width() for image in images)
             x_offset = (self.config.window.width - digits_width) / 2

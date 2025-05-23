@@ -8,18 +8,18 @@ from .constants import BACKGROUNDS, PLAYERS
 
 class Images:
     numbers: List[pygame.Surface]
-    game_over: pygame.Surface
     scoreboard: pygame.Surface
-    welcome_message: pygame.Surface
+    message: dict
+    room_list: pygame.Surface
     base: pygame.Surface
     background: pygame.Surface
     player: Tuple[pygame.Surface]
     pipe: pygame.Surface
     medals: dict
     buttons: dict
-    title: pygame.Surface
+    title: dict
 
-    def __init__(self, screen_width, screen_height) -> None:
+    def __init__(self) -> None:
         self.numbers = list(
             (
                 pygame.image.load(f"assets/sprites/{num}.png").convert_alpha()
@@ -31,10 +31,20 @@ class Images:
             "assets/sprites/title.png"
         ).convert_alpha()
 
-        # game over sprite
-        self.game_over = pygame.image.load(
-            "assets/sprites/gameover.png"
+        # message sprite
+        self.message = {
+            "ready": pygame.image.load("assets/sprites/message.png").convert_alpha(),
+            "game room": pygame.image.load("assets/sprites/Game room.png").convert_alpha(),
+            "create": pygame.image.load("assets/sprites/Create room.png").convert_alpha(),
+            "gameover": pygame.image.load("assets/sprites/gameover.png").convert_alpha(),
+        }
+
+        self.room_list = pygame.image.load(
+            "assets/sprites/container.png"
         ).convert_alpha()
+        
+        # base (ground) sprite
+        self.base = pygame.image.load("assets/sprites/base.png").convert_alpha()
 
         # scoreboard sprite
         self.scoreboard = pygame.image.load(
@@ -57,20 +67,11 @@ class Images:
             "quit": pygame.image.load("assets/sprites/quit.png").convert_alpha(),
             "join": pygame.image.load("assets/sprites/join.png").convert_alpha(),
             "create": pygame.image.load("assets/sprites/create.png").convert_alpha(),
+            #"start": pygame.image.load("assets/sprites/start.png").convert_alpha(),
+            "ready": pygame.image.load("assets/sprites/ready.png").convert_alpha(),
         }
 
-        # welcome_message sprite for welcome screen
-        self.welcome_message = pygame.image.load(
-            "assets/sprites/message.png"
-        ).convert_alpha()
-        
-        # welcome_message sprite for welcome screen
-        self.title = pygame.image.load(
-            "assets/sprites/Title.png"
-        ).convert_alpha()
-        
-        # base (ground) sprite
-        self.base = pygame.image.load("assets/sprites/base.png").convert_alpha()
+       
 
         self.randomize()
 

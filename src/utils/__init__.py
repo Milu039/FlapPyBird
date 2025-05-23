@@ -4,3 +4,4 @@ from .sounds import Sounds
 from .utils import clamp, get_hit_mask, pixel_collision
 from .window import Window
 from .multiplayer import MultiplayerManager
+from .mode import Mode

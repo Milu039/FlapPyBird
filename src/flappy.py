@@ -19,7 +19,8 @@ from .entities import (
     Timer,
 )
 from .utils import GameConfig, Images, Sounds, Window, Mode
-    
+
+
 class Flappy:
     def __init__(self):
         pygame.init()
@@ -37,21 +38,22 @@ class Flappy:
             sounds=Sounds(),
         )
 
-         #create the solo button 
+        # create the solo button
+
     def solo_button(self):
         FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
-        WHITE = (255,255,255)
+        WHITE = (255, 255, 255)
         text_surf = FONT.render("SOLO", True, WHITE)
         text_rect = text_surf.get_rect(
             centerx=self.config.window.width // 2,
-            centery=self.config.window.height // 2 - 60 
+            centery=self.config.window.height // 2 - 60
         )
         return text_surf, text_rect
 
-     #create the solo button 
+    # create the multi button
     def multi_button(self):
         FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
-        WHITE = (255,255,255)
+        WHITE = (255, 255, 255)
         text_surf = FONT.render("MULTI", True, WHITE)
         text_rect = text_surf.get_rect(
             centerx=self.config.window.width // 2,
@@ -68,7 +70,48 @@ class Flappy:
             centery=self.config.window.height // 2 + 60
         )
         return text_surf, text_rect
-    
+
+    # New skill interface buttons
+    def skill_interface_buttons(self):
+        """Create the five skill interface buttons"""
+        FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 20)
+        WHITE = (255, 255, 255)
+
+        # Button names and positions
+        button_names = ["Speed Boost", "Destination", "Time Freeze", "Power Fruit", "Teleport"]
+        buttons = []
+
+        # Calculate button positions (arranged in a grid-like pattern)
+        center_x = self.config.window.width // 2
+        center_y = self.config.window.height // 2
+
+        # Positions for 5 buttons (2 on top, 1 in middle, 2 on bottom)
+        positions = [
+            (center_x - 150, center_y - 80),  # Speed Boost (top left)
+            (center_x + 150, center_y - 80),  # Destination (top right)
+            (center_x, center_y),  # Time Freeze (center)
+            (center_x - 150, center_y + 80),  # Power Fruit (bottom left)
+            (center_x + 150, center_y + 80)  # Teleport (bottom right)
+        ]
+
+        for i, (name, pos) in enumerate(zip(button_names, positions)):
+            text_surf = FONT.render(name, True, WHITE)
+            text_rect = text_surf.get_rect(center=pos)
+            buttons.append((text_surf, text_rect, name.lower().replace(" ", "_")))
+
+        return buttons
+
+    def individual_skill_button(self, skill_name):
+        """Create button for individual skill interface"""
+        FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
+        WHITE = (255, 255, 255)
+        text_surf = FONT.render(f"{skill_name.upper()} SKILL", True, WHITE)
+        text_rect = text_surf.get_rect(
+            centerx=self.config.window.width // 2,
+            centery=self.config.window.height // 2
+        )
+        return text_surf, text_rect
+
     def back_button(self):
         back_button = self.config.images.buttons["back"]
         back_pos = (30, 30)
@@ -77,7 +120,7 @@ class Flappy:
 
     def check_quit_event(self, event):
         if event.type == QUIT or (
-            event.type == KEYDOWN and event.key == K_ESCAPE
+                event.type == KEYDOWN and event.key == K_ESCAPE
         ):
             pygame.quit()
             sys.exit()
@@ -85,11 +128,11 @@ class Flappy:
     def is_tap_event(self, event):
         m_left, _, _ = pygame.mouse.get_pressed()
         space_or_up = event.type == KEYDOWN and (
-            event.key == K_SPACE or event.key == K_UP
+                event.key == K_SPACE or event.key == K_UP
         )
         screen_tap = event.type == pygame.FINGERDOWN
         return m_left or space_or_up or screen_tap
-    
+
     def restart(self):
         self.floor = Floor(self.config)
         self.player = Player(self.config)
@@ -98,52 +141,172 @@ class Flappy:
         self.medal = Medal(self.config, self.score)
         self.button = Button(self.config, self.mode)
         self.timer = Timer(self.config)
-    
+
     async def start(self):
         while True:
-                self.mode = Mode()
-                self.background = Background(self.config)
-                self.title = Title(self.config)
-                self.message = Message(self.config, self.mode)
-                self.room_list = RoomList(self.config)
-                self.scoreboard = ScoreBoard(self.config)
-                self.mode.set_mode("Default")
-                self.restart()
-                await self.main_interface()
+            self.mode = Mode()
+            self.background = Background(self.config)
+            self.title = Title(self.config)
+            self.message = Message(self.config, self.mode)
+            self.room_list = RoomList(self.config)
+            self.scoreboard = ScoreBoard(self.config)
+            self.mode.set_mode("Default")
+            self.restart()
+            await self.main_interface()
 
-    #first interface 
+    # first interface
     async def main_interface(self):
         while True:
-            
+
             # Get both surface and rect
             solo_text_surf, solo_button_rect = self.solo_button()
             multi_text_surf, multi_button_rect = self.multi_button()
             skill_text_surf, skill_button_rect = self.skill_button()
-            
+
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 if self.is_tap_event(event):
-                    #click the solo button , run solo_ready_interface screen
+                    # click the solo button , run solo_ready_interface screen
                     if solo_button_rect.collidepoint(event.pos):
                         await self.solo_ready_interface()
                     if multi_button_rect.collidepoint(event.pos):
                         await self.game_room_interface()
                     if skill_button_rect.collidepoint(event.pos):
-                        # Run the skill tutorial
-                        pass
-                    
+                        # Run the main skill interface
+                        await self.main_skill_interface()
+
             self.background.tick()
             self.floor.tick()
             self.title.tick()
-            
+
             # Draw the button
             self.config.screen.blit(solo_text_surf, solo_button_rect)
             self.config.screen.blit(multi_text_surf, multi_button_rect)
             self.config.screen.blit(skill_text_surf, skill_button_rect)
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
+
+    async def main_skill_interface(self):
+        """Main skill interface with 5 skill buttons"""
+        self.mode.set_mode("Main Skill")
+
+        while True:
+            back_button_surf, back_button_rect = self.back_button()
+            skill_buttons = self.skill_interface_buttons()
+
+            for event in pygame.event.get():
+                self.check_quit_event(event)
+                if self.is_tap_event(event):
+                    if back_button_rect.collidepoint(event.pos):
+                        await self.main_interface()
+
+                    # Check which skill button was clicked
+                    for text_surf, text_rect, skill_id in skill_buttons:
+                        if text_rect.collidepoint(event.pos):
+                            await self.individual_skill_interface(skill_id)
+
+            self.background.tick()
+            self.floor.tick()
+
+            # Draw title
+            title_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 32)
+            title_surf = title_font.render("SKILL TUTORIAL", True, (255, 255, 255))
+            title_rect = title_surf.get_rect(centerx=self.config.window.width // 2, y=100)
+            self.config.screen.blit(title_surf, title_rect)
+
+            # Draw skill buttons
+            for text_surf, text_rect, _ in skill_buttons:
+                # Draw button background (optional - you can use sprites here)
+                pygame.draw.rect(self.config.screen, (100, 100, 100), text_rect.inflate(20, 10))
+                pygame.draw.rect(self.config.screen, (255, 255, 255), text_rect.inflate(20, 10), 2)
+                self.config.screen.blit(text_surf, text_rect)
+
+            # Draw back button
+            self.config.screen.blit(back_button_surf, back_button_rect)
+
+            pygame.display.update()
+            await asyncio.sleep(0)
+            self.config.tick()
+
+    async def individual_skill_interface(self, skill_name):
+        """Individual skill interface for each skill"""
+        self.mode.set_mode(f"{skill_name.title()} Skill")
+
+        while True:
+            back_button_surf, back_button_rect = self.back_button()
+            skill_text_surf, skill_text_rect = self.individual_skill_button(skill_name)
+
+            for event in pygame.event.get():
+                self.check_quit_event(event)
+                if self.is_tap_event(event):
+                    if back_button_rect.collidepoint(event.pos):
+                        await self.main_skill_interface()
+
+            self.background.tick()
+            self.floor.tick()
+
+            # Draw skill-specific content
+            title_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 28)
+            title_surf = title_font.render(f"{skill_name.upper().replace('_', ' ')} TUTORIAL", True, (255, 255, 255))
+            title_rect = title_surf.get_rect(centerx=self.config.window.width // 2, y=150)
+            self.config.screen.blit(title_surf, title_rect)
+
+            # Add skill-specific instructions based on skill type
+            instruction_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 16)
+            instructions = self.get_skill_instructions(skill_name)
+
+            y_offset = 250
+            for instruction in instructions:
+                instruction_surf = instruction_font.render(instruction, True, (255, 255, 255))
+                instruction_rect = instruction_surf.get_rect(centerx=self.config.window.width // 2, y=y_offset)
+                self.config.screen.blit(instruction_surf, instruction_rect)
+                y_offset += 40
+
+            # Draw back button
+            self.config.screen.blit(back_button_surf, back_button_rect)
+
+            pygame.display.update()
+            await asyncio.sleep(0)
+            self.config.tick()
+
+    def get_skill_instructions(self, skill_name):
+        """Get instructions for each skill"""
+        instructions = {
+            "speed_boost": [
+                "Speed Boost increases your movement speed",
+                "Press SHIFT to activate speed boost",
+                "Duration: 5 seconds",
+                "Cooldown: 10 seconds"
+            ],
+            "destination": [
+                "Destination teleports you to a safe location",
+                "Press D to activate destination",
+                "Automatically finds safe spot",
+                "Cooldown: 15 seconds"
+            ],
+            "time_freeze": [
+                "Time Freeze stops all obstacles",
+                "Press T to activate time freeze",
+                "Duration: 3 seconds",
+                "Cooldown: 20 seconds"
+            ],
+            "power_fruit": [
+                "Power Fruit gives temporary invincibility",
+                "Press F to activate power fruit",
+                "Duration: 4 seconds",
+                "Cooldown: 25 seconds"
+            ],
+            "teleport": [
+                "Teleport moves you instantly forward",
+                "Press E to activate teleport",
+                "Distance: Fixed amount forward",
+                "Cooldown: 8 seconds"
+            ]
+        }
+
+        return instructions.get(skill_name, ["Instructions not available"])
 
     async def solo_ready_interface(self):
         """Shows welcome solo_ready_interface screen animation of flappy bird"""
@@ -159,7 +322,7 @@ class Flappy:
                     if back_button_rect.collidepoint(event.pos):
                         self.restart()
                         await self.main_interface()
-                    #after click run the play() and start the game
+                    # after click run the play() and start the game
                     await self.play()
 
             self.background.tick()
@@ -167,7 +330,7 @@ class Flappy:
             self.player.tick()
             self.message.tick()
             self.config.screen.blit(back_button_surf, back_button_rect)
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
@@ -197,9 +360,9 @@ class Flappy:
                         await self.solo_ready_interface()
                     elif self.button.quit_rect and self.button.quit_rect.collidepoint(event.pos):
                         self.restart()
-                        #after click back to main
+                        # after click back to main
                         await self.main_interface()
-            
+
             self.background.tick()
             self.floor.tick()
             self.pipes.tick()
@@ -210,7 +373,7 @@ class Flappy:
             self.config.tick()
             pygame.display.update()
             await asyncio.sleep(0)
-    
+
     async def game_resume(self):
         self.pipes.resume()
         self.floor.resume()
@@ -222,7 +385,7 @@ class Flappy:
         while True:
             back_button_surf, back_button_rect = self.back_button()
             if self.player.collided(self.pipes, self.floor):
-                #if flappy hit ground or pipe, end this and run the game over()
+                # if flappy hit ground or pipe, end this and run the game over()
                 await self.solo_game_over()
 
             for i, pipe in enumerate(self.pipes.upper):
@@ -243,7 +406,7 @@ class Flappy:
             self.score.tick()
             self.player.tick()
             self.config.screen.blit(back_button_surf, back_button_rect)
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
@@ -267,7 +430,7 @@ class Flappy:
                         await self.solo_ready_interface()
                     elif self.button.quit_rect and self.button.quit_rect.collidepoint(event.pos):
                         self.restart()
-                        #after click back to main
+                        # after click back to main
                         await self.main_interface()
 
             self.background.tick()
@@ -285,12 +448,12 @@ class Flappy:
             await asyncio.sleep(0)
 
     async def game_room_interface(self):
-        #self.button.set_mode(ButtonMode.MULTI)
+        # self.button.set_mode(ButtonMode.MULTI)
         self.mode.set_mode("Game Room")
         self.message.set_mode(self.mode.get_mode())
         self.button.set_mode(self.mode.get_mode())
-        
-        while True:  
+
+        while True:
             back_button_surf, back_button_rect = self.back_button()
             for event in pygame.event.get():
                 self.check_quit_event(event)
@@ -309,11 +472,11 @@ class Flappy:
             self.floor.tick()
             self.config.screen.blit(back_button_surf, back_button_rect)
             self.button.tick()
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
-    
+
     async def create_room_interface(self):
         self.mode.set_mode("Create Room")
         self.message.set_mode(self.mode.get_mode())
@@ -335,7 +498,7 @@ class Flappy:
             self.floor.tick()
             self.config.screen.blit(back_button_surf, back_button_rect)
             self.button.tick()
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
@@ -361,7 +524,7 @@ class Flappy:
             self.floor.tick()
             self.config.screen.blit(back_button_surf, back_button_rect)
             self.button.tick()
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
@@ -370,7 +533,7 @@ class Flappy:
         self.player.set_mode(PlayerMode.NORMAL)
         while True:
             if self.player.collided(self.pipes, self.floor):
-                #if flappy push by the pipes
+                # if flappy push by the pipes
                 await self.solo_game_over()
 
             if self.timer.time_up():
@@ -388,13 +551,13 @@ class Flappy:
             self.timer.update_timer()
             self.timer.tick()
             self.player.tick()
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
 
     async def leaderboard_interface(self):
-        
+
         self.pipes.stop()
         self.floor.stop()
         self.mode.set_mode("Leaderboard")
@@ -418,7 +581,7 @@ class Flappy:
             self.player.tick()
             self.message.tick()
             self.button.tick()
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()

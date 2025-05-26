@@ -90,6 +90,10 @@ class Flappy:
         screen_tap = event.type == pygame.FINGERDOWN
         return m_left or space_or_up or screen_tap
     
+    def click_event(self):
+        click,_,_ = pygame.mouse.get_pressed()
+        return click
+    
     def restart(self):
         self.floor = Floor(self.config)
         self.player = Player(self.config)
@@ -155,10 +159,11 @@ class Flappy:
             back_button_surf, back_button_rect = self.back_button()
             for event in pygame.event.get():
                 self.check_quit_event(event)
-                if self.is_tap_event(event):
+                if self.click_event():
                     if back_button_rect.collidepoint(event.pos):
                         self.restart()
                         await self.main_interface()
+                if self.is_tap_event(event):
                     #after click run the play() and start the game
                     await self.play()
 
@@ -189,13 +194,13 @@ class Flappy:
 
         while True:
             for event in pygame.event.get():
-                if self.is_tap_event(event):
-                    if self.button.resume_rect and self.button.resume_rect.collidepoint(event.pos):
+                if self.click_event():
+                    if self.button.resume_rect.collidepoint(event.pos):
                         await self.game_resume()
-                    elif self.button.restart_rect and self.button.restart_rect.collidepoint(event.pos):
+                    elif self.button.restart_rect.collidepoint(event.pos):
                         self.restart()
                         await self.solo_ready_interface()
-                    elif self.button.quit_rect and self.button.quit_rect.collidepoint(event.pos):
+                    elif self.button.quit_rect.collidepoint(event.pos):
                         self.restart()
                         #after click back to main
                         await self.main_interface()
@@ -232,9 +237,10 @@ class Flappy:
             for event in pygame.event.get():
                 if event.type == KEYDOWN and event.key == K_ESCAPE:
                     await self.game_pause()
-                if self.is_tap_event(event):
+                if self.click_event():
                     if back_button_rect.collidepoint(event.pos):
                         await self.game_pause()
+                if self.is_tap_event(event):
                     self.player.flap()
 
             self.background.tick()
@@ -261,11 +267,11 @@ class Flappy:
         while True:
             for event in pygame.event.get():
                 self.check_quit_event(event)
-                if self.is_tap_event(event):
-                    if self.button.restart_rect and self.button.restart_rect.collidepoint(event.pos):
+                if self.click_event():
+                    if self.button.restart_rect.collidepoint(event.pos):
                         self.restart()
                         await self.solo_ready_interface()
-                    elif self.button.quit_rect and self.button.quit_rect.collidepoint(event.pos):
+                    if self.button.quit_rect.collidepoint(event.pos):
                         self.restart()
                         #after click back to main
                         await self.main_interface()
@@ -294,13 +300,13 @@ class Flappy:
             back_button_surf, back_button_rect = self.back_button()
             for event in pygame.event.get():
                 self.check_quit_event(event)
-                if self.is_tap_event(event):
+                if self.click_event():
                     if back_button_rect.collidepoint(event.pos):
                         self.restart()
                         await self.main_interface()
-                    if self.button.create_rect and self.button.create_rect.collidepoint(event.pos):
+                    if self.button.create_rect.collidepoint(event.pos):
                         await self.create_room_interface()
-                    if self.button.join_rect and self.button.join_rect.collidepoint(event.pos):
+                    if self.button.join_rect.collidepoint(event.pos):
                         await self.join_room_interface()
 
             self.background.tick()
@@ -323,10 +329,10 @@ class Flappy:
             back_button_surf, back_button_rect = self.back_button()
             for event in pygame.event.get():
                 self.check_quit_event(event)
-                if self.is_tap_event(event):
+                if self.click_event():
                     if back_button_rect.collidepoint(event.pos):
                         await self.game_room_interface()
-                    if self.button.create_rect and self.button.create_rect.collidepoint(event.pos):
+                    if self.button.create_rect.collidepoint(event.pos):
                         await self.join_room_interface()
 
             self.background.tick()
@@ -349,10 +355,10 @@ class Flappy:
             back_button_surf, back_button_rect = self.back_button()
             for event in pygame.event.get():
                 self.check_quit_event(event)
-                if self.is_tap_event(event):
+                if self.click_event():
                     if back_button_rect.collidepoint(event.pos):
                         await self.game_room_interface()
-                    if self.button.ready_rect and self.button.ready_rect.collidepoint(event.pos):
+                    if self.button.ready_rect.collidepoint(event.pos):
                         await self.multi_gameplay()
 
             self.background.tick()
@@ -404,11 +410,11 @@ class Flappy:
         while True:
             for event in pygame.event.get():
                 self.check_quit_event(event)
-                if self.is_tap_event(event):
-                    if self.button.restart_rect and self.button.restart_rect.collidepoint(event.pos):
+                if self.click_event():
+                    if self.button.restart_rect.collidepoint(event.pos):
                         self.restart()
                         await self.join_room_interface()
-                    elif self.button.quit_rect and self.button.quit_rect.collidepoint(event.pos):
+                    elif self.button.quit_rect.collidepoint(event.pos):
                         self.restart()
                         await self.game_room_interface()
 

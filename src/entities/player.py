@@ -26,6 +26,9 @@ class Player(Entity):
         self.img_idx = 0
         self.img_gen = cycle([0, 1, 2, 1])
         self.frame = 0
+        self.respawn_timer = 0
+        self.respawn_delay = 24
+        self.waiting_to_respawn = False
         self.crashed = False
         self.crash_entity = None
         self.set_mode(PlayerMode.SHM)
@@ -175,16 +178,39 @@ class Player(Entity):
     
     def collided_push(self, pipes: Pipes) -> None:
         """flappy will get push if hit the pipe"""
+        
         for pipe in pipes.upper:
             if self.collide(pipe):
-                self.x = pipe.x -42
-                return self.x
+                # Push player to the left of the pipe with a small buffer
+                self.x = pipe.x - self.w - 5  # Use player width + small buffer
+                return
             
         for pipe in pipes.lower:
             if self.collide(pipe):
-                self.x = pipe.x -42
-                return self.x       
-    
+                self.x = pipe.x - self.w - 5
+                return
+            
+    def respawn(self, config:GameConfig) -> None:
+        # Check if player reached the left edge
+        if self.x <= 0 and not self.waiting_to_respawn:
+            self.waiting_to_respawn = True
+            self.respawn_timer = 0
+            
+        # Handle respawn timer
+        if self.waiting_to_respawn:
+            self.respawn_timer += 1
+            
+            # Check if delay has passed
+            if self.respawn_timer >= self.respawn_delay:
+                # Actually respawn the player
+                self.x = int(config.window.width * 0.2)
+                self.y = int((config.window.height - self.h) / 2)
+                self.vel_y = 0
+                self.rot = 0
+                
+                # Reset respawn flags
+                self.waiting_to_respawn = False
+                self.respawn_timer = 0
                 
             
 

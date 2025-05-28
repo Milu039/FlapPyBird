@@ -11,6 +11,7 @@ from .message import Message
 from .room_list import RoomList
 from .buttons import Button
 from .timer import Timer
+from .countdown import CountdownTimer
 
 __all__ = [
     "Background",

@@ -27,8 +27,8 @@ class Button(Entity):
             create_button = self.config.images.buttons["create"]
             join_button = self.config.images.buttons["join"]
 
-            create_pos = (325, self.config.window.height // 2 + 100)
-            join_pos = (540, self.config.window.height // 2 + 100)
+            create_pos = (325, self.config.window.height // 2 + 90)
+            join_pos = (540, self.config.window.height // 2 + 90)
 
             self.draw_button(create_button, create_pos)
             self.draw_button(join_button, join_pos)

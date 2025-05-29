@@ -30,9 +30,6 @@ class Message(Entity):
         if self.mode == "Game Room":
             self.game_room_pos = ((self.config.window.width - self.game_room_message.get_width()) // 2, int(self.config.window.height * 0.05))
             self.draw_message(self.game_room_message, self.game_room_pos)
-        if self.mode == "skill_ability":
-            self.game_room_pos = ((self.config.window.width - self.game_room_message.get_width()) // 2, int(self.config.window.height * 0.05))
-            self.draw_message(self.game_room_message, self.game_room_pos)
         if self.mode == "Create Room":
             FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
             WHITE = (255, 255, 255)

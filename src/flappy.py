@@ -321,8 +321,6 @@ class Flappy:
                         await self.room_lobby_interface("member")
 
             self.background.tick()
-            self.message.tick()
-            self.room_list.tick()
             self.floor.tick()
             self.container.tick()
             self.message.draw(selected_room=self.selected_room, mouse_pos=mouse_pos)

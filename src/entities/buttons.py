@@ -79,18 +79,18 @@ class Button(Entity):
                 self.rectCancel = self.btnrectCreate(self.posCancel, self.btnCancel)
         
         if self.mode == "Create Room":
-            self.posCreate = ((self.config.window.width - self.btnCreate.get_width()) // 2, self.config.window.height // 2 + 150)
+            self.posCreate = ((self.config.window.width - self.btnCreate.get_width()) // 2, self.config.window.height // 2 + 100)
             self.draw_button(self.btnCreate, self.posCreate)
             self.rectCreate = self.btnrectCreate(self.posCreate, self.btnCreate)
         
         if self.mode == "Room Lobby: host":
             self.btnStart.set_alpha(191)
-            self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 150)
+            self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 225)
             self.draw_button(self.btnStart, self.posStart)
             self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
 
         if self.mode == "Room Lobby: member":
-            self.posReady = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 150)
+            self.posReady = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 225)
             self.draw_button(self.btnReady, self.posReady)
             self.rectReady = self.btnrectCreate(self.posReady, self.btnReady)
 

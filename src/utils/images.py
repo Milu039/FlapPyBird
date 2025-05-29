@@ -43,10 +43,13 @@ class Images:
         original_container = pygame.image.load("assets/sprites/container.png").convert_alpha()
         message_box = pygame.transform.scale(original_container, (350,275))
         room_list_container = pygame.transform.scale(original_container, (700,500))
+        create_room_container = pygame.transform.scale(original_container, (400,400))
+        room_lobby_container = pygame.transform.scale(original_container, (600,400))
         self.container = {
             "message box" : message_box,
             "room list": room_list_container,
-            "create room": original_container
+            "create room": create_room_container,
+            "room lobby": room_lobby_container,
         }
         
         # base (ground) sprite

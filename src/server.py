@@ -41,10 +41,16 @@ def threaded_client(conn):
                     reply = json.dumps(room_list)
 
                 if command == "Create Room":
-                    room_num = reply.split(":")[1].split(",")[0]
-                    room_password = reply.split(":")[1].split(",")[1]
                     room_id = str(len(room_list)+1)
-                    room_list.append(f"{room_id}: {room_num}, {room_password}")
+                    room_num = reply.split(":")[1].split(",")[0]
+
+                    if reply.split(":")[1].split(",")[1] != " ":
+                        room_password = reply.split(":")[1].split(",")[1]
+                        room_list.append(f"{room_id}: {room_num}, {room_password}")
+                    else:
+                        room_list.append(f"{room_id}: {room_num}")
+
+                    print(room_list)
                     room_members[room_num] = [conn]
                     
                     player_id = 0
@@ -57,6 +63,27 @@ def threaded_client(conn):
                         player_id = len(room_members[room_num])
                         room_members[room_num].append(conn)
                         reply = f"Joined:{room_num}:{player_id}:member"
+                    
+                if command == "Remove Room":
+                    room_num = reply.split(":")[1]
+
+                    # Remove from room_list
+                    room_list = [room for room in room_list if not room.split(": ")[1].split(",")[0] == room_num]
+                    print(f"Room{room_num} removed")
+
+                    # Remove from room_members
+                    if room_num in room_members:
+                        del room_members[room_num]
+
+                if command == "Leave Room":
+                    room_num = reply.split(":")[1]
+                    player_id = reply.split(":")[2]
+
+                    if room_num in room_members:
+                        members = room_members[room_num]
+                        if player_id < len(members):
+                            members.remove(conn)
+                            print(f"Player {player_id} left room {room_num}")
                     
             conn.sendall(reply.encode())
         except:

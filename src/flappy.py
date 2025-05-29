@@ -450,6 +450,7 @@ class Flappy:
                 self.check_quit_event(event)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
+                        self.network.send(f"Remove Room: {self.message.random_number}")
                         await self.game_room_interface()
 
                     if self.message.password_input_rect.collidepoint(event.pos):
@@ -497,6 +498,10 @@ class Flappy:
                 self.check_quit_event(event)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
+                        if state == "host":
+                            self.network.send(f"Remove Room: {self.message.random_number}")
+                        elif state == "member":
+                            self.network.send(f"Leave Room: {self.message.random_number}: {self.network.net_id}")
                         await self.game_room_interface()
                     #if self.button.rectReady.collidepoint(event.pos):
                      #   await self.multi_gameplay()

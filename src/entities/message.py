@@ -153,28 +153,22 @@ class Message(Entity):
         elif self.mode == "Room Lobby: host" or "Room Lobby: member":
             room_title = f"Room {self.room_num}"
             font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 20)
-
             # Colors
             brown = (66, 36, 0)
             orange = (234, 92, 0)
-
             # Sizes and positions
             x, y = (self.config.window.width - self.create_room_message.get_width()) // 2, int(self.config.window.height * 0.05)
             width, height = 306, 63  # Outer border size
-
             # Draw outer brown border
             pygame.draw.rect(self.config.screen, brown, (x, y, width, height))
-
             # Draw white inner border
             padding = 5
             pygame.draw.rect(self.config.screen, self.WHITE, (x + padding, y + padding, width - 2 * padding, height - 2 * padding))
-
             # Draw orange inner box
             inner_padding = 5
             pygame.draw.rect(self.config.screen, orange, (x + padding + inner_padding, y + padding + inner_padding,
                                             width - 2 * (padding + inner_padding),
                                             height - 2 * (padding + inner_padding)))
-
             # Draw text centered
             text_surface = font.render(room_title, True, self.WHITE)
             text_rect = text_surface.get_rect(center=(x + width // 2, y + height // 2))

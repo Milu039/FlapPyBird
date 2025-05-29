@@ -7,7 +7,7 @@ class Timer(Entity):
     def __init__(self, config: GameConfig) -> None:
         super().__init__(config)
         self.y = self.config.window.height * 0.1
-        self.total_time = 1 * 15  # 5 minutes in seconds
+        self.total_time = 1 * 300  # 5 minutes in seconds
         self.start_time = time.time()
         self.remaining_time = self.total_time
 

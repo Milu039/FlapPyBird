@@ -509,7 +509,8 @@ class Flappy:
         while True:
             if self.player.collided_push(self.pipes):
                 pass
-
+            if self.player.respawn(self.config):
+                pass    
             if self.timer.time_up():
                 await self.leaderboard_interface()
 

@@ -18,6 +18,7 @@ from .entities import (
     RoomList,
     Button,
     Timer,
+    CountdownTimer,
 )
 from .utils import GameConfig, Images, Sounds, Window, Mode, Network
     
@@ -104,7 +105,7 @@ class Flappy:
         self.medal = Medal(self.config, self.score)
         self.button = Button(self.config, self.mode)
         self.timer = Timer(self.config)
-        self.message = Message(self.config, self.mode)
+        self.countdown = CountdownTimer(self.config)
     
     async def start(self):
         while True:
@@ -412,9 +413,8 @@ class Flappy:
     async def multi_gameplay(self):
         self.player.set_mode(PlayerMode.NORMAL)
         while True:
-            if self.player.collided(self.pipes, self.floor):
-                #if flappy push by the pipes
-                await self.solo_game_over()
+            if self.player.collided_push(self.pipes):
+                pass
 
             if self.timer.time_up():
                 await self.leaderboard_interface()

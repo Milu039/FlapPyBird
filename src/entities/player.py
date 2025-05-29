@@ -172,3 +172,20 @@ class Player(Entity):
                 return True
 
         return False
+    
+    def collided_push(self, pipes: Pipes) -> None:
+        """flappy will get push if hit the pipe"""
+        for pipe in pipes.upper:
+            if self.collide(pipe):
+                self.x = pipe.x -42
+                return self.x
+            
+        for pipe in pipes.lower:
+            if self.collide(pipe):
+                self.x = pipe.x -42
+                return self.x       
+    
+                
+            
+
+      

@@ -73,31 +73,39 @@ class Flappy:
 
     # New skill interface buttons
     def skill_interface_buttons(self):
-        """Create the five skill interface buttons"""
-        FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 20)
-        WHITE = (255, 255, 255)
-
-        # Button names and positions
-        button_names = ["Speed Boost", "Destination", "Time Freeze", "Power Fruit", "Teleport"]
+        """Create skill interface using images from config"""
         buttons = []
 
-        # Calculate button positions (arranged in a grid-like pattern)
-        center_x = self.config.window.width // 2
-        center_y = self.config.window.height // 2
+        # Get skill images from config
+        skills = self.config.images.skills
+        messages = self.config.images.message
 
-        # Positions for 5 buttons (2 on top, 1 in middle, 2 on bottom)
+        # Set interface mode
+        self.mode.set_mode("Skill Ability")
+        self.message.set_mode(self.mode.get_mode())
+
+        # Skill positions (adjust these values based on your image sizes)
         positions = [
-            (center_x - 150, center_y - 80),  # Speed Boost (top left)
-            (center_x + 150, center_y - 80),  # Destination (top right)
-            (center_x, center_y),  # Time Freeze (center)
-            (center_x - 150, center_y + 80),  # Power Fruit (bottom left)
-            (center_x + 150, center_y + 80)  # Teleport (bottom right)
+            (self.config.window.width // 2 - 200, 200),  # Speed Boost
+            (self.config.window.width // 2 + 50, 200),  # Penetration
+            (self.config.window.width // 2 - 150, 400),  # Pipe Shift
+            (self.config.window.width // 2 + 50, 400),  # Time Freeze
+            (self.config.window.width // 2 - 75, 550)  # Teleport (center bottom)
         ]
 
-        for i, (name, pos) in enumerate(zip(button_names, positions)):
-            text_surf = FONT.render(name, True, WHITE)
-            text_rect = text_surf.get_rect(center=pos)
-            buttons.append((text_surf, text_rect, name.lower().replace(" ", "_")))
+        # Map skills to positions
+        skill_order = [
+            "speed_boost",
+            "penetration",
+            "pipe_shift",
+            "time_freeze",
+            "teleport"
+        ]
+
+        for skill_id, pos in zip(skill_order, positions):
+            img = skills[skill_id]
+            img_rect = img.get_rect(topleft=pos)
+            buttons.append((img, img_rect, skill_id))
 
         return buttons
 
@@ -196,6 +204,9 @@ class Flappy:
             back_button_surf, back_button_rect = self.back_button()
             skill_buttons = self.skill_interface_buttons()
 
+            title_img = self.config.images.message["skill_ability"]
+            title_rect = title_img.get_rect(centerx=self.config.window.width // 2, top=50)
+
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 if self.is_tap_event(event):
@@ -209,6 +220,7 @@ class Flappy:
 
             self.background.tick()
             self.floor.tick()
+            self.message.tick()
 
             # Draw title
             title_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 32)

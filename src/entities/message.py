@@ -112,3 +112,7 @@ class Message(Entity):
         if self.mode == "Leaderboard":
             pass
 
+        if self.mode == "skill_ability":
+            self.game_room_pos = ((self.config.window.width - self.game_room_message.get_width()) // 2, int(self.config.window.height * 0.05))
+            self.draw_message(self.game_room_message, self.game_room_pos)
+

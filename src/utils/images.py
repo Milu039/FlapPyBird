@@ -37,7 +37,7 @@ class Images:
             "game room": pygame.image.load("assets/sprites/Game room.png").convert_alpha(),
             "create": pygame.image.load("assets/sprites/Create room.png").convert_alpha(),
             "gameover": pygame.image.load("assets/sprites/gameover.png").convert_alpha(),
-            #"skill_ability": pygame.image.load("assets/sprites/skill_ability.png").convert_alpha(),
+            "skill_ability": pygame.image.load("assets/sprites/skill_ability.png").convert_alpha(),
         }
 
         original_container = pygame.image.load("assets/sprites/container.png").convert_alpha()
@@ -81,13 +81,13 @@ class Images:
             "ready": pygame.image.load("assets/sprites/ready.png").convert_alpha(),
         }
 
-        #self.skills = {
-         #   "speed_boost": pygame.image.load("assets/sprites/speed_boost.png").convert_alpha(),
-          #  "penetration": pygame.image.load("assets/sprites/penetration.png").convert_alpha(),
-           # "pipe_shift": pygame.image.load("assets/sprites/pipe_shift.png").convert_alpha(),
-           # "time_freeze": pygame.image.load("assets/sprites/time_freeze.png").convert_alpha(),
-           # "teleport": pygame.image.load("assets/sprites/teleport.png").convert_alpha(),
-        #}
+        self.skills = {
+            "speed_boost": pygame.image.load("assets/sprites/speed_boost.png").convert_alpha(),
+            "penetration": pygame.image.load("assets/sprites/penetration.png").convert_alpha(),
+            "pipe_shift": pygame.image.load("assets/sprites/pipe_shift.png").convert_alpha(),
+            "time_freeze": pygame.image.load("assets/sprites/time_freeze.png").convert_alpha(),
+            "teleport": pygame.image.load("assets/sprites/teleport.png").convert_alpha(),
+        }
 
         self.randomize()
 

@@ -6,11 +6,14 @@ class Button(Entity):
     def __init__(self, config: GameConfig, mode: Mode) -> None:
         super().__init__(config)
         self.mode = mode
+        self.show_password_prompt = False
         self.btnResume = self.config.images.buttons["resume"]
         self.btnRestart = self.config.images.buttons["restart"]
         self.btnQuit = self.config.images.buttons["quit"]
         self.btnCreate = self.config.images.buttons["create"]
         self.btnJoin = self.config.images.buttons["join"]
+        self.btnEnter = self.config.images.buttons["enter"]
+        self.btnCancel = self.config.images.buttons["cancel"]
 
         self.btnStart_1_2 = self.config.images.buttons["start (1/2)"]
         self.btnStart_1_2.set_alpha(191)
@@ -65,6 +68,15 @@ class Button(Entity):
 
             self.rectCreate = self.btnrectCreate(self.posCreate, self.btnCreate)
             self.rectJoin = self.btnrectCreate(self.posJoin, self.btnJoin)
+
+            if self.show_password_prompt:
+                self.posEnter = (self.config.window.width // 2 - 150, 425)
+                self.draw_button(self.btnEnter, self.posEnter)
+                self.rectEnter = self.btnrectCreate(self.posEnter, self.btnEnter)
+
+                self.posCancel = (self.config.window.width // 2 + 7, 425)
+                self.draw_button(self.btnCancel, self.posCancel)
+                self.rectCancel = self.btnrectCreate(self.posCancel, self.btnCancel)
         
         if self.mode == "Create Room":
             self.posCreate = ((self.config.window.width - self.btnCreate.get_width()) // 2, self.config.window.height // 2 + 150)

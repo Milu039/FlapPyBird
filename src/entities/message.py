@@ -15,6 +15,9 @@ class Message(Entity):
         self.random_number = Random.randint(100000, 999999)
         self.ready_message = config.images.message["ready"]
         self.game_room_message = config.images.message["game room"]
+        self.show_password_prompt = False
+        self.password_error = False
+        self.password_input_rect = pygame.Rect(self.config.window.width // 2 - 150, 325, 300, 40)
         self.create_room_message = config.images.message["create"]
         self.txtPassword = ""
         self.password_active = False
@@ -63,6 +66,7 @@ class Message(Entity):
                     txtRoomNo = self.FONT.render(roomNo, True, self.BLACK)
                     txtRoomNum = self.FONT.render(roomNum, True, self.BLACK)
                     txtPerson = self.FONT.render("1/4", True, self.BLACK)
+                    
                     # Draw rect for text
                     row_rect = pygame.Rect(200, posRoom-10, 600, 40)
                     self.rectRoom.append(row_rect)
@@ -78,6 +82,32 @@ class Message(Entity):
                     self.config.screen.blit(txtRoomNum, (int((self.config.window.width - txtRoomNum.get_width()) // 2), posRoom))
                     self.config.screen.blit(txtPerson, (715, posRoom))
                     posRoom += 50
+
+            if self.show_password_prompt:
+                messageBox = self.config.images.container["message box"]
+                posMessageBox = (int((self.config.window.width - messageBox.get_width()) // 2), int((self.config.window.height - messageBox.get_height()) // 2))
+                self.draw_message(messageBox, posMessageBox)
+
+                # Draw label
+                lblPassword = self.FONT.render("Room Password:", True, self.BLACK)
+                posPassword = (self.config.window.width // 2 - lblPassword.get_width() // 2, 275)
+                self.draw_message(lblPassword, posPassword)
+
+                # Draw input field (red if error)
+                color = (255, 0, 0) if self.password_error else self.BLACK
+                pygame.draw.rect(self.config.screen, self.WHITE, self.password_input_rect)
+                pygame.draw.rect(self.config.screen, color, self.password_input_rect, 2)
+
+                # Draw text inside input
+                masked = "*" * len(self.txtPassword)
+                password_surface = self.FONT.render(masked, True, self.BLACK)
+                self.config.screen.blit(password_surface, (self.password_input_rect.x + 10, self.password_input_rect.y + 8))
+
+                # Draw error message
+                if self.password_error:
+                    error_msg = self.FONT.render("Incorrect password", True, (255, 0, 0))
+                    error_pos = (self.config.window.width // 2 - error_msg.get_width() // 2, self.password_input_rect.y + 60)
+                    self.config.screen.blit(error_msg, error_pos)
 
         if self.mode == "Create Room":
             self.create_pos = ((self.config.window.width - self.create_room_message.get_width()) // 2, int(self.config.window.height * 0.05))

@@ -41,8 +41,10 @@ class Images:
         }
 
         original_container = pygame.image.load("assets/sprites/container.png").convert_alpha()
+        message_box = pygame.transform.scale(original_container, (350,275))
         room_list_container = pygame.transform.scale(original_container, (700,500))
         self.container = {
+            "message box" : message_box,
             "room list": room_list_container,
             "create room": original_container
         }
@@ -70,6 +72,8 @@ class Images:
             "restart": pygame.image.load("assets/sprites/restart.png").convert_alpha(),
             "quit": pygame.image.load("assets/sprites/quit.png").convert_alpha(),
             "join": pygame.image.load("assets/sprites/join.png").convert_alpha(),
+            "enter": pygame.image.load("assets/sprites/enter.png").convert_alpha(),
+            "cancel": pygame.image.load("assets/sprites/cancel.png").convert_alpha(),
             "create": pygame.image.load("assets/sprites/create.png").convert_alpha(),
             "start (1/2)": pygame.image.load("assets/sprites/start-1-2.png").convert_alpha(),
             "start (1/3)": pygame.image.load("assets/sprites/start-1-3.png").convert_alpha(),

@@ -338,22 +338,25 @@ class Flappy:
             pygame.display.update()
             await asyncio.sleep(0)
 
-    async def game_room_interface(self): # receive the room list from the server
+    async def game_room_interface(self):
         self.restart()
         self.mode.set_mode("Game Room")
         self.message.set_mode(self.mode.get_mode())
         self.container.set_mode(self.mode.get_mode())
         self.button.set_mode(self.mode.get_mode())
         self.selected_room = None
-        
+
         while True:
             self.network.send(self.mode.get_mode())
             room_list_data = self.network.receive_room_list()
             self.message.set_rooms(room_list_data)
+
             btnBack, rectBack = self.back_button()
             mouse_pos = pygame.mouse.get_pos()
+
             for event in pygame.event.get():
                 self.check_quit_event(event)
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
                         self.restart()
@@ -361,14 +364,63 @@ class Flappy:
 
                     for i, rect in enumerate(self.message.rectRoom):
                         if rect.collidepoint(event.pos):
-                            self.selected_room = i  # Set selected index
+                            self.selected_room = i
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         await self.create_room_interface()
 
-                    if self.button.rectJoin.collidepoint(event.pos) and self.selected_room != None:
-                        await self.room_lobby_interface("member")
+                    if self.button.rectJoin.collidepoint(event.pos) and self.selected_room is not None:
+                        self.roomPassword = self.message.rooms[self.selected_room].split(':')[1].split(',')[1].strip()
+                        if self.roomPassword == "":
+                            await self.room_lobby_interface("member")
+                        else:
+                            self.message.show_password_prompt = True
+                            self.message.txtPassword = ""
+                            self.message.password_error = False
+                            self.button.show_password_prompt = True
+                            self.message.password_active = True
 
+                    # Activate password input box on click
+                    if self.message.show_password_prompt:
+                        if self.message.password_input_rect.collidepoint(event.pos):
+                            self.message.password_active = True
+                        else:
+                            self.message.password_active = False
+
+                    # Button click handling for enter/cancel
+                    if self.message.show_password_prompt and self.button.show_password_prompt:
+                        if hasattr(self.button, "rectEnter") and self.button.rectEnter.collidepoint(event.pos):
+                            if self.message.txtPassword == self.roomPassword:
+                                self.message.show_password_prompt = False
+                                self.button.show_password_prompt = False
+                                self.message.password_active = False
+                                self.message.password_error = False
+                                await self.room_lobby_interface("member")
+                            else:
+                                self.message.password_error = True
+
+                        elif hasattr(self.button, "rectCancel") and self.button.rectCancel.collidepoint(event.pos):
+                            self.message.show_password_prompt = False
+                            self.button.show_password_prompt = False
+                            self.message.password_active = False
+                            self.message.password_error = False
+
+                if event.type == pygame.KEYDOWN and self.message.show_password_prompt and self.message.password_active:
+                    if event.key == pygame.K_BACKSPACE:
+                        self.message.txtPassword = self.message.txtPassword[:-1]
+                    elif event.key == pygame.K_RETURN:
+                        if self.message.txtPassword == self.roomPassword:
+                            self.message.show_password_prompt = False
+                            self.button.show_password_prompt = False
+                            self.message.password_active = False
+                            self.message.password_error = False
+                            await self.room_lobby_interface("member")
+                        else:
+                            self.message.password_error = True
+                    else:
+                        self.message.txtPassword += event.unicode
+
+            # Update everything
             self.background.tick()
             self.message.tick()
             self.floor.tick()
@@ -376,7 +428,7 @@ class Flappy:
             self.message.draw(selected_room=self.selected_room, mouse_pos=mouse_pos)
             self.config.screen.blit(btnBack, rectBack)
             self.button.tick()
-            
+
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
@@ -438,8 +490,8 @@ class Flappy:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
                         await self.game_room_interface()
-                    if self.button.rectReady.collidepoint(event.pos):
-                        await self.multi_gameplay()
+                    #if self.button.rectReady.collidepoint(event.pos):
+                     #   await self.multi_gameplay()
 
             self.background.tick()
             self.message.tick()

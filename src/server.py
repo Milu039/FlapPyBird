@@ -19,9 +19,10 @@ s.listen(4)
 print("Waiting for a connection")
 
 room_list = [] # list of rooms
+room_members = {}
 pos = ["0:50,50", "1:100,100"] # first game of multi
 def threaded_client(conn):
-    global room_list, pos
+    global room_list, room_members, pos
     reply = ''
 
     while True:
@@ -34,15 +35,29 @@ def threaded_client(conn):
                 break
             else:
                 print("Recieved: " + reply)
-                data = reply.split(":")[0]
-                if data == "Game Room":
-                    reply = json.dumps(room_list)
-                if data == "Create Room":
-                    room_list.append(f"{room_list.__len__()+1}: {reply.split(":")[1]}")
-                    reply = json.dumps(room_list)
-                #if data == "Join Room":
-                    
+                command = reply.split(":")[0]
 
+                if command == "Game Room":
+                    reply = json.dumps(room_list)
+
+                if command == "Create Room":
+                    room_num = reply.split(":")[1].split(",")[0]
+                    room_password = reply.split(":")[1].split(",")[1]
+                    room_id = str(len(room_list)+1)
+                    room_list.append(f"{room_id}: {room_num}, {room_password}")
+                    room_members[room_num] = [conn]
+                    
+                    player_id = 0
+                    reply = f"Joined:{room_num}:{player_id}:host"
+
+                if command == "Join Room":
+                    room_num = reply.split(":")[1]
+
+                    if room_num in room_members and len(room_members[room_num]) < 4:
+                        player_id = len(room_members[room_num])
+                        room_members[room_num].append(conn)
+                        reply = f"Joined:{room_num}:{player_id}:member"
+                    
             conn.sendall(reply.encode())
         except:
             break

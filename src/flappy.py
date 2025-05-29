@@ -372,7 +372,9 @@ class Flappy:
                     if self.button.rectJoin.collidepoint(event.pos) and self.selected_room is not None:
                         self.roomPassword = self.message.rooms[self.selected_room].split(':')[1].split(',')[1].strip()
                         if self.roomPassword == "":
-                            await self.room_lobby_interface("member")
+                            reply = self.network.send_receive(f"Join Room: {self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()}")
+                            permission = reply.split(":")[3]
+                            await self.room_lobby_interface(permission)
                         else:
                             self.message.show_password_prompt = True
                             self.message.txtPassword = ""
@@ -393,7 +395,9 @@ class Flappy:
                                 self.button.show_password_prompt = False
                                 self.message.password_active = False
                                 self.message.password_error = False
-                                await self.room_lobby_interface("member")
+                                reply = self.network.send_receive(f"Join Room: {self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()}")
+                                permission = reply.split(":")[3]
+                                await self.room_lobby_interface(permission)
                             else:
                                 self.message.password_error = True
 
@@ -412,7 +416,9 @@ class Flappy:
                             self.button.show_password_prompt = False
                             self.message.password_active = False
                             self.message.password_error = False
-                            await self.room_lobby_interface("member")
+                            reply = self.network.send_receive(f"Join Room: {self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()}")
+                            permission = reply.split(":")[3]
+                            await self.room_lobby_interface(permission)
                         else:
                             self.message.password_error = True
                     else:
@@ -451,16 +457,18 @@ class Flappy:
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         self.message.password_active = False
-                        self.network.send(f"Create Room: {self.message.random_number}, {self.message.txtPassword}")
-                        await self.room_lobby_interface("host")
+                        reply = self.network.send_receive(f"Create Room: {self.message.random_number}, {self.message.txtPassword}")
+                        permission = reply.split(":")[3]
+                        await self.room_lobby_interface(permission)
 
                 if event.type == pygame.KEYDOWN and self.message.password_active:
                     if event.key == pygame.K_BACKSPACE:
                         self.message.txtPassword = self.message.txtPassword[:-1]
                     elif event.key == pygame.K_RETURN:
                         self.message.password_active = False
-                        self.network.send(f"Create Room: {self.message.random_number} {self.message.txtPassword}")
-                        await self.room_lobby_interface("host")
+                        reply = self.network.send_receive(f"Create Room: {self.message.random_number}, {self.message.txtPassword}")
+                        permission = reply.split(":")[3]
+                        await self.room_lobby_interface(permission)
                     else:
                         self.message.txtPassword += event.unicode
 

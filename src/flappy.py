@@ -380,14 +380,12 @@ class Flappy:
                             self.button.show_password_prompt = True
                             self.message.password_active = True
 
-                    # Activate password input box on click
                     if self.message.show_password_prompt:
                         if self.message.password_input_rect.collidepoint(event.pos):
                             self.message.password_active = True
                         else:
                             self.message.password_active = False
 
-                    # Button click handling for enter/cancel
                     if self.message.show_password_prompt and self.button.show_password_prompt:
                         if hasattr(self.button, "rectEnter") and self.button.rectEnter.collidepoint(event.pos):
                             if self.message.txtPassword == self.roomPassword:
@@ -420,7 +418,6 @@ class Flappy:
                     else:
                         self.message.txtPassword += event.unicode
 
-            # Update everything
             self.background.tick()
             self.message.tick()
             self.floor.tick()

@@ -15,7 +15,6 @@ from .entities import (
     PlayerMode,
     Score,
     Message,
-    RoomList,
     Button,
     Timer,
     CountdownTimer,
@@ -92,10 +91,6 @@ class Flappy:
         screen_tap = event.type == pygame.FINGERDOWN
         return m_left or space_or_up or screen_tap
     
-    def click_event(self):
-        click,_,_ = pygame.mouse.get_pressed()
-        return click
-    
     def restart(self):
         self.container = Container(self.config, self.mode)
         self.floor = Floor(self.config)
@@ -113,7 +108,6 @@ class Flappy:
                 self.background = Background(self.config)
                 self.title = Title(self.config)
                 self.message = Message(self.config, self.mode)
-                self.room_list = RoomList(self.config)
                 self.scoreboard = ScoreBoard(self.config)
                 self.mode.set_mode("Default")
                 self.restart()

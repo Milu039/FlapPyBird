@@ -10,7 +10,7 @@ class Images:
     numbers: List[pygame.Surface]
     scoreboard: pygame.Surface
     message: dict
-    room_list: pygame.Surface
+    container: dict
     base: pygame.Surface
     background: pygame.Surface
     player: Tuple[pygame.Surface]
@@ -39,9 +39,12 @@ class Images:
             "gameover": pygame.image.load("assets/sprites/gameover.png").convert_alpha(),
         }
 
-        self.room_list = pygame.image.load(
-            "assets/sprites/container.png"
-        ).convert_alpha()
+        original_container = pygame.image.load("assets/sprites/container.png").convert_alpha()
+        room_list_container = pygame.transform.scale(original_container, (700,500))
+        self.container = {
+            "room list": room_list_container,
+            "create room": original_container
+        }
         
         # base (ground) sprite
         self.base = pygame.image.load("assets/sprites/base.png").convert_alpha()
@@ -67,7 +70,13 @@ class Images:
             "quit": pygame.image.load("assets/sprites/quit.png").convert_alpha(),
             "join": pygame.image.load("assets/sprites/join.png").convert_alpha(),
             "create": pygame.image.load("assets/sprites/create.png").convert_alpha(),
-            #"start": pygame.image.load("assets/sprites/start.png").convert_alpha(),
+            "start (1/2)": pygame.image.load("assets/sprites/start-1-2.png").convert_alpha(),
+            "start (1/3)": pygame.image.load("assets/sprites/start-1-3.png").convert_alpha(),
+            "start (2/3)": pygame.image.load("assets/sprites/start-2-3.png").convert_alpha(),
+            "start (1/4)": pygame.image.load("assets/sprites/start-1-4.png").convert_alpha(),
+            "start (2/4)": pygame.image.load("assets/sprites/start-2-4.png").convert_alpha(),
+            "start (3/4)": pygame.image.load("assets/sprites/start-3-4.png").convert_alpha(),
+            "start": pygame.image.load("assets/sprites/start.png").convert_alpha(),
             "ready": pygame.image.load("assets/sprites/ready.png").convert_alpha(),
         }
 

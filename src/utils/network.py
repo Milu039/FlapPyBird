@@ -1,32 +1,39 @@
 import socket
-
+import json
 
 class Network:
-    def __init__(self, host="localhost"):
+
+    def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = host  # Default to localhost, but can be passed in
+        self.host = "26.189.170.88" # For this to work on your machine this must be equal to the ipv4 address of the machine running the server
+                                    # You can find this address by typing ipconfig in CMD and copying the ipv4 address. Again this must be the servers
+                                    # ipv4 address. This feild will be the same for all your clients.
         self.port = 5555
         self.addr = (self.host, self.port)
-        self.id = self.connect()
-        
+        if self.connect():
+            print("Connect")
+        else:
+            print("Unsuccessful connect")
+
     def connect(self):
-        """Connect to the server and get the player ID"""
         try:
             self.client.connect(self.addr)
-            return self.client.recv(2048).decode()
-        except socket.error as e:
-            print(f"Connection Error: {e}")
-            return "-1"  # Return invalid ID on connection failure
-            
+            return True
+        except Exception as e:
+            print("Connection failed:", e)
+            return False
+
     def send(self, data):
-        """
-        Send data to server and receive response
-        :param data: str - Data to send in format "id:x,y,rot"
-        :return: str - Data received from server
-        """
         try:
             self.client.send(str.encode(data))
-            return self.client.recv(4096).decode()
         except socket.error as e:
-            print(f"Send Error: {e}")
-            return ""
+            return str(e)
+
+    def receive_room_list(self):
+        try:
+            raw_data = self.client.recv(2048).decode()
+            if raw_data:
+                return json.loads(raw_data)
+        except Exception as e:
+            print("Room list receive error:", e)
+            return []

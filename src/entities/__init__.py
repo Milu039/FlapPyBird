@@ -8,13 +8,14 @@ from .pipe import Pipe, Pipes
 from .player import Player, PlayerMode
 from .score import Score
 from .message import Message
-from .room_list import RoomList
+from .container import Container
 from .buttons import Button
 from .timer import Timer
 
 __all__ = [
     "Background",
     "Title",
+    "Container",
     "Floor",
     "Pipe",
     "Pipes",

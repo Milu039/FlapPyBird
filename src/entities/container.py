@@ -36,7 +36,7 @@ class Container(Entity):
         elif self.mode == "Room Lobby: host" or "Room Lobby: member":
             self.posRoomLobby = (
                 int(self.config.window.width - self.conRoomLobby.get_width()) // 2,
-                int(self.config.window.height - self.conRoomLobby.get_height()) // 2
+                int(self.config.window.height - self.conRoomLobby.get_height()) // 2 - 50
             )
             self.draw_container(self.conRoomLobby, self.posRoomLobby)
             

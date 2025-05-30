@@ -3,11 +3,12 @@ from typing import List, Tuple
 
 import pygame
 
-from .constants import BACKGROUNDS, PLAYERS
+from .constants import PLAYERS
 
 
 class Images:
     numbers: List[pygame.Surface]
+    icon: dict
     scoreboard: pygame.Surface
     message: dict
     container: dict
@@ -18,6 +19,7 @@ class Images:
     medals: dict
     buttons: dict
     title: dict
+    skin: Tuple[pygame.Surface]
 
     def __init__(self) -> None:
         self.numbers = list(
@@ -26,10 +28,18 @@ class Images:
                 for num in range(10)
             )
         )
+
+        self.icon = {
+            "host": pygame.image.load("assets/sprites/host_icon.png").convert_alpha(),
+            "kick": pygame.image.load("assets/sprites/kick_icon.png").convert_alpha(),
+            "ready": pygame.image.load("assets/sprites/ready_icon.png").convert_alpha()
+        }
         # title sprite
         self.title = pygame.image.load(
             "assets/sprites/title.png"
         ).convert_alpha()
+
+        self.background = pygame.image.load("assets/sprites/background-day.png")
 
         # message sprite
         self.message = {
@@ -44,7 +54,7 @@ class Images:
         message_box = pygame.transform.scale(original_container, (350,275))
         room_list_container = pygame.transform.scale(original_container, (700,500))
         create_room_container = pygame.transform.scale(original_container, (400,400))
-        room_lobby_container = pygame.transform.scale(original_container, (600,400))
+        room_lobby_container = pygame.transform.scale(original_container, (500,400))
         self.container = {
             "message box" : message_box,
             "room list": room_list_container,
@@ -78,6 +88,8 @@ class Images:
             "enter": pygame.image.load("assets/sprites/enter.png").convert_alpha(),
             "cancel": pygame.image.load("assets/sprites/cancel.png").convert_alpha(),
             "create": pygame.image.load("assets/sprites/create.png").convert_alpha(),
+            "next": pygame.image.load("assets/sprites/next-skin.png").convert_alpha(),
+            "previous": pygame.image.load("assets/sprites/previous-skin.png").convert_alpha(),
             "start (1/2)": pygame.image.load("assets/sprites/start-1-2.png").convert_alpha(),
             "start (1/3)": pygame.image.load("assets/sprites/start-1-3.png").convert_alpha(),
             "start (2/3)": pygame.image.load("assets/sprites/start-2-3.png").convert_alpha(),
@@ -87,6 +99,12 @@ class Images:
             "start": pygame.image.load("assets/sprites/start.png").convert_alpha(),
             "ready": pygame.image.load("assets/sprites/ready.png").convert_alpha(),
         }
+
+        self.skin = (
+            pygame.image.load("assets/sprites/yellowbird-midflap.png").convert_alpha(),
+            pygame.image.load("assets/sprites/redbird-midflap.png").convert_alpha(),
+            pygame.image.load("assets/sprites/bluebird-midflap.png").convert_alpha()
+        )
 
         self.skills = {
             "speed_boost": pygame.image.load("assets/sprites/speed_boost.png").convert_alpha(),
@@ -99,12 +117,9 @@ class Images:
         self.randomize()
 
     def randomize(self):
-        # select random background sprites
-        rand_bg = random.randint(0, len(BACKGROUNDS) - 1)
         # select random player sprites
         rand_player = random.randint(0, len(PLAYERS) - 1)
 
-        self.background = pygame.image.load(BACKGROUNDS[rand_bg]).convert()
         self.player = (
             pygame.image.load(PLAYERS[rand_player][0]).convert_alpha(),
             pygame.image.load(PLAYERS[rand_player][1]).convert_alpha(),

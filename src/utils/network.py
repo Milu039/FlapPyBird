@@ -10,7 +10,7 @@ class Network:
                                     # ipv4 address. This feild will be the same for all your clients.
         self.port = 5555
         self.addr = (self.host, self.port)
-        self.net_id = None
+        self.id = None
         if self.connect():
             print("Connect")
         else:
@@ -33,7 +33,7 @@ class Network:
     def send_receive(self, data):
         self.client.send(str.encode(data))
         reply = self.client.recv(2048).decode()
-        self.net_id = reply.split(":")[2]
+        self.id = reply.split(":")[2]
         return reply
 
     def receive_room_list(self):

@@ -16,6 +16,7 @@ from .entities import (
     Score,
     Message,
     Button,
+    Skin,
     Timer,
     CountdownTimer,
 )
@@ -487,10 +488,13 @@ class Flappy:
             self.config.tick()
 
     async def room_lobby_interface(self, state):
+        self.skin = Skin(self.config, self.network.id)
         self.mode.set_mode(f"Room Lobby: {state}")
         self.message.set_mode(self.mode.get_mode())
         self.container.set_mode(self.mode.get_mode())
         self.button.set_mode(self.mode.get_mode())
+        self.button.player_id = self.network.id
+        self.message.player_id = self.network.id
 
         while True:
             btnBack, rectBack = self.back_button()
@@ -501,10 +505,13 @@ class Flappy:
                         if state == "host":
                             self.network.send(f"Remove Room: {self.message.random_number}")
                         elif state == "member":
-                            self.network.send(f"Leave Room: {self.message.random_number}: {self.network.net_id}")
+                            self.network.send(f"Leave Room: {self.message.random_number}: {self.network.id}")
                         await self.game_room_interface()
-                    #if self.button.rectReady.collidepoint(event.pos):
-                     #   await self.multi_gameplay()
+
+                    if self.button.rectNextSkin.collidepoint(event.pos):
+                        self.skin.next()
+                    elif self.button.rectPreSkin.collidepoint(event.pos):
+                        self.skin.previous()
 
             self.background.tick()
             self.floor.tick()
@@ -512,6 +519,7 @@ class Flappy:
             self.message.tick()
             self.config.screen.blit(btnBack, rectBack)
             self.button.tick()
+            self.skin.tick()
             
             pygame.display.update()
             await asyncio.sleep(0)

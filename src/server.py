@@ -48,13 +48,13 @@ def threaded_client(conn):
                         room_password = reply.split(":")[1].split(",")[1]
                         room_list.append(f"{room_id}: {room_num}, {room_password}")
                     else:
-                        room_list.append(f"{room_id}: {room_num}")
+                        room_list.append(f"{room_id}: {room_num},")
 
-                    print(room_list)
                     room_members[room_num] = [conn]
                     
                     player_id = 0
                     reply = f"Joined:{room_num}:{player_id}:host"
+                    print(reply)
 
                 if command == "Join Room":
                     room_num = reply.split(":")[1]
@@ -81,9 +81,16 @@ def threaded_client(conn):
 
                     if room_num in room_members:
                         members = room_members[room_num]
-                        if player_id < len(members):
-                            members.remove(conn)
-                            print(f"Player {player_id} left room {room_num}")
+
+                        # Remove player with matching conn or player_id
+                        for i, player in enumerate(members):
+                            if player["player_id"] == player_id and player["conn"] == conn:
+                                members.pop(i)
+                                break
+
+                        # Shift player IDs down
+                        for idx, player in enumerate(members):
+                            player["player_id"] = idx
                     
             conn.sendall(reply.encode())
         except:

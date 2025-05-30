@@ -9,6 +9,7 @@ from .player import Player, PlayerMode
 from .score import Score
 from .message import Message
 from .container import Container
+from .skin import Skin
 from .buttons import Button
 from .timer import Timer
 from .countdown import CountdownTimer

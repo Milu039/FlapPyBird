@@ -31,6 +31,10 @@ class Message(Entity):
 
         # room lobby
         self.room_num = self.random_number
+        self.player_id = None
+        self.host_icon = config.images.icon["host"]
+        self.kick_icon = config.images.icon["kick"]
+        self.ready_icon = config.images.icon["ready"]
     
     def set_mode(self, mode) -> None:
         self.mode = mode
@@ -172,7 +176,39 @@ class Message(Entity):
             # Draw text centered
             text_surface = font.render(room_title, True, self.WHITE)
             text_rect = text_surface.get_rect(center=(x + width // 2, y + height // 2))
-            self.config.screen.blit(text_surface, text_rect)
+            self.draw_message(text_surface, text_rect)
+
+            if self.player_id == "0":
+                posHost = (295,278)
+                self.draw_message(self.host_icon, posHost)
+
+                surPlayer = self.FONT.render("Player 1", True, self.BLACK)
+                self.rectPlayer = surPlayer.get_rect(center=(400, 295))
+                self.draw_message(surPlayer, self.rectPlayer)
+
+            elif self.player_id == "1":
+                posReady = (515, 285)
+                self.draw_message(self.ready_icon, posReady)
+
+                surPlayer = self.FONT.render("Player 2", True, self.BLACK)
+                self.rectPlayer = surPlayer.get_rect(center=(625, 295))
+                self.draw_message(surPlayer, self.rectPlayer)
+            
+            elif self.player_id == "2":
+                posReady = (295, 445)
+                self.draw_message(self.ready_icon, posReady)
+
+                surPlayer = self.FONT.render("Player 3", True, self.BLACK)
+                self.rectPlayer = surPlayer.get_rect(center=(400, 455))
+                self.draw_message(surPlayer, self.rectPlayer)
+            
+            elif self.player_id == "3":
+                posReady = (515, 445)
+                self.draw_message(self.ready_icon, posReady)
+
+                surPlayer = self.FONT.render("Player 4", True, self.BLACK)
+                self.rectPlayer = surPlayer.get_rect(center=(625, 455))
+                self.draw_message(surPlayer, self.rectPlayer)
 
         elif self.mode == "Leaderboard":
             pass

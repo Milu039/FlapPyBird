@@ -14,6 +14,7 @@ class PlayerMode(Enum):
     NORMAL = "NORMAL"
     PAUSE = "PAUSE"
     CRASH = "CRASH"
+    MULTI = "MULTI"
 
 class Player(Entity):
     def __init__(self, config: GameConfig) -> None:
@@ -29,6 +30,12 @@ class Player(Entity):
         self.respawn_timer = 0
         self.respawn_delay = 24
         self.waiting_to_respawn = False
+        
+        # Post-respawn transparency
+        self.respawn_grace_period = 120  # 2 seconds of transparency after respawn
+        self.respawn_grace_timer = 0
+        self.just_respawned = False
+        
         self.crashed = False
         self.crash_entity = None
         self.set_mode(PlayerMode.SHM)
@@ -49,7 +56,10 @@ class Player(Entity):
             if self.crash_entity == "pipe":
                 self.config.sounds.die.play()
             self.reset_vals_crash()
-
+        elif mode == PlayerMode.MULTI:
+            self.reset_vals_multi()
+            self.resume_wings()
+            
     def reset_vals_normal(self) -> None:
         self.vel_y = -9  # player's velocity along Y axis
         self.max_vel_y = 10  # max vel along Y, max descend speed
@@ -83,7 +93,28 @@ class Player(Entity):
         self.vel_y = 7
         self.max_vel_y = 15
         self.vel_rot = -8
+        
+    def reset_vals_multi(self) -> None:
+        """Reset values for multiplayer mode - similar to normal but with respawn"""
+        self.vel_y = -9  # player's velocity along Y axis
+        self.max_vel_y = 10  # max vel along Y, max descend speed
+        self.min_vel_y = -8  # min vel along Y, max ascend speed
+        self.acc_y = 1  # players downward acceleration
 
+        self.rot = 80  # player's current rotation
+        self.vel_rot = -3  # player's rotation speed
+        self.rot_min = -90  # player's min rotation angle
+        self.rot_max = 20  # player's max rotation angle
+
+        self.flap_acc = -9  # players speed on flapping
+        self.flapped = False  # True when player flaps
+        
+        # Reset respawn-related flags
+        self.waiting_to_respawn = False
+        self.just_respawned = False
+        self.respawn_timer = 0
+        self.respawn_grace_timer = 0
+    
     def update_image(self):
         self.frame += 1
         if self.frame % 5 == 0:
@@ -118,6 +149,17 @@ class Player(Entity):
         if self.vel_y < self.max_vel_y:
             self.vel_y += self.acc_y
 
+    def tick_multi(self) -> None:
+        """Update player position and state in MULTI mode"""
+        # Same physics as normal mode
+        if self.vel_y < self.max_vel_y and not self.flapped:
+            self.vel_y += self.acc_y
+        if self.flapped:
+            self.flapped = False
+
+        self.y = clamp(self.y + self.vel_y, self.min_y, self.max_y)
+        self.rotate()
+    
     def rotate(self) -> None:
         self.rot = clamp(self.rot + self.vel_rot, self.rot_min, self.rot_max)
 
@@ -127,12 +169,28 @@ class Player(Entity):
             self.tick_shm()
         elif self.mode == PlayerMode.NORMAL:
             self.tick_normal()
+        elif self.mode == PlayerMode.MULTI:
+            self.tick_multi()
         elif self.mode == PlayerMode.CRASH:
             self.tick_crash()
 
         self.draw_player()
 
     def draw_player(self) -> None:
+        # Don't draw player while waiting to respawn (only in MULTI mode)
+        if self.mode == PlayerMode.MULTI and self.waiting_to_respawn:
+            return
+        
+        rotated_image = pygame.transform.rotate(self.image, self.rot)
+        
+        # Make player semi-transparent after respawning (only in MULTI mode)
+        if self.mode == PlayerMode.MULTI and self.just_respawned:
+            # Blinking effect: alternate between normal and transparent
+            if (self.respawn_grace_timer // 10) % 2 == 0:
+                return
+            else:
+                rotated_image.set_alpha(255)  # Full opacity
+        
         rotated_image = pygame.transform.rotate(self.image, self.rot)
         rotated_rect = rotated_image.get_rect(center=self.rect.center)
         self.config.screen.blit(rotated_image, rotated_rect)
@@ -177,12 +235,17 @@ class Player(Entity):
         return False
     
     def collided_push(self, pipes: Pipes) -> None:
-        """flappy will get push if hit the pipe"""
-        
+        """Push player backwards if hit pipe (only in MULTI mode)"""
+        if self.mode != PlayerMode.MULTI:
+            return
+            
+        # Skip collision if in grace period
+        if self.just_respawned:
+            return
+            
         for pipe in pipes.upper:
             if self.collide(pipe):
-                # Push player to the left of the pipe with a small buffer
-                self.x = pipe.x - self.w - 5  # Use player width + small buffer
+                self.x = pipe.x - self.w - 5
                 return
             
         for pipe in pipes.lower:
@@ -190,7 +253,11 @@ class Player(Entity):
                 self.x = pipe.x - self.w - 5
                 return
             
-    def respawn(self, config:GameConfig) -> None:
+    def respawn(self, config: GameConfig) -> None:
+        """Respawn player (only in MULTI mode)"""
+        if self.mode != PlayerMode.MULTI:
+            return
+            
         # Check if player reached the left edge
         if self.x <= 0 and not self.waiting_to_respawn:
             self.waiting_to_respawn = True
@@ -212,6 +279,13 @@ class Player(Entity):
                 self.waiting_to_respawn = False
                 self.respawn_timer = 0
                 
-            
-
-      
+                # Start post-respawn grace period
+                self.just_respawned = True
+                self.respawn_grace_timer = 0
+        
+        # Handle post-respawn grace period
+        if self.just_respawned:
+            self.respawn_grace_timer += 1
+            if self.respawn_grace_timer >= self.respawn_grace_period:
+                self.just_respawned = False
+                self.respawn_grace_timer = 0

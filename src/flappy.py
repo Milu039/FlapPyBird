@@ -16,7 +16,6 @@ from .entities import (
     Score,
     Message,
     Button,
-    Skin,
     Timer,
     CountdownTimer,
 )
@@ -29,7 +28,8 @@ class Flappy:
         window = Window(1024, 768)
         screen = pygame.display.set_mode((window.width, window.height))
         images = Images()
-
+        
+        
         self.config = GameConfig(
             screen=screen,
             clock=pygame.time.Clock(),
@@ -38,7 +38,7 @@ class Flappy:
             images=images,
             sounds=Sounds(),
         )
-
+        
          #create the solo button 
     def solo_button(self):
         FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
@@ -71,58 +71,43 @@ class Flappy:
         )
         return text_surf, text_rect
     
+    # New skill interface buttons
     def skill_interface_buttons(self):
-            """Create skill interface using images from config with vertical layout like first image"""
-            buttons = []
+        """Create skill interface using images from config"""
+        buttons = []
 
-            # Get skill images from config
-            skills = self.config.images.skills
+        # Get skill images from config
+        skills = self.config.images.skills
+        messages = self.config.images.message
 
-            # Vertical layout positions like the first image
-            start_x = 80  # Left margin
-            start_y = 200  # Starting Y position
-            button_height = 80  # Height of each skill button frame
-            button_width = 400  # Width of each skill button frame
-            spacing = 20  # Space between buttons
+        # Set interface mode
+        self.mode.set_mode("Skill Ability")
+        self.message.set_mode(self.mode.get_mode())
 
-            # Calculate positions for vertical layout
-            positions = []
-            for i in range(5):
-                y_pos = start_y + (button_height + spacing) * i
-                positions.append((start_x, y_pos))
+        # Skill positions (adjust these values based on your image sizes)
+        positions = [
+            (self.config.window.width // 2 - 200, 200),  # Speed Boost
+            (self.config.window.width // 2 + 50, 200),  # Penetration
+            (self.config.window.width // 2 - 150, 400),  # Pipe Shift
+            (self.config.window.width // 2 + 50, 400),  # Time Freeze
+            (self.config.window.width // 2 - 75, 550)  # Teleport (center bottom)
+        ]
 
-            # Map skills to positions
-            skill_order = [
-                "speed_boost",
-                "penetration", 
-                "pipe_shift",
-                "time_freeze",
-                "teleport"
-            ]
+        # Map skills to positions
+        skill_order = [
+            "speed_boost",
+            "penetration",
+            "pipe_shift",
+            "time_freeze",
+            "teleport"
+        ]
 
-            # Skill display names
-            skill_names = [
-                "Speed boost",
-                "Penetration",
-                "Pipe shift", 
-                "Time Freeze",
-                "Teleport"
-            ]
+        for skill_id, pos in zip(skill_order, positions):
+            img = skills[skill_id]
+            img_rect = img.get_rect(topleft=pos)
+            buttons.append((img, img_rect, skill_id))
 
-            for i, (skill_id, pos) in enumerate(zip(skill_order, positions)):
-                img = skills[skill_id]
-                # Position icon with some padding from the left edge of frame
-                icon_x = pos[0] + 20
-                icon_y = pos[1] + (button_height - img.get_height()) // 2  # Center vertically in frame
-                img_rect = img.get_rect(topleft=(icon_x, icon_y))
-                
-                # Create frame rectangle
-                frame_rect = pygame.Rect(pos[0], pos[1], button_width, button_height)
-                
-                skill_name = skill_names[i]
-                buttons.append((img, img_rect, skill_id, skill_name, (icon_x, icon_y), frame_rect))
-
-            return buttons
+        return buttons
 
     def individual_skill_button(self, skill_name):
         """Create button for individual skill interface"""
@@ -166,7 +151,6 @@ class Flappy:
         self.medal = Medal(self.config, self.score)
         self.button = Button(self.config, self.mode)
         self.timer = Timer(self.config)
-        self.countdown = CountdownTimer(self.config)
     
     async def start(self):
         while True:
@@ -195,7 +179,6 @@ class Flappy:
                         await self.solo_ready_interface()
                     if multi_button_rect.collidepoint(event.pos):
                         self.network = Network()
-                        await self.game_room_interface()
                     if skill_button_rect.collidepoint(event.pos):
                         # Run the main skill interface
                         await self.main_skill_interface()
@@ -354,25 +337,22 @@ class Flappy:
             pygame.display.update()
             await asyncio.sleep(0)
 
-    async def game_room_interface(self):
+    async def game_room_interface(self): # receive the room list from the server
         self.restart()
         self.mode.set_mode("Game Room")
         self.message.set_mode(self.mode.get_mode())
         self.container.set_mode(self.mode.get_mode())
         self.button.set_mode(self.mode.get_mode())
         self.selected_room = None
-
+        
         while True:
             self.network.send(self.mode.get_mode())
             room_list_data = self.network.receive_room_list()
             self.message.set_rooms(room_list_data)
-
             btnBack, rectBack = self.back_button()
             mouse_pos = pygame.mouse.get_pos()
-
             for event in pygame.event.get():
                 self.check_quit_event(event)
-
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
                         self.restart()
@@ -380,67 +360,13 @@ class Flappy:
 
                     for i, rect in enumerate(self.message.rectRoom):
                         if rect.collidepoint(event.pos):
-                            self.selected_room = i
+                            self.selected_room = i  # Set selected index
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         await self.create_room_interface()
 
-                    if self.button.rectJoin.collidepoint(event.pos) and self.selected_room is not None:
-                        self.roomPassword = self.message.rooms[self.selected_room].split(':')[1].split(',')[1].strip()
-                        if self.roomPassword == "":
-                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
-                            reply = self.network.send_receive(f"Join Room: {self.message.room_num}")
-                            permission = reply.split(":")[3]
-                            await self.room_lobby_interface(permission)
-                        else:
-                            self.message.show_password_prompt = True
-                            self.message.txtPassword = ""
-                            self.message.password_error = False
-                            self.button.show_password_prompt = True
-                            self.message.password_active = True
-
-                    if self.message.show_password_prompt:
-                        if self.message.password_input_rect.collidepoint(event.pos):
-                            self.message.password_active = True
-                        else:
-                            self.message.password_active = False
-
-                    if self.message.show_password_prompt and self.button.show_password_prompt:
-                        if hasattr(self.button, "rectEnter") and self.button.rectEnter.collidepoint(event.pos):
-                            if self.message.txtPassword == self.roomPassword:
-                                self.message.show_password_prompt = False
-                                self.button.show_password_prompt = False
-                                self.message.password_active = False
-                                self.message.password_error = False
-                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
-                                reply = self.network.send_receive(f"Join Room: {self.message.room_num}")
-                                permission = reply.split(":")[3]
-                                await self.room_lobby_interface(permission)
-                            else:
-                                self.message.password_error = True
-
-                        elif hasattr(self.button, "rectCancel") and self.button.rectCancel.collidepoint(event.pos):
-                            self.message.show_password_prompt = False
-                            self.button.show_password_prompt = False
-                            self.message.password_active = False
-                            self.message.password_error = False
-
-                if event.type == pygame.KEYDOWN and self.message.show_password_prompt and self.message.password_active:
-                    if event.key == pygame.K_BACKSPACE:
-                        self.message.txtPassword = self.message.txtPassword[:-1]
-                    elif event.key == pygame.K_RETURN:
-                        if self.message.txtPassword == self.roomPassword:
-                            self.message.show_password_prompt = False
-                            self.button.show_password_prompt = False
-                            self.message.password_active = False
-                            self.message.password_error = False
-                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
-                            reply = self.network.send_receive(f"Join Room: {self.message.room_num}")
-                            await self.room_lobby_interface(permission)
-                        else:
-                            self.message.password_error = True
-                    else:
-                        self.message.txtPassword += event.unicode
+                    if self.button.rectJoin.collidepoint(event.pos) and self.selected_room != None:
+                        await self.room_lobby_interface("member")
 
             self.background.tick()
             self.message.tick()
@@ -449,7 +375,7 @@ class Flappy:
             self.message.draw(selected_room=self.selected_room, mouse_pos=mouse_pos)
             self.config.screen.blit(btnBack, rectBack)
             self.button.tick()
-
+            
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
@@ -466,7 +392,6 @@ class Flappy:
                 self.check_quit_event(event)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
-                        self.network.send(f"Remove Room: {self.message.random_number}")
                         await self.game_room_interface()
 
                     if self.message.password_input_rect.collidepoint(event.pos):
@@ -476,18 +401,16 @@ class Flappy:
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         self.message.password_active = False
-                        reply = self.network.send_receive(f"Create Room: {self.message.random_number}, {self.message.txtPassword}")
-                        permission = reply.split(":")[3]
-                        await self.room_lobby_interface(permission)
+                        self.network.send(f"Create Room: {self.message.random_number}, {self.message.txtPassword}")
+                        await self.room_lobby_interface("host")
 
                 if event.type == pygame.KEYDOWN and self.message.password_active:
                     if event.key == pygame.K_BACKSPACE:
                         self.message.txtPassword = self.message.txtPassword[:-1]
                     elif event.key == pygame.K_RETURN:
                         self.message.password_active = False
-                        reply = self.network.send_receive(f"Create Room: {self.message.random_number}, {self.message.txtPassword}")
-                        permission = reply.split(":")[3]
-                        await self.room_lobby_interface(permission)
+                        self.network.send(f"Create Room: {self.message.random_number} {self.message.txtPassword}")
+                        await self.room_lobby_interface("host")
                     else:
                         self.message.txtPassword += event.unicode
 
@@ -503,13 +426,9 @@ class Flappy:
             self.config.tick()
 
     async def room_lobby_interface(self, state):
-        self.skin = Skin(self.config, self.network.id)
         self.mode.set_mode(f"Room Lobby: {state}")
         self.message.set_mode(self.mode.get_mode())
-        self.container.set_mode(self.mode.get_mode())
         self.button.set_mode(self.mode.get_mode())
-        self.button.player_id = self.network.id
-        self.message.player_id = self.network.id
 
         while True:
             btnBack, rectBack = self.back_button()
@@ -517,31 +436,25 @@ class Flappy:
                 self.check_quit_event(event)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
-                        if state == "host":
-                            self.network.send(f"Remove Room: {self.message.random_number}")
-                        elif state == "member":
-                            self.network.send(f"Leave Room: {self.message.random_number}: {self.network.id}")
                         await self.game_room_interface()
-
-                    if self.button.rectNextSkin.collidepoint(event.pos):
-                        self.skin.next()
-                    elif self.button.rectPreSkin.collidepoint(event.pos):
-                        self.skin.previous()
+                    if self.button.rectReady.collidepoint(event.pos):
+                        await self.multi_gameplay()
 
             self.background.tick()
-            self.floor.tick()
-            self.container.tick()
             self.message.tick()
+            self.container.tick()
+            self.floor.tick()
             self.config.screen.blit(btnBack, rectBack)
             self.button.tick()
-            self.skin.tick()
             
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
 
     async def multi_gameplay(self):
-        self.player.set_mode(PlayerMode.NORMAL)
+        self.player.set_mode(PlayerMode.MULTI)
+        countdown_timer = CountdownTimer(self.config)
+        countdown_timer.pause_with_countdown()
         while True:
             if self.player.collided_push(self.pipes):
                 pass
@@ -562,7 +475,7 @@ class Flappy:
             self.timer.update_timer()
             self.timer.tick()
             self.player.tick()
-            
+        
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
@@ -598,60 +511,50 @@ class Flappy:
             self.config.tick()
 
     async def main_skill_interface(self):
-            """Main skill interface with 5 skill buttons"""
-            self.mode.set_mode("Main Skill")
+        """Main skill interface with 5 skill buttons"""
+        self.mode.set_mode("Main Skill")
 
-            while True:
-                back_button_surf, back_button_rect = self.back_button()
-                skill_buttons = self.skill_interface_buttons()
+        while True:
+            back_button_surf, back_button_rect = self.back_button()
+            skill_buttons = self.skill_interface_buttons()
 
-                for event in pygame.event.get():
-                    self.check_quit_event(event)
-                    if self.is_tap_event(event):
-                        if back_button_rect.collidepoint(event.pos):
-                            await self.main_interface()
+            title_img = self.config.images.message["skill_ability"]
+            title_rect = title_img.get_rect(centerx=self.config.window.width // 2, top=50)
 
-                        # Check which skill button was clicked
-                        for img, img_rect, skill_id, skill_name, pos, frame_rect in skill_buttons:
-                            if frame_rect.collidepoint(event.pos):  # Use frame_rect for click detection
-                                await self.individual_skill_interface(skill_id)
+            for event in pygame.event.get():
+                self.check_quit_event(event)
+                if self.is_tap_event(event):
+                    if back_button_rect.collidepoint(event.pos):
+                        await self.main_interface()
 
-                self.background.tick()
-                self.floor.tick()
+                    # Check which skill button was clicked
+                    for text_surf, text_rect, skill_id in skill_buttons:
+                        if text_rect.collidepoint(event.pos):
+                            await self.individual_skill_interface(skill_id)
 
-                # Draw skill ability title image (only once, smaller size)
-                skill_ability_img = self.config.images.message["skill_ability"]
-                # Scale down the title image to make it smaller
-                scaled_title = pygame.transform.scale(skill_ability_img, (350, 70))  # Adjust size as needed
-                title_rect = scaled_title.get_rect(centerx=self.config.window.width // 2, y=50)
-                self.config.screen.blit(scaled_title, title_rect)
+            self.background.tick()
+            self.floor.tick()
+            self.message.tick()
 
-                # Create font for skill names
-                skill_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 16)
+            # Draw title
+            title_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 32)
+            title_surf = title_font.render("SKILL TUTORIAL", True, (255, 255, 255))
+            title_rect = title_surf.get_rect(centerx=self.config.window.width // 2, y=100)
+            self.config.screen.blit(title_surf, title_rect)
 
-                # Draw skill buttons with frames, icons and names
-                for img, img_rect, skill_id, skill_name, pos, frame_rect in skill_buttons:
-                    # Draw frame behind the skill (color #DDD894)
-                    frame_color = (221, 216, 148)  # #DDD894 in RGB
-                    border_radius = 15
-                    pygame.draw.rect(self.config.screen, frame_color, frame_rect, border_radius=border_radius)
-                    pygame.draw.rect(self.config.screen, (0, 0, 0), frame_rect, width=2, border_radius=border_radius)
-                    
-                    # Draw skill icon
-                    self.config.screen.blit(img, img_rect)
-                    
-                    # Draw skill name next to the icon
-                    text_surf = skill_font.render(skill_name, True, (0, 0, 0))  # Black text
-                    text_x = pos[0] + img.get_width() + 20  # Position text to the right of icon
-                    text_y = pos[1] + (img.get_height() - text_surf.get_height()) // 2  # Center vertically with icon
-                    self.config.screen.blit(text_surf, (text_x, text_y))
+            # Draw skill buttons
+            for text_surf, text_rect, _ in skill_buttons:
+                # Draw button background (optional - you can use sprites here)
+                pygame.draw.rect(self.config.screen, (100, 100, 100), text_rect.inflate(20, 10))
+                pygame.draw.rect(self.config.screen, (255, 255, 255), text_rect.inflate(20, 10), 2)
+                self.config.screen.blit(text_surf, text_rect)
 
-                # Draw back button
-                self.config.screen.blit(back_button_surf, back_button_rect)
+            # Draw back button
+            self.config.screen.blit(back_button_surf, back_button_rect)
 
-                pygame.display.update()
-                await asyncio.sleep(0)
-                self.config.tick()
+            pygame.display.update()
+            await asyncio.sleep(0)
+            self.config.tick()
 
     async def individual_skill_interface(self, skill_name):
         """Individual skill interface for each skill"""

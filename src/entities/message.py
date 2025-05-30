@@ -212,8 +212,9 @@ class Message(Entity):
 
         elif self.mode == "Leaderboard":
             pass
-
-        elif self.mode == "skill_ability":
-            self.game_room_pos = ((self.config.window.width - self.game_room_message.get_width()) // 2, int(self.config.window.height * 0.05))
-            self.draw_message(self.game_room_message, self.game_room_pos)
+        elif self.mode == "skill_ability" or self.mode == "Skill Ability":
+            # Draw the skill ability image instead of generating text
+            skill_ability_img = self.config.images.message["skill_ability"]
+            skill_ability_pos = ((self.config.window.width - skill_ability_img.get_width()) // 2, int(self.config.window.height * 0.05))
+            self.draw_message(skill_ability_img, skill_ability_pos)
 

@@ -7,10 +7,17 @@ from .entity import Entity
 class CountdownTimer(Entity):
     def __init__(self, config: GameConfig) -> None:
         super().__init__(config)
-        self.y = self.config.window.height * 0.4  # Center vertically
         self.countdown_duration = 3  # 3 seconds
         self.start_time = time.time()
         self.remaining_time = self.countdown_duration
+        
+        # Create transparent overlay surface with per-pixel alpha
+        self.overlay = pygame.Surface((self.config.window.width, self.config.window.height), pygame.SRCALPHA)
+        # Fill with black color at 75% opacity (alpha 191 out of 255)
+        self.overlay.fill((0, 0, 0, 25))  # RGBA: Black with 75% opacity
+        
+        # Font for countdown numbers
+        self.font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 200)  # Large font for countdown
 
     def reset(self) -> None:
         """Reset the countdown timer"""
@@ -27,48 +34,51 @@ class CountdownTimer(Entity):
         self.update_countdown()
         return self.remaining_time <= 0
 
-    def get_countdown_digit(self) -> int:
+    def get_countdown_number(self) -> int:
         """Get the current countdown number (3, 2, 1)"""
         self.update_countdown()
-        return max(1, self.remaining_time) if self.remaining_time > 0 else 0
-
-    def draw_countdown(self) -> None:
-        """Draw the countdown number centered on screen"""
-        digit = self.get_countdown_digit()
-        
-        if digit > 0:
-            # Get the number image
-            number_image = self.config.images.numbers[digit]
-            
-            # Center the number on screen
-            x_pos = (self.config.window.width - number_image.get_width()) / 2
-            
-            # Draw the countdown number
-            self.config.screen.blit(number_image, (x_pos, self.y))
+        return self.remaining_time if self.remaining_time > 0 else 0
 
     def draw(self) -> None:
-        """Main draw method"""
-        self.draw_countdown()
+        """Draw the countdown with transparent black overlay"""
+        number = self.get_countdown_number()
+        
+        if number > 0:
+            # Draw transparent black overlay
+            self.config.screen.blit(self.overlay, (0, 0))
+            
+            # Draw countdown number at center
+            number_text = self.font.render(str(number), True, (255, 255, 255))  # White text
+            number_rect = number_text.get_rect(
+                center=(self.config.window.width // 2, self.config.window.height // 2)
+            )
+            self.config.screen.blit(number_text, number_rect)
 
-    def pause_with_countdown(config: GameConfig) -> None:
-        countdown = CountdownTimer(config)
-        # Main countdown loop
-        while not countdown.is_finished():
-            # Handle events (optional - allows quitting during countdown)
+    def pause_with_countdown(self) -> None:
+        """Pause the game for 3 seconds with countdown display"""
+        self.reset()  # Reset timer to start countdown
+        
+        while not self.is_finished():
+            # Handle quit events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
             
-            # Clear screen (you might want to draw your paused game state here)
-            config.screen.fill((0, 0, 0))  # Black background
+            # Keep drawing your game background first (this preserves what's underneath)
+            # Note: You'll need to call your game's draw methods here to see through the overlay
             
-            # Draw countdown
-            countdown.draw()
+            # Draw the countdown overlay and number on top
+            self.draw()
             
             # Update display
             pygame.display.flip()
             
             # Control frame rate
-            config.tick()
+            self.config.tick()
 
+# Standalone function for easy use
+def pause_with_countdown(config: GameConfig) -> None:
+    """Simple function to pause with 3-second countdown"""
+    countdown = CountdownTimer(config)
+    countdown.pause_with_countdown()

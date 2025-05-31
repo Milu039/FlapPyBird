@@ -17,12 +17,6 @@ class Button(Entity):
         self.btnCancel = config.images.buttons["cancel"]
 
         # host start button
-        self.btnStart_1_2 = config.images.buttons["start (1/2)"]
-        self.btnStart_1_2.set_alpha(191)
-        self.btnStart_1_3 = config.images.buttons["start (1/3)"]
-        self.btnStart_1_3.set_alpha(191)
-        self.btnStart_2_3 = config.images.buttons["start (2/3)"]
-        self.btnStart_2_3.set_alpha(191)
         self.btnStart_1_4 = config.images.buttons["start (1/4)"]
         self.btnStart_1_4.set_alpha(191)
         self.btnStart_2_4 = config.images.buttons["start (2/4)"]
@@ -95,12 +89,12 @@ class Button(Entity):
         
         if self.mode == "Room Lobby: host":
             self.posNext = (450, 215)
-            self.draw_button(self.btnNextSkin, self.posNext)
-            self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
-
             self.posPrevious = (325, 215)
+
+            self.draw_button(self.btnNextSkin, self.posNext)
             self.draw_button(self.btnPreSkin, self.posPrevious)
             self.rectPreSkin = self.btnrectCreate(self.posPrevious, self.btnPreSkin)
+            self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
 
             self.posKick = (515, 185)
             self.draw_button(self.btnKickPlayer, self.posKick)
@@ -122,30 +116,20 @@ class Button(Entity):
         if self.mode == "Room Lobby: member":
             if self.player_id == "1":
                 self.posNext = (675, 215)
-                self.draw_button(self.btnNextSkin, self.posNext)
-                self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
-
                 self.posPrevious = (550, 215)
-                self.draw_button(self.btnPreSkin, self.posPrevious)
-                self.rectPreSkin = self.btnrectCreate(self.posPrevious, self.btnPreSkin)
 
             elif self.player_id == "2":
                 self.posNext = (450, 375)
-                self.draw_button(self.btnNextSkin, self.posNext)
-                self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
-
                 self.posPrevious = (325, 375)
-                self.draw_button(self.btnPreSkin, self.posPrevious)
-                self.rectPreSkin = self.btnrectCreate(self.posPrevious, self.btnPreSkin)
 
             elif self.player_id == "3":
                 self.posNext = (675, 375)
-                self.draw_button(self.btnNextSkin, self.posNext)
-                self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
-
                 self.posPrevious = (550, 375)
-                self.draw_button(self.btnPreSkin, self.posPrevious)
-                self.rectPreSkin = self.btnrectCreate(self.posPrevious, self.btnPreSkin)
+                
+            self.draw_button(self.btnNextSkin, self.posNext)
+            self.draw_button(self.btnPreSkin, self.posPrevious)
+            self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
+            self.rectPreSkin = self.btnrectCreate(self.posPrevious, self.btnPreSkin)
 
             self.posReady = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 175)
             self.draw_button(self.btnReady, self.posReady)

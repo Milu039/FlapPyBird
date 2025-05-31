@@ -18,6 +18,7 @@ from .entities import (
     Button,
     Timer,
     CountdownTimer,
+    Skin,
 )
 from .utils import GameConfig, Images, Sounds, Window, Mode, Network
     
@@ -194,6 +195,7 @@ class Flappy:
                         await self.solo_ready_interface()
                     if multi_button_rect.collidepoint(event.pos):
                         self.network = Network()
+                        await self.game_room_interface()
                     if skill_button_rect.collidepoint(event.pos):
                         # Run the main skill interface
                         await self.main_skill_interface()
@@ -518,9 +520,9 @@ class Flappy:
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         if rectBack.collidepoint(event.pos):
                             if state == "host":
-                                self.network.send(f"Remove Room:{self.message.random_number}")
+                                self.network.send(f"Remove Room:{self.message.room_num}")
                             elif state == "member":
-                                self.network.send(f"Leave Room:{self.message.random_number}:{self.network.id}")
+                                self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
                             await self.game_room_interface()
 
                         if self.button.rectNextSkin.collidepoint(event.pos):
@@ -533,6 +535,14 @@ class Flappy:
                         else:
                             self.message.change_name_active = False
 
+                        if int(self.network.id) > 0:
+                            if self.button.rectReady.collidepoint(event.pos):
+                                self.message.isHost = False
+                                self.message.isReady = True
+                        else:
+                            self.message.isHost = True
+                            self.message.isReady = False
+
                     if event.type == pygame.KEYDOWN and self.message.change_name_active:
                         if event.key == pygame.K_BACKSPACE:
                             self.message.txtPlayerName = self.message.txtPlayerName[:-1]
@@ -540,9 +550,8 @@ class Flappy:
                             self.message.change_name_active = False
                         else:
                             self.message.txtPlayerName += event.unicode
-                
 
-                self.network.send(f"Update:{self.message.random_number}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}")
+                self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}")
                 
                 self.background.tick()
                 self.floor.tick()

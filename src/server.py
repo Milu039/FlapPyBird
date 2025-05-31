@@ -18,9 +18,10 @@ room_list = []
 room_members = {}
 
 def broadcast_lobby_update(room_num):
+    print(room_num)
     if room_num in room_members:
         players_info = [
-            {"player_id": m["player_id"], "name": m["name"], "skin_id": m["skin_id"]}
+            {"player_id": m["player_id"], "name": m["name"], "skin_id": m["skin_id"], "ready": m["ready"], "host":m["host"]}
             for m in room_members[room_num]
         ]
         print(room_members[room_num])
@@ -52,7 +53,7 @@ def threaded_client(conn):
                 room_num, room_password = parts[1].split(",")
                 room_id = str(len(room_list) + 1)
                 room_list.append(f"{room_id}: {room_num}, {room_password}")
-                room_members[room_num] = [{"conn": conn, "player_id": 0, "name": "Player 1", "skin_id": 0}]
+                room_members[room_num] = [{"conn": conn, "player_id": 0, "name": "Player 1", "skin_id": 0, "ready": False, "host": True}]
                 conn.sendall(f"Joined:{room_num}:0:host".encode())
                 broadcast_lobby_update(room_num)
 
@@ -60,7 +61,7 @@ def threaded_client(conn):
                 room_num = parts[1]
                 if room_num in room_members and len(room_members[room_num]) < 4:
                     player_id = len(room_members[room_num])
-                    room_members[room_num].append({"conn": conn, "player_id": player_id, "name": f"Player {player_id+1}", "skin_id": 0})
+                    room_members[room_num].append({"conn": conn, "player_id": player_id, "name": f"Player {player_id+1}", "skin_id": 0, "ready": False, "host": False})
                     conn.sendall(f"Joined:{room_num}:{player_id}:member".encode())
                     broadcast_lobby_update(room_num)
 
@@ -80,13 +81,16 @@ def threaded_client(conn):
                     del room_members[room_num]
 
             elif command == "Update":
-                room_num, pid, name, skin_id = parts[1], int(parts[2]), parts[3], int(parts[4])
+                room_num, pid, name, skin_id, ready_str = parts[1], int(parts[2]), parts[3], int(parts[4]), parts[5]
+                ready = ready_str == "True"
 
                 for m in room_members.get(room_num, []):
                     if m["player_id"] == pid:
                         m["name"] = name
                         m["skin_id"] = skin_id
+                        m["ready"] =  ready
                         break
+                print("Updated")
                 broadcast_lobby_update(room_num)
         
         except Exception as e:

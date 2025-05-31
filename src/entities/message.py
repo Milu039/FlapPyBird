@@ -35,8 +35,10 @@ class Message(Entity):
         self.txtPlayerName = ""
         self.change_name_active = False
         self.host_icon = config.images.icon["host"]
+        self.isHost = False
         self.kick_icon = config.images.icon["kick"]
         self.ready_icon = config.images.icon["ready"]
+        self.isReady = False
     
     def set_mode(self, mode) -> None:
         self.mode = mode
@@ -67,12 +69,13 @@ class Message(Entity):
 
             player_id = player.get("player_id", i)
             name = player.get("name", f"Player {i+1}")
-            is_ready = player.get("ready", False)
+            is_ready = player.get("ready")
+            is_host = player.get("host")
 
             # Draw host or ready icon
-            if self.player_id == "0":
+            if is_host:
                 self.draw_message(self.host_icon, positions[i])
-            elif is_ready:
+            elif is_ready or self.isReady:
                 self.draw_message(self.ready_icon, positions[i])
 
             # Draw player name
@@ -201,7 +204,7 @@ class Message(Entity):
 
         elif self.mode == "Leaderboard":
             pass
-        
+
         elif self.mode == "skill_ability" or self.mode == "Skill Ability":
             # Draw the skill ability image instead of generating text
             skill_ability_img = self.config.images.message["skill_ability"]

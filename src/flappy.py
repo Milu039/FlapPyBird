@@ -72,58 +72,58 @@ class Flappy:
         return text_surf, text_rect
     
     def skill_interface_buttons(self):
-                """Create skill interface using images from config with vertical layout like first image"""
-                buttons = []
+        """Create skill interface using images from config with vertical layout like first image"""
+        buttons = []
 
-                # Get skill images from config
-                skills = self.config.images.skills
+        # Get skill images from config
+        skills = self.config.images.skills
 
-                # Vertical layout positions like the first image
-                start_x = 80  # Left margin
-                start_y = 200  # Starting Y position
-                button_height = 80  # Height of each skill button frame
-                button_width = 400  # Width of each skill button frame
-                spacing = 20  # Space between buttons
+        # Vertical layout positions like the first image
+        start_x = 80  # Left margin
+        start_y = 200  # Starting Y position
+        button_height = 80  # Height of each skill button frame
+        button_width = 400  # Width of each skill button frame
+        spacing = 20  # Space between buttons
 
-                # Calculate positions for vertical layout
-                positions = []
-                for i in range(5):
-                    y_pos = start_y + (button_height + spacing) * i
-                    positions.append((start_x, y_pos))
+        # Calculate positions for vertical layout
+        positions = []
+        for i in range(5):
+            y_pos = start_y + (button_height + spacing) * i
+            positions.append((start_x, y_pos))
 
-                # Map skills to positions
-                skill_order = [
-                    "speed_boost",
-                    "penetration", 
-                    "pipe_shift",
-                    "time_freeze",
-                    "teleport"
-                ]
+        # Map skills to positions
+        skill_order = [
+            "speed_boost",
+            "penetration", 
+            "pipe_shift",
+            "time_freeze",
+            "teleport"
+        ]
 
-                # Skill display names
-                skill_names = [
-                    "Speed boost",
-                    "Penetration",
-                    "Pipe shift", 
-                    "Time Freeze",
-                    "Teleport"
-                ]
+        # Skill display names
+        skill_names = [
+            "Speed boost",
+            "Penetration",
+            "Pipe shift", 
+            "Time Freeze",
+            "Teleport"
+        ]
 
-                for i, (skill_id, pos) in enumerate(zip(skill_order, positions)):
-                    img = skills[skill_id]
-                    # Position icon with some padding from the left edge of frame
-                    icon_x = pos[0] + 20
-                    icon_y = pos[1] + (button_height - img.get_height()) // 2  # Center vertically in frame
-                    img_rect = img.get_rect(topleft=(icon_x, icon_y))
-                    
-                    # Create frame rectangle
-                    frame_rect = pygame.Rect(pos[0], pos[1], button_width, button_height)
-                    
-                    skill_name = skill_names[i]
-                    buttons.append((img, img_rect, skill_id, skill_name, (icon_x, icon_y), frame_rect))
+        for i, (skill_id, pos) in enumerate(zip(skill_order, positions)):
+            img = skills[skill_id]
+            # Position icon with some padding from the left edge of frame
+            icon_x = pos[0] + 20
+            icon_y = pos[1] + (button_height - img.get_height()) // 2  # Center vertically in frame
+            img_rect = img.get_rect(topleft=(icon_x, icon_y))
+            
+            # Create frame rectangle
+            frame_rect = pygame.Rect(pos[0], pos[1], button_width, button_height)
+            
+            skill_name = skill_names[i]
+            buttons.append((img, img_rect, skill_id, skill_name, (icon_x, icon_y), frame_rect))
 
-                return buttons
-
+        return buttons
+    
     def individual_skill_button(self, skill_name):
         """Create button for individual skill interface"""
         FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
@@ -525,95 +525,202 @@ class Flappy:
             await asyncio.sleep(0)
             self.config.tick()
 
+    def get_skill_description(self, skill_id):
+        """Get description for a specific skill"""
+        descriptions = {
+            "speed_boost": [
+                " ",
+                "Speed up the player in 5 seconds",
+                " ",
+                " ",
+                " ",
+                " ",
+                " ",
+                " ",
+                "*only available for multi"
+            ],
+            "penetration": [
+                " ",
+                "Ignore the pipe for 3 seconds",
+                " ",
+                " ",
+                " ",
+                " ",
+                " ",
+                " ",
+                "*only available for multi"
+            ],
+            "pipe_shift": [
+                " ",
+                "Change the position of the pipe",
+                "either up or down during the ",
+                "game",
+                " ",
+                " ",
+                " ",
+                " ",
+                "*only available for multi"
+            ],
+            "time_freeze": [
+                " ",
+                "Freeze the first player for 2",
+                "seconds",
+                " ",
+                " ",
+                " ",
+                " ",
+                " ",
+                "*only available for multi"
+            ],
+            "teleport": [
+                " ",
+                "Teleport the player in front to",
+                "the back",
+                " ",
+                " ",
+                " ",
+                " ",
+                " ",
+                "*only available for multi"
+            ]
+        }
+        return descriptions.get(skill_id, ["Skill not found"])
+
     async def main_skill_interface(self):
-                """Main skill interface with 5 skill buttons"""
-                self.mode.set_mode("Main Skill")
-
-                while True:
-                    back_button_surf, back_button_rect = self.back_button()
-                    skill_buttons = self.skill_interface_buttons()
-
-                    for event in pygame.event.get():
-                        self.check_quit_event(event)
-                        if self.is_tap_event(event):
-                            if back_button_rect.collidepoint(event.pos):
-                                await self.main_interface()
-
-                            # Check which skill button was clicked
-                            for img, img_rect, skill_id, skill_name, pos, frame_rect in skill_buttons:
-                                if frame_rect.collidepoint(event.pos):  # Use frame_rect for click detection
-                                    await self.individual_skill_interface(skill_id)
-
-                    self.background.tick()
-                    self.floor.tick()
-
-                    # Draw skill ability title image (only once, smaller size)
-                    skill_ability_img = self.config.images.message["skill_ability"]
-                    # Scale down the title image to make it smaller
-                    scaled_title = pygame.transform.scale(skill_ability_img, (350, 70))  # Adjust size as needed
-                    title_rect = scaled_title.get_rect(centerx=self.config.window.width // 2, y=50)
-                    self.config.screen.blit(scaled_title, title_rect)
-
-                    # Create font for skill names
-                    skill_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 16)
-
-                    # Draw skill buttons with frames, icons and names
-                    for img, img_rect, skill_id, skill_name, pos, frame_rect in skill_buttons:
-                        # Draw frame behind the skill (color #DDD894)
-                        frame_color = (221, 216, 148)  # #DDD894 in RGB
-                        border_radius = 15
-                        pygame.draw.rect(self.config.screen, frame_color, frame_rect, border_radius=border_radius)
-                        pygame.draw.rect(self.config.screen, (0, 0, 0), frame_rect, width=2, border_radius=border_radius)
-                        
-                        # Draw skill icon
-                        self.config.screen.blit(img, img_rect)
-                        
-                        # Draw skill name next to the icon
-                        text_surf = skill_font.render(skill_name, True, (0, 0, 0))  # Black text
-                        text_x = pos[0] + img.get_width() + 20  # Position text to the right of icon
-                        text_y = pos[1] + (img.get_height() - text_surf.get_height()) // 2  # Center vertically with icon
-                        self.config.screen.blit(text_surf, (text_x, text_y))
-
-                    # Draw back button
-                    self.config.screen.blit(back_button_surf, back_button_rect)
-
-                    pygame.display.update()
-                    await asyncio.sleep(0)
-                    self.config.tick()
-
-    async def individual_skill_interface(self, skill_name):
-        """Individual skill interface for each skill"""
-        self.mode.set_mode(f"{skill_name.title()} Skill")
+        """Main skill interface with 5 skill buttons"""
+        self.mode.set_mode("Main Skill")
+        selected_skill = None  # Track which skill is selected for description
 
         while True:
             back_button_surf, back_button_rect = self.back_button()
-            skill_text_surf, skill_text_rect = self.individual_skill_button(skill_name)
+            skill_buttons = self.skill_interface_buttons()
 
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 if self.is_tap_event(event):
                     if back_button_rect.collidepoint(event.pos):
-                        await self.main_skill_interface()
+                        await self.main_interface()
+
+                    # Check which skill button was clicked
+                    for img, img_rect, skill_id, skill_name, pos, frame_rect in skill_buttons:
+                        if frame_rect.collidepoint(event.pos):
+                            # Toggle selection
+                            if selected_skill == skill_id:
+                                selected_skill = None
+                            else:
+                                selected_skill = skill_id
 
             self.background.tick()
             self.floor.tick()
 
-            # Draw skill-specific content
-            title_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 28)
-            title_surf = title_font.render(f"{skill_name.upper().replace('_', ' ')} TUTORIAL", True, (255, 255, 255))
-            title_rect = title_surf.get_rect(centerx=self.config.window.width // 2, y=150)
-            self.config.screen.blit(title_surf, title_rect)
+            # Draw skill ability title image (only once, smaller size)
+            skill_ability_img = self.config.images.message["skill_ability"]
+            # Scale down the title image to make it smaller
+            scaled_title = pygame.transform.scale(skill_ability_img, (350, 70))
+            title_rect = scaled_title.get_rect(centerx=self.config.window.width // 2, y=50)
+            self.config.screen.blit(scaled_title, title_rect)
 
-            # Add skill-specific instructions based on skill type
-            instruction_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 16)
-            instructions = self.get_skill_instructions(skill_name)
+            # Create font for skill names
+            skill_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 16)
 
-            y_offset = 250
-            for instruction in instructions:
-                instruction_surf = instruction_font.render(instruction, True, (255, 255, 255))
-                instruction_rect = instruction_surf.get_rect(centerx=self.config.window.width // 2, y=y_offset)
-                self.config.screen.blit(instruction_surf, instruction_rect)
-                y_offset += 40
+            # Draw skill buttons with frames, icons and names
+            for img, img_rect, skill_id, skill_name, pos, frame_rect in skill_buttons:
+                # Determine if this skill is selected
+                is_selected = (selected_skill == skill_id)
+                
+                # Main frame colors (always the same)
+                main_frame_color = (221, 216, 148)  # Default color #DDD894
+                border_radius = 15
+                
+                # Draw main frame behind the skill
+                pygame.draw.rect(self.config.screen, main_frame_color, frame_rect, border_radius=border_radius)
+                pygame.draw.rect(self.config.screen, (0, 0, 0), frame_rect, width=2, border_radius=border_radius)
+                
+                # Create smaller inner frame for content (icon + text area)
+                inner_padding_left = -2   # Distance from left edge of main frame
+                inner_padding_top = 2     # Distance from top edge of main frame
+                inner_padding_right = 13 # Distance from right edge of main frame  
+                inner_padding_bottom = 15 # Distance from bottom edge of main frame
+                
+                inner_frame_x = pos[0] + inner_padding_left
+                inner_frame_y = pos[1] + inner_padding_top
+                inner_frame_width = 380 - inner_padding_left - inner_padding_right
+                inner_frame_height = 80 - inner_padding_top - inner_padding_bottom
+                inner_frame_rect = pygame.Rect(inner_frame_x, inner_frame_y, inner_frame_width, inner_frame_height)
+
+                # Inner frame colors based on selection
+                if is_selected:
+                    inner_frame_color = (204, 192, 148)  # 25% blend of #533000 with original beige
+                    inner_border_width = 0
+                else:
+                    inner_frame_color = main_frame_color  # Same as main frame (invisible effect)
+                    inner_border_width = 0  # No border when not selected
+                
+                # Draw inner frame
+                inner_border_radius = 10
+                pygame.draw.rect(self.config.screen, inner_frame_color, inner_frame_rect, border_radius=inner_border_radius)
+                if inner_border_width > 0:
+                    pygame.draw.rect(self.config.screen, (0, 0, 0), inner_frame_rect, width=inner_border_width, border_radius=inner_border_radius)
+                
+                # Draw skill icon (no tinting needed since we have inner frame)
+                self.config.screen.blit(img, img_rect)
+                
+                # Draw skill name next to the icon
+                text_surf = skill_font.render(skill_name, True, (0, 0, 0))  # Always black text
+                text_x = pos[0] + img.get_width() + 20  # Position text to the right of icon
+                text_y = pos[1] + (img.get_height() - text_surf.get_height()) // 2  # Center vertically with icon
+                self.config.screen.blit(text_surf, (text_x, text_y))
+
+            # Draw video and description frame if a skill is selected
+            if selected_skill:
+                # Main info frame position (beside the skill buttons)
+                info_frame_x = 520  # Right of skill buttons
+                info_frame_y = 200  # Same as first skill button
+                info_frame_width = 480
+                info_frame_height = 480
+                
+                # Draw main info frame with same color
+                info_frame_rect = pygame.Rect(info_frame_x, info_frame_y, info_frame_width, info_frame_height)
+                frame_color = (221, 216, 148)  # Same color as skill buttons
+                border_radius = 15
+                pygame.draw.rect(self.config.screen, frame_color, info_frame_rect, border_radius=border_radius)
+                pygame.draw.rect(self.config.screen, (0, 0, 0), info_frame_rect, width=2, border_radius=border_radius)
+                
+                # Video area (upper part of the frame)
+                video_area_x = info_frame_x + 20
+                video_area_y = info_frame_y + 20
+                video_area_width = info_frame_width - 40
+                video_area_height = 180  # Space reserved for video
+                
+                # Draw placeholder for video area (you can replace this with actual video rendering)
+                video_placeholder_rect = pygame.Rect(video_area_x, video_area_y, video_area_width, video_area_height)
+                pygame.draw.rect(self.config.screen, (200, 200, 200), video_placeholder_rect)  # Light gray placeholder
+                pygame.draw.rect(self.config.screen, (0, 0, 0), video_placeholder_rect, width=2)
+                
+                # Add "VIDEO PREVIEW" text in the placeholder
+                video_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 12)
+                video_text = video_font.render("VIDEO PREVIEW", True, (100, 100, 100))
+                video_text_rect = video_text.get_rect(center=video_placeholder_rect.center)
+                self.config.screen.blit(video_text, video_text_rect)
+                
+                # Description area (lower part of the frame)
+                desc_start_y = video_area_y + video_area_height + 20  # Start below video area with some spacing
+                
+                # Get description text
+                description_lines = self.get_skill_description(selected_skill)
+                
+                # Draw description text
+                desc_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 14)
+                line_height = 25
+                
+                for i, line in enumerate(description_lines):
+                    if line:  # Skip empty lines for spacing
+                        text_surf = desc_font.render(line, True, (0, 0, 0))
+                        text_x = info_frame_x + 20  # Padding from left edge
+                        text_y = desc_start_y + (i * line_height)
+                        # Make sure text doesn't go outside the frame
+                        if text_y + text_surf.get_height() < info_frame_y + info_frame_height - 20:
+                            self.config.screen.blit(text_surf, (text_x, text_y))
 
             # Draw back button
             self.config.screen.blit(back_button_surf, back_button_rect)
@@ -622,39 +729,4 @@ class Flappy:
             await asyncio.sleep(0)
             self.config.tick()
 
-    def get_skill_instructions(self, skill_name):
-        """Get instructions for each skill"""
-        instructions = {
-            "speed_boost": [
-                "Speed Boost increases your movement speed",
-                "Press SHIFT to activate speed boost",
-                "Duration: 5 seconds",
-                "Cooldown: 10 seconds"
-            ],
-            "destination": [
-                "Destination teleports you to a safe location",
-                "Press D to activate destination",
-                "Automatically finds safe spot",
-                "Cooldown: 15 seconds"
-            ],
-            "time_freeze": [
-                "Time Freeze stops all obstacles",
-                "Press T to activate time freeze",
-                "Duration: 3 seconds",
-                "Cooldown: 20 seconds"
-            ],
-            "power_fruit": [
-                "Power Fruit gives temporary invincibility",
-                "Press F to activate power fruit",
-                "Duration: 4 seconds",
-                "Cooldown: 25 seconds"
-            ],
-            "teleport": [
-                "Teleport moves you instantly forward",
-                "Press E to activate teleport",
-                "Distance: Fixed amount forward",
-                "Cooldown: 8 seconds"
-            ]
-        }
-
-        return instructions.get(skill_name, ["Instructions not available"])
+        

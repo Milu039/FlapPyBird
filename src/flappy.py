@@ -383,9 +383,9 @@ class Flappy:
                         await self.create_room_interface()
 
                     if self.button.rectJoin.collidepoint(event.pos) and self.selected_room is not None:
-                        self.roomPassword = self.message.rooms[self.selected_room].split(':')[1].split(',')[1].strip()
+                        self.roomPassword = self.message.rooms[self.selected_room].split(':')[2].strip()
                         if self.roomPassword == "":
-                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
+                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
                             reply = self.network.send_receive_id(f"Join Room:{self.message.room_num}")
                             permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)
@@ -473,7 +473,7 @@ class Flappy:
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         self.message.password_active = False
-                        reply = self.network.send_receive_id(f"Create Room:{self.message.random_number},{self.message.txtPassword}")
+                        reply = self.network.send_receive_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
                         permission = reply.split(":")[3]
                         await self.room_lobby_interface(permission)
 
@@ -482,7 +482,7 @@ class Flappy:
                         self.message.txtPassword = self.message.txtPassword[:-1]
                     elif event.key == pygame.K_RETURN:
                         self.message.password_active = False
-                        reply = self.network.send_receive_id(f"Create Room:{self.message.random_number},{self.message.txtPassword}")
+                        reply = self.network.send_receive_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
                         permission = reply.split(":")[3]
                         await self.room_lobby_interface(permission)
                     else:

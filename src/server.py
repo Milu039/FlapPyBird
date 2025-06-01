@@ -50,10 +50,10 @@ def threaded_client(conn):
                 conn.sendall(reply.encode())
 
             elif command == "Create Room":
-                room_num, room_password = parts[1].split(",")
+                room_num, room_password = parts[1], parts[2]
                 room_id = str(len(room_list) + 1)
-                room_list.append(f"{room_id}: {room_num}, {room_password}")
-                room_members[room_num] = [{"conn": conn, "player_id": 0, "name": "Player 1", "skin_id": 0, "ready": False, "host": True}]
+                room_list.append(f"{room_id}:{room_num}:{room_password}:{1}")
+                room_members[room_num] = [{"conn":conn, "player_id":0, "name":"Player 1", "skin_id":0, "ready":False, "host":True}]
                 conn.sendall(f"Joined:{room_num}:0:host".encode())
                 broadcast_lobby_update(room_num)
 
@@ -61,9 +61,18 @@ def threaded_client(conn):
                 room_num = parts[1]
                 if room_num in room_members and len(room_members[room_num]) < 4:
                     player_id = len(room_members[room_num])
-                    room_members[room_num].append({"conn": conn, "player_id": player_id, "name": f"Player {player_id+1}", "skin_id": 0, "ready": False, "host": False})
-                    conn.sendall(f"Joined:{room_num}:{player_id}:member".encode())
-                    broadcast_lobby_update(room_num)
+                    room_members[room_num].append({"conn":conn, "player_id":player_id, "name":f"Player {player_id+1}", "skin_id":0, "ready":False, "host":False})
+                
+                # Update capacity in room_list
+                for i in range(len(room_list)):
+                    room_id, name, password, capacity = room_list[i].split(":")
+                    if name == room_num:
+                        new_capacity = str(len(room_members[room_num]))
+                        room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
+                        break
+
+                conn.sendall(f"Joined:{room_num}:{player_id}:member".encode())
+                broadcast_lobby_update(room_num)
 
             elif command == "Leave Room":
                 room_num, pid = parts[1], int(parts[2])

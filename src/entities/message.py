@@ -117,10 +117,16 @@ class Message(Entity):
             if self.rooms:
                 for index, room in enumerate(self.rooms):
                     roomNo = room.split(':')[0].strip()
-                    self.roomNum = room.split(':')[1].split(',')[0].strip()
+                    self.roomNum = room.split(':')[1].strip()
+                    roomCapacity = int(room.split(':')[3].strip())
                     txtRoomNo = self.FONT.render(roomNo, True, self.BLACK)
                     txtRoomNum = self.FONT.render(self.roomNum, True, self.BLACK)
-                    txtPerson = self.FONT.render("1/4", True, self.BLACK)
+                    if roomCapacity == 1:
+                        txtPerson = self.FONT.render("1/4", True, self.BLACK)
+                    elif roomCapacity == 2:
+                        txtPerson = self.FONT.render("2/4", True, self.BLACK)
+                    elif roomCapacity == 3:
+                        txtPerson = self.FONT.render("3/4", True, self.BLACK)
 
                     row_rect = pygame.Rect(200, posRoom-10, 600, 40)
                     self.rectRoom.append(row_rect)

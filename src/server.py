@@ -1,89 +1,140 @@
 import socket
-import threading
-import time
+import json
+from _thread import start_new_thread
 
-class FlappyServer:
-    def __init__(self, host='0.0.0.0', port=5555, max_players=4):
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = host
-        self.port = port
-        self.max_players = max_players
-        
-        # Player state format: "id:x,y,rotation"
-        self.player_states = {}
-        self.current_id = 0
-        self.lock = threading.Lock()  # For thread-safe access to player_states
-        
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server = '0.0.0.0'
+port = 5555
+
+try:
+    s.bind((server, port))
+except socket.error as e:
+    print(str(e))
+
+s.listen(4)
+print("Waiting for a connection")
+
+room_list = []
+room_members = {}
+full_room_list = []
+
+def broadcast_lobby_update(room_num):
+    print(room_num)
+    if room_num in room_members:
+        players_info = [
+            {"player_id": m["player_id"], "name": m["name"], "skin_id": m["skin_id"], "ready": m["ready"], "host":m["host"]}
+            for m in room_members[room_num]
+        ]
+        print(room_members[room_num])
+        message = json.dumps({"type": "LobbyUpdate", "players": players_info})
+        for m in room_members[room_num]:
+            try:
+                m["conn"].send(message.encode())
+            except:
+                pass
+
+def threaded_client(conn):
+    global room_list, room_members
+
+    while True:
         try:
-            self.server_socket.bind((self.host, self.port))
-        except socket.error as e:
-            print(f"Socket Bind Error: {e}")
-            exit()
-            
-    def start(self):
-        """Start the server, listening for connections"""
-        self.server_socket.listen(self.max_players)
-        print(f"Flappy Bird Server started on {self.host}:{self.port}")
-        print(f"Waiting for connections... (Max players: {self.max_players})")
-        
-        try:
-            while True:
-                conn, addr = self.server_socket.accept()
-                print(f"Connected to: {addr}")
+            data = conn.recv(2048).decode("utf-8")
+            if not data:
+                break
+            print("Received:", data)
+            parts = data.split(":")
+            command = parts[0]
+            reply = ""
+
+            if command == "Game Room":
+                reply = json.dumps(room_list)
+                conn.sendall(reply.encode())
+
+            elif command == "Create Room":
+                room_num, room_password = parts[1], parts[2]
+                room_id = str(len(room_list) + 1)
+                room_list.append(f"{room_id}:{room_num}:{room_password}:{1}")
+                room_members[room_num] = [{"conn":conn, "player_id":0, "name":"Player 1", "skin_id":0, "ready":False, "host":True}]
+                conn.sendall(f"Joined:{room_num}:0:host".encode())
+                broadcast_lobby_update(room_num)
+
+            elif command == "Join Room":
+                room_num = parts[1]
+                if room_num in room_members and len(room_members[room_num]) < 4:
+                    player_id = len(room_members[room_num])
+                    room_members[room_num].append({"conn":conn, "player_id":player_id, "name":f"Player {player_id+1}", "skin_id":0, "ready":False, "host":False})
                 
-                # Start a new thread to handle this client
-                threading.Thread(target=self.client_handler, args=(conn,)).start()
-        except KeyboardInterrupt:
-            print("Server shutting down...")
-        finally:
-            self.server_socket.close()
-            
-    def client_handler(self, conn):
-        """Handle communication with a connected client"""
-        # Assign player ID and initial position
-        with self.lock:
-            player_id = self.current_id
-            self.current_id += 1
-            # Initialize player with starting position at the center of screen
-            # Format: "id:x,y,rotation"
-            self.player_states[player_id] = f"{player_id}:200,300,0"
-        
-        # Send player ID to client
-        conn.send(str.encode(str(player_id)))
-        
-        try:
-            while True:
-                data = conn.recv(2048)
-                if not data:
+                # Update capacity in room_list
+                for i in range(len(room_list)):
+                    room_id, name, password, capacity = room_list[i].split(":")
+                    if name == room_num:
+                        new_capacity = str(len(room_members[room_num]))
+                        updated_room = f"{room_id}:{name}:{password}:{new_capacity}"
+
+                    # If room is now full, move it to full_room_list and remove from room_list
+                    if int(new_capacity) >= 4:
+                        full_room_list.append(updated_room)
+                        room_list.pop(i)
+                    else:
+                        room_list[i] = updated_room
                     break
-                
-                player_data = data.decode('utf-8')
-                # Update this player's state
-                with self.lock:
-                    parts = player_data.split(':')
-                    if len(parts) == 2:
-                        pid = int(parts[0])
-                        self.player_states[pid] = player_data
-                
-                # Create response with all other players' states
-                response = []
-                with self.lock:
-                    for pid, state in self.player_states.items():
-                        if pid != player_id:  # Don't send player their own state
-                            response.append(state)
-                
-                # Send all other player states back
-                conn.send(str.encode('|'.join(response)))
-        except Exception as e:
-            print(f"Error handling client {player_id}: {e}")
-        finally:
-            # Clean up when player disconnects
-            with self.lock:
-                if player_id in self.player_states:
-                    del self.player_states[player_id]
-            print(f"Player {player_id} disconnected")
-            conn.close()
 
-if __name__ == "__main__":
-    server = FlappyServer()
-    server.start()
+                conn.sendall(f"Joined:{room_num}:{player_id}:member".encode())
+                broadcast_lobby_update(room_num)
+
+            elif command == "Leave Room": # need test
+                room_num, pid = parts[1], int(parts[2])
+                if room_num in room_members:
+                    room_members[room_num] = [m for m in room_members[room_num] if not (m["conn"] == conn and m["player_id"] == pid)]
+                    
+                    # Shift IDs
+                    for i, m in enumerate(room_members[room_num]):
+                        m["player_id"] = i
+                    
+                    # Update capacity in room_list and full_room_list
+                    new_capacity = len(room_members[room_num])
+                    for i in range(len(room_list)):
+                        room_id, name, password, capacity = room_list[i].split(":")
+                        if name == room_num:
+                            room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
+                            break
+
+                    for i in range(len(full_room_list)):
+                        room_id, name, password, capacity = full_room_list[i].split(":")
+                        if name == room_num:
+                            # Room is no longer full, move back to room_list
+                            full_room = full_room_list.pop(i)
+                            room_list.append(f"{room_id}:{name}:{password}:{new_capacity}")
+                            break
+                    broadcast_lobby_update(room_num)
+
+            elif command == "Remove Room": # need test
+                room_num = parts[1]
+                room_list = [r for r in room_list if room_num not in r]
+                if room_num in room_members:
+                    del room_members[room_num]
+
+            elif command == "Update":
+                room_num, pid, name, skin_id, ready_str = parts[1], int(parts[2]), parts[3], int(parts[4]), parts[5]
+                ready = ready_str == "True"
+
+                for m in room_members.get(room_num, []):
+                    if m["player_id"] == pid:
+                        m["name"] = name
+                        m["skin_id"] = skin_id
+                        m["ready"] =  ready
+                        break
+                print("Updated")
+                broadcast_lobby_update(room_num)
+        
+        except Exception as e:
+            print("Error:", e)
+            break
+
+    print("Connection Closed")
+    conn.close()
+
+while True:
+    conn, addr = s.accept()
+    print("Connected to:", addr)
+    start_new_thread(threaded_client, (conn,))

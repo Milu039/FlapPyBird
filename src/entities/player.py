@@ -12,8 +12,8 @@ from .pipe import Pipe, Pipes
 class PlayerMode(Enum):
     SHM = "SHM"
     NORMAL = "NORMAL"
+    PAUSE = "PAUSE"
     CRASH = "CRASH"
-
 
 class Player(Entity):
     def __init__(self, config: GameConfig) -> None:
@@ -35,8 +35,11 @@ class Player(Entity):
         if mode == PlayerMode.NORMAL:
             self.reset_vals_normal()
             self.config.sounds.wing.play()
+            self.resume_wings()
         elif mode == PlayerMode.SHM:
             self.reset_vals_shm()
+        elif mode == PlayerMode.PAUSE:
+            self.stop_wings()
         elif mode == PlayerMode.CRASH:
             self.stop_wings()
             self.config.sounds.hit.play()
@@ -133,6 +136,10 @@ class Player(Entity):
 
     def stop_wings(self) -> None:
         self.img_gen = cycle([self.img_idx])
+
+    def resume_wings(self) -> None:
+        self.img_gen = cycle([0, 1, 2, 1])
+        self.frame = 0
 
     def flap(self) -> None:
         if self.y > self.min_y:

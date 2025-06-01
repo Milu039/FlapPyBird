@@ -1,40 +1,65 @@
 import pygame
-from ..utils import GameConfig, GameMode
+from ..utils import GameConfig, Mode
 from .entity import Entity
-from .player import PlayerMode
 
 class Button(Entity):
-    def __init__(self, config: GameConfig, game_mode : GameMode) -> None:
+    def __init__(self, config: GameConfig, mode: Mode) -> None:
         super().__init__(config)
-        self.game_mode = game_mode
+        self.mode = mode
+        self.resume_button = self.config.images.buttons["resume"]
+        self.restart_button = self.config.images.buttons["restart"]
+        self.quit_button = self.config.images.buttons["quit"]
+        self.create_button = self.config.images.buttons["create"]
+        self.join_button = self.config.images.buttons["join"]
+        self.ready_button = self.config.images.buttons["ready"]
+
+    def set_mode(self, mode) -> None:
+        self.mode = mode
 
     def draw(self) -> None:
-        #print(self.game_mode)
-        if self.game_mode == "solo":
-            restart_button = self.config.images.buttons["restart"]
-            quit_button = self.config.images.buttons["quit"]
+        # Draw the buttons based on the game mode
+        if self.mode == "Pause":
+            self.resume_pos = ((self.config.window.width - self.resume_button.get_width()) // 2, (self.config.window.height - self.restart_button.get_height()) // 3)
+            self.restart_pos = ((self.config.window.width - self.restart_button.get_width()) // 2, (self.config.window.height - self.restart_button.get_height()) * 1.5 // 3)
+            self.quit_pos = ((self.config.window.width - self.quit_button.get_width()) // 2, (self.config.window.height - self.restart_button.get_height()) * 2 // 3)
 
-            restart_pos = (325, self.config.window.height // 2 + 100)
-            quit_pos = (540, self.config.window.height // 2 + 100)
+            self.draw_button(self.resume_button, self.resume_pos)
+            self.draw_button(self.restart_button, self.restart_pos)
+            self.draw_button(self.quit_button, self.quit_pos)
 
-            self.draw_button(restart_button, restart_pos)
-            self.draw_button(quit_button, quit_pos)
+            self.resume_rect = self.create_button_rect(self.resume_pos, self.resume_button)
+            self.restart_rect = self.create_button_rect(self.restart_pos, self.restart_button)
+            self.quit_rect = self.create_button_rect(self.quit_pos, self.quit_button)
 
-            self.restart_rect = self.create_button_rect(restart_pos, restart_button)
-            self.quit_rect = self.create_button_rect(quit_pos, quit_button)
+        if self.mode == "Solo GameOver" or self.mode == "Leaderboard":
+            self.restart_pos = (325, self.config.window.height // 2 + 100)
+            self.quit_pos = (540, self.config.window.height // 2 + 100)
 
-        elif self.game_mode == "multi":
-            create_button = self.config.images.buttons["create"]
-            join_button = self.config.images.buttons["join"]
+            self.draw_button(self.restart_button, self.restart_pos)
+            self.draw_button(self.quit_button, self.quit_pos)
 
-            create_pos = (325, self.config.window.height // 2 + 90)
-            join_pos = (540, self.config.window.height // 2 + 90)
+            self.restart_rect = self.create_button_rect(self.restart_pos, self.restart_button)
+            self.quit_rect = self.create_button_rect(self.quit_pos, self.quit_button)
 
-            self.draw_button(create_button, create_pos)
-            self.draw_button(join_button, join_pos)
+        if self.mode == "Game Room":
+            self.create_pos = (325, self.config.window.height // 2 + 150)
+            self.join_pos = (540, self.config.window.height // 2 + 150)
 
-            self.create_rect = self.create_button_rect(create_pos, create_button)
-            self.join_rect = self.create_button_rect(join_pos, join_button)
+            self.draw_button(self.create_button, self.create_pos)
+            self.draw_button(self.join_button, self.join_pos)
+
+            self.create_rect = self.create_button_rect(self.create_pos, self.create_button)
+            self.join_rect = self.create_button_rect(self.join_pos, self.join_button)
+        
+        if self.mode == "Create Room":
+            self.create_pos = ((self.config.window.width - self.create_button.get_width()) // 2, self.config.window.height // 2 + 150)
+            self.draw_button(self.create_button, self.create_pos)
+            self.create_rect = self.create_button_rect(self.create_pos, self.create_button)
+        
+        if self.mode == "Room Lobby":
+            self.ready_pos = ((self.config.window.width - self.ready_button.get_width()) // 2, self.config.window.height // 2 + 150)
+            self.draw_button(self.ready_button, self.ready_pos)
+            self.ready_rect = self.create_button_rect(self.ready_pos, self.ready_button)
 
     def draw_button(self,image,pos) -> None:
         self.config.screen.blit(image, pos)

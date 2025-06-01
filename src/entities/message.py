@@ -40,7 +40,6 @@ class Message(Entity):
         self.kick_icon = config.images.icon["kick"]
         self.ready_icon = config.images.icon["ready"]
         self.isReady = False
-        self.ready_count = 0
     
     def set_mode(self, mode) -> None:
         self.mode = mode
@@ -73,9 +72,6 @@ class Message(Entity):
             name = player.get("name", f"Player {i+1}")
             is_ready = player.get("ready")
             is_host = player.get("host")
-
-            if is_ready:
-                self.ready_count += 1
 
             # Draw host or ready icon
             if is_host:
@@ -178,9 +174,7 @@ class Message(Entity):
             posRoomNumber = (int((self.config.window.width - lblRoomNumber.get_width()) // 2), self.config.window.height // 2 - 125 )
             self.draw_message(lblRoomNumber, posRoomNumber)
 
-            self.room_input_rect = pygame.Rect(self.config.window.width // 2 - 150, 300, 300, 40)
-            pygame.draw.rect(self.config.screen, self.WHITE, self.room_input_rect)
-            pygame.draw.rect(self.config.screen, self.BLACK, self.room_input_rect, 2)
+            self.room_input_rect = pygame.Rect(self.config.window.width // 2 - 60, 300, 300, 40)
             self.room_input_surface = self.FONT.render(str(self.random_number), True, self.BLACK)
             self.config.screen.blit(self.room_input_surface, (self.room_input_rect.x + 10, self.room_input_rect.y + 8))
 

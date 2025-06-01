@@ -507,14 +507,14 @@ class Flappy:
             self.button.set_mode(self.mode.get_mode())
             self.message.player_id = self.network.id
             self.button.player_id = self.network.id
-            self.button.roomCapacity = self.message.roomCapacity
-            self.button.ready_count = self.message.ready_count
 
             while True:
                 self.network.listen_for_lobby_updates()
+                self.button.roomCapacity = int(len(self.network.lobby_state))
                 for p in self.network.lobby_state:
                     if p["player_id"] == int(self.network.id):
                         self.message.txtPlayerName = p["name"]
+                    
                 btnBack, rectBack = self.back_button()
 
                 for event in pygame.event.get():
@@ -546,9 +546,15 @@ class Flappy:
                             if self.button.rectReady.collidepoint(event.pos):
                                 self.message.isHost = False
                                 self.message.isReady = True
+                                self.button.isReady = True
                         else:
                             self.message.isHost = True
                             self.message.isReady = False
+                        
+                        if hasattr(self.button, "rectCancel") and self.button.isReady and self.button.rectCancel.collidepoint(event.pos):
+                                self.message.isHost = False
+                                self.message.isReady = False
+                                self.button.isReady = False
 
                     if event.type == pygame.KEYDOWN and self.message.change_name_active:
                         if event.key == pygame.K_BACKSPACE:

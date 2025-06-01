@@ -76,7 +76,7 @@ class Message(Entity):
             # Draw host or ready icon
             if is_host:
                 self.draw_message(self.host_icon, positions[i])
-            elif is_ready or self.isReady:
+            elif is_ready:
                 self.draw_message(self.ready_icon, positions[i])
 
             # Draw player name

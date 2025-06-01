@@ -37,6 +37,9 @@ class Network:
     def listen_for_lobby_updates(self):
             try:
                 data = self.client.recv(2048).decode()
+                if data == "Kicked":
+                    self.kicked = True
+                    return
                 message = json.loads(data)
                 if message.get("type") == "LobbyUpdate":
                     self.lobby_state = message["players"]

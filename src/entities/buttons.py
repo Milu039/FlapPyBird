@@ -123,7 +123,7 @@ class Button(Entity):
                 1: self.btnStart_2_4,
                 2: self.btnStart_3_4
             }
-            #print(self.ready_count)
+
             if self.ready_count in start_buttons:
                 button = start_buttons[self.ready_count]
                 button.set_alpha(191)
@@ -151,7 +151,7 @@ class Button(Entity):
             self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
             self.rectPreSkin = self.btnrectCreate(self.posPrevious, self.btnPreSkin)
             
-            if self.isReady: # also have problem with False
+            if self.isReady:
                 self.posCancel = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnCancel, self.posCancel)
                 self.rectCancel = self.btnrectCreate(self.posCancel, self.btnReady)

@@ -193,12 +193,15 @@ class Flappy:
                     #click the solo button , run solo_ready_interface screen
                     if solo_button_rect.collidepoint(event.pos):
                         await self.solo_ready_interface()
+                        return
                     if multi_button_rect.collidepoint(event.pos):
                         self.network = Network()
                         await self.game_room_interface()
+                        return
                     if skill_button_rect.collidepoint(event.pos):
                         # Run the main skill interface
                         await self.main_skill_interface()
+                        return
                     
             self.background.tick()
             self.floor.tick()
@@ -228,8 +231,10 @@ class Flappy:
                         if rectBack.collidepoint(event.pos):
                             self.restart()
                             await self.main_interface()
+                            return
                     if self.is_tap_event(event):
                         await self.play()
+                        return
 
             self.background.tick()
             self.floor.tick()
@@ -246,8 +251,10 @@ class Flappy:
         if self.gamemode == "Solo":
             self.score.reset()
             await self.solo_gameplay()
+            return
         elif self.gamemode == "Multi":
             await self.multi_gameplay()
+            return
 
     async def game_pause(self):
         self.player.set_mode(PlayerMode.PAUSE)
@@ -261,13 +268,16 @@ class Flappy:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.button.rectResume and self.button.rectResume.collidepoint(event.pos):
                         await self.game_resume()
+                        return
                     elif self.button.rectRestart and self.button.rectRestart.collidepoint(event.pos):
                         self.restart()
                         await self.solo_ready_interface()
+                        return
                     elif self.button.rectQuit and self.button.rectQuit.collidepoint(event.pos):
                         self.restart()
                         #after click back to main
                         await self.main_interface()
+                        return
             
             self.background.tick()
             self.floor.tick()
@@ -284,6 +294,7 @@ class Flappy:
         self.pipes.resume()
         self.floor.resume()
         await self.solo_gameplay()
+        return
 
     async def solo_gameplay(self):
         self.player.set_mode(PlayerMode.NORMAL)
@@ -293,6 +304,7 @@ class Flappy:
             if self.player.collided(self.pipes, self.floor):
                 #if flappy hit ground or pipe, end this and run the game over()
                 await self.solo_game_over()
+                return
 
             for i, pipe in enumerate(self.pipes.upper):
                 if self.player.crossed(pipe):
@@ -301,9 +313,11 @@ class Flappy:
             for event in pygame.event.get():
                 if event.type == KEYDOWN and event.key == K_ESCAPE:
                     await self.game_pause()
+                    return
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
                         await self.game_pause()
+                        return
                 if self.is_tap_event(event):
                     self.player.flap()
 
@@ -335,10 +349,12 @@ class Flappy:
                     if self.button.rectRestart and self.button.rectRestart.collidepoint(event.pos):
                         self.restart()
                         await self.solo_ready_interface()
+                        return
                     elif self.button.rectQuit and self.button.rectQuit.collidepoint(event.pos):
                         self.restart()
                         #after click back to main
                         await self.main_interface()
+                        return
 
             self.background.tick()
             self.floor.tick()
@@ -366,14 +382,16 @@ class Flappy:
             self.network.send(self.mode.get_mode())
             room_list_data = self.network.receive_room_list()
             self.message.set_rooms(room_list_data)
+
             btnBack, rectBack = self.back_button()
+
             mouse_pos = pygame.mouse.get_pos()
             for event in pygame.event.get():
                 self.check_quit_event(event)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if rectBack.collidepoint(event.pos):
-                        self.restart()
                         await self.main_interface()
+                        return
 
                     for i, rect in enumerate(self.message.rectRoom):
                         if rect.collidepoint(event.pos):
@@ -381,6 +399,7 @@ class Flappy:
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         await self.create_room_interface()
+                        return
 
                     if self.button.rectJoin.collidepoint(event.pos) and self.selected_room is not None:
                         self.roomPassword = self.message.rooms[self.selected_room].split(':')[2].strip()
@@ -389,6 +408,7 @@ class Flappy:
                             reply = self.network.send_receive_id(f"Join Room:{self.message.room_num}")
                             permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)
+                            return
                         else:
                             self.message.show_password_prompt = True
                             self.message.txtPassword = ""
@@ -413,6 +433,7 @@ class Flappy:
                                 reply = self.network.send_receive_id(f"Join Room:{self.message.room_num}")
                                 permission = reply.split(":")[3]
                                 await self.room_lobby_interface(permission)
+                                return
                             else:
                                 self.message.password_error = True
 
@@ -434,6 +455,7 @@ class Flappy:
                             self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
                             reply = self.network.send_receive_id(f"Join Room:{self.message.room_num}")
                             await self.room_lobby_interface(permission)
+                            return
                         else:
                             self.message.password_error = True
                     else:
@@ -465,6 +487,7 @@ class Flappy:
                     if rectBack.collidepoint(event.pos):
                         self.network.send(f"Remove Room:{self.message.random_number}")
                         await self.game_room_interface()
+                        return
 
                     if self.message.password_input_rect.collidepoint(event.pos):
                         self.message.password_active = True
@@ -476,6 +499,7 @@ class Flappy:
                         reply = self.network.send_receive_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
                         permission = reply.split(":")[3]
                         await self.room_lobby_interface(permission)
+                        return
 
                 if event.type == pygame.KEYDOWN and self.message.password_active:
                     if event.key == pygame.K_BACKSPACE:
@@ -485,6 +509,7 @@ class Flappy:
                         reply = self.network.send_receive_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
                         permission = reply.split(":")[3]
                         await self.room_lobby_interface(permission)
+                        return
                     else:
                         self.message.txtPassword += event.unicode
 
@@ -507,15 +532,24 @@ class Flappy:
             self.button.set_mode(self.mode.get_mode())
             self.message.player_id = self.network.id
             self.button.player_id = self.network.id
-            self.button.roomCapacity = self.message.roomCapacity
-            self.button.ready_count = self.message.ready_count
 
             while True:
                 self.network.listen_for_lobby_updates()
+
+                if hasattr(self.network, "kicked") and self.network.kicked and state == "member":
+                    print("You have been kicked from the room.")
+                    self.network.kicked = False  # Reset for future room entries
+                    await self.game_room_interface()
+                    return
+                
                 for p in self.network.lobby_state:
                     if p["player_id"] == int(self.network.id):
                         self.message.txtPlayerName = p["name"]
                 btnBack, rectBack = self.back_button()
+
+                if state == "host":
+                    self.button.roomCapacity = int(len(self.network.lobby_state))
+                    self.button.ready_count = sum(1 for player in self.network.lobby_state if player["ready"])
 
                 for event in pygame.event.get():
                     self.check_quit_event(event)
@@ -526,6 +560,7 @@ class Flappy:
                             elif state == "member":
                                 self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
                             await self.game_room_interface()
+                            return
 
                         if self.button.rectNextSkin.collidepoint(event.pos):
                             self.skin.next()
@@ -539,13 +574,19 @@ class Flappy:
 
                         for i, rect in enumerate(self.button.rectKicks):
                             if rect.collidepoint(event.pos):
-                                self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
+                                self.network.send(f"Kick:{self.message.room_num}:{self.network.id}")
                                 break
 
                         if int(self.network.id) > 0:
-                            if self.button.rectReady.collidepoint(event.pos):
+                            if not self.button.isReady and hasattr(self.button, "rectReady") and self.button.rectReady.collidepoint(event.pos):
                                 self.message.isHost = False
                                 self.message.isReady = True
+                                self.button.isReady = True
+
+                            elif self.button.isReady and hasattr(self.button, "rectCancel") and self.button.rectCancel.collidepoint(event.pos):
+                                self.message.isHost = False
+                                self.message.isReady = False
+                                self.button.isReady = False
                         else:
                             self.message.isHost = True
                             self.message.isReady = False

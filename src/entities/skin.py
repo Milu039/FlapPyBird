@@ -10,11 +10,11 @@ class Skin(Entity):
         self.player_id = player_id
 
     def next(self):
-        self.skin_id = (self.skin_id + 1) % 3
+        self.skin_id = (self.skin_id + 1) % 4
         self.skin = self.config.images.skin[self.skin_id]
 
     def previous(self):
-        self.skin_id = (self.skin_id - 1) % 3
+        self.skin_id = (self.skin_id - 1) % 4
         self.skin = self.config.images.skin[self.skin_id]
     
     def get_skin_id(self):

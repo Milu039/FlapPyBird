@@ -126,6 +126,23 @@ def threaded_client(conn):
                         break
                 print("Updated")
                 broadcast_lobby_update(room_num)
+
+            elif command == "Kick":
+                room_num, target_id = parts[1], int(parts[2])
+
+                if room_num in room_members:
+                    for i, m in enumerate(room_members[room_num]):
+                        if m["player_id"] == target_id:
+                            try:
+                                m["conn"].send("Kicked".encode())  # Optional: notify the kicked player
+                            except:
+                                pass
+                            room_members[room_num].pop(i)
+                            # Shift remaining player IDs
+                            for j, player in enumerate(room_members[room_num]):
+                                player["player_id"] = j
+                            broadcast_lobby_update(room_num)
+                            break
         
         except Exception as e:
             print("Error:", e)

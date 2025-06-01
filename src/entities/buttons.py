@@ -28,6 +28,7 @@ class Button(Entity):
 
         # member ready button
         self.btnReady = config.images.buttons["ready"]
+        self.isReady = False
 
         # change skin button
         self.btnNextSkin = config.images.buttons["next"]
@@ -91,7 +92,7 @@ class Button(Entity):
             self.draw_button(self.btnCreate, self.posCreate)
             self.rectCreate = self.btnrectCreate(self.posCreate, self.btnCreate)
 
-        if self.mode == "Room Lobby: host": # test kick
+        if self.mode == "Room Lobby: host": # kick icon is ok but kick function not ok
             self.posNext = (450, 215)
             self.posPrevious = (325, 215)
 
@@ -149,10 +150,15 @@ class Button(Entity):
             self.draw_button(self.btnPreSkin, self.posPrevious)
             self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
             self.rectPreSkin = self.btnrectCreate(self.posPrevious, self.btnPreSkin)
-
-            self.posReady = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 175)
-            self.draw_button(self.btnReady, self.posReady)
-            self.rectReady = self.btnrectCreate(self.posReady, self.btnReady)
+            
+            if self.isReady:
+                self.posCancel = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 175)
+                self.draw_button(self.btnCancel, self.posCancel)
+                self.rectCancel = self.btnrectCreate(self.posCancel, self.btnReady)
+            else:
+                self.posReady = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 175)
+                self.draw_button(self.btnReady, self.posReady)
+                self.rectReady = self.btnrectCreate(self.posReady, self.btnReady)
 
     def draw_button(self,image,pos) -> None:
         self.config.screen.blit(image, pos)

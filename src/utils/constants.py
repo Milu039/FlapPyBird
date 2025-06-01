@@ -19,9 +19,3 @@ PLAYERS = (
         "assets/sprites/yellowbird-downflap.png",
     ),
 )
-
-# list of backgrounds
-BACKGROUNDS = (
-    "assets/sprites/background-day.png",
-    "assets/sprites/background-night.png",
-)

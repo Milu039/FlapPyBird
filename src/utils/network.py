@@ -1,32 +1,45 @@
 import socket
-
+import threading
+import json
 
 class Network:
-    def __init__(self, host="localhost"):
+    def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = host  # Default to localhost, but can be passed in
+        self.host = "26.189.170.88"
         self.port = 5555
         self.addr = (self.host, self.port)
-        self.id = self.connect()
-        
-    def connect(self):
-        """Connect to the server and get the player ID"""
+        self.id = None
+        self.lobby_state = []
+        self.room_num = None
+        self.running = True
+
         try:
             self.client.connect(self.addr)
-            return self.client.recv(2048).decode()
-        except socket.error as e:
-            print(f"Connection Error: {e}")
-            return "-1"  # Return invalid ID on connection failure
-            
+        except Exception as e:
+            print("Failed to connect:", e)
+
     def send(self, data):
-        """
-        Send data to server and receive response
-        :param data: str - Data to send in format "id:x,y,rot"
-        :return: str - Data received from server
-        """
+        self.client.send(data.encode())
+
+    def send_receive_id(self, data):
+        self.send(data)
+        reply = self.client.recv(2048).decode()
+        self.id = reply.split(":")[2]
+        return reply
+
+    def receive_room_list(self):
         try:
-            self.client.send(str.encode(data))
-            return self.client.recv(4096).decode()
-        except socket.error as e:
-            print(f"Send Error: {e}")
-            return ""
+            data = self.client.recv(2048).decode()
+            return json.loads(data)
+        except:
+            return []
+
+    def listen_for_lobby_updates(self):
+            try:
+                data = self.client.recv(2048).decode()
+                message = json.loads(data)
+                if message.get("type") == "LobbyUpdate":
+                    self.lobby_state = message["players"]
+                    print("Updated Lobby State:", self.lobby_state)
+            except:
+                return "Error Lobby Update"

@@ -507,6 +507,8 @@ class Flappy:
             self.button.set_mode(self.mode.get_mode())
             self.message.player_id = self.network.id
             self.button.player_id = self.network.id
+            self.button.roomCapacity = self.message.roomCapacity
+            self.button.ready_count = self.message.ready_count
 
             while True:
                 self.network.listen_for_lobby_updates()
@@ -534,6 +536,11 @@ class Flappy:
                             self.message.change_name_active = True
                         else:
                             self.message.change_name_active = False
+
+                        for i, rect in enumerate(self.button.rectKicks):
+                            if rect.collidepoint(event.pos):
+                                self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
+                                break
 
                         if int(self.network.id) > 0:
                             if self.button.rectReady.collidepoint(event.pos):

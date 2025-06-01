@@ -31,6 +31,7 @@ class Message(Entity):
 
         # room lobby
         self.room_num = self.random_number
+        self.roomCapacity = 0
         self.player_id = None
         self.txtPlayerName = ""
         self.change_name_active = False
@@ -39,6 +40,7 @@ class Message(Entity):
         self.kick_icon = config.images.icon["kick"]
         self.ready_icon = config.images.icon["ready"]
         self.isReady = False
+        self.ready_count = 0
     
     def set_mode(self, mode) -> None:
         self.mode = mode
@@ -71,6 +73,9 @@ class Message(Entity):
             name = player.get("name", f"Player {i+1}")
             is_ready = player.get("ready")
             is_host = player.get("host")
+
+            if is_ready:
+                self.ready_count += 1
 
             # Draw host or ready icon
             if is_host:
@@ -118,14 +123,15 @@ class Message(Entity):
                 for index, room in enumerate(self.rooms):
                     roomNo = room.split(':')[0].strip()
                     self.roomNum = room.split(':')[1].strip()
-                    roomCapacity = int(room.split(':')[3].strip())
+                    self.roomCapacity = int(room.split(':')[3].strip())
                     txtRoomNo = self.FONT.render(roomNo, True, self.BLACK)
                     txtRoomNum = self.FONT.render(self.roomNum, True, self.BLACK)
-                    if roomCapacity == 1:
+
+                    if self.roomCapacity == 1:
                         txtPerson = self.FONT.render("1/4", True, self.BLACK)
-                    elif roomCapacity == 2:
+                    elif self.roomCapacity == 2:
                         txtPerson = self.FONT.render("2/4", True, self.BLACK)
-                    elif roomCapacity == 3:
+                    elif self.roomCapacity == 3:
                         txtPerson = self.FONT.render("3/4", True, self.BLACK)
 
                     row_rect = pygame.Rect(200, posRoom-10, 600, 40)

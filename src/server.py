@@ -16,6 +16,7 @@ print("Waiting for a connection")
 
 room_list = []
 room_members = {}
+full_room_list = []
 
 def broadcast_lobby_update(room_num):
     print(room_num)
@@ -68,22 +69,46 @@ def threaded_client(conn):
                     room_id, name, password, capacity = room_list[i].split(":")
                     if name == room_num:
                         new_capacity = str(len(room_members[room_num]))
-                        room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
-                        break
+                        updated_room = f"{room_id}:{name}:{password}:{new_capacity}"
+
+                    # If room is now full, move it to full_room_list and remove from room_list
+                    if int(new_capacity) >= 4:
+                        full_room_list.append(updated_room)
+                        room_list.pop(i)
+                    else:
+                        room_list[i] = updated_room
+                    break
 
                 conn.sendall(f"Joined:{room_num}:{player_id}:member".encode())
                 broadcast_lobby_update(room_num)
 
-            elif command == "Leave Room":
+            elif command == "Leave Room": # need test
                 room_num, pid = parts[1], int(parts[2])
                 if room_num in room_members:
                     room_members[room_num] = [m for m in room_members[room_num] if not (m["conn"] == conn and m["player_id"] == pid)]
+                    
                     # Shift IDs
                     for i, m in enumerate(room_members[room_num]):
                         m["player_id"] = i
+                    
+                    # Update capacity in room_list and full_room_list
+                    new_capacity = len(room_members[room_num])
+                    for i in range(len(room_list)):
+                        room_id, name, password, capacity = room_list[i].split(":")
+                        if name == room_num:
+                            room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
+                            break
+
+                    for i in range(len(full_room_list)):
+                        room_id, name, password, capacity = full_room_list[i].split(":")
+                        if name == room_num:
+                            # Room is no longer full, move back to room_list
+                            full_room = full_room_list.pop(i)
+                            room_list.append(f"{room_id}:{name}:{password}:{new_capacity}")
+                            break
                     broadcast_lobby_update(room_num)
 
-            elif command == "Remove Room":
+            elif command == "Remove Room": # need test
                 room_num = parts[1]
                 room_list = [r for r in room_list if room_num not in r]
                 if room_num in room_members:

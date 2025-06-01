@@ -7,6 +7,7 @@ class Skin(Entity):
         super().__init__(config)
         self.skin_id = 0
         self.skin = config.images.skin[self.skin_id]
+        self.unknow_skin = config.images.skin[4]
         self.player_id = player_id
 
     def next(self):
@@ -23,6 +24,15 @@ class Skin(Entity):
     def draw(self):
         posSkin = self.get_position_by_id(self.player_id)
         self.config.screen.blit(self.skin, posSkin)
+
+        posSkin1 = self.get_position_by_id("1")
+        self.config.screen.blit(self.unknow_skin, posSkin1)
+
+        posSkin2 = self.get_position_by_id("2")
+        self.config.screen.blit(self.unknow_skin, posSkin2)
+
+        posSkin3 = self.get_position_by_id("3")
+        self.config.screen.blit(self.unknow_skin, posSkin3)
 
     def draw_other(self, other_players):
         for player in other_players:

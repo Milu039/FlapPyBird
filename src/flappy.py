@@ -563,7 +563,17 @@ class Flappy:
             self.button.set_mode(self.mode.get_mode())
             self.message.player_id = self.network.id
             self.button.player_id = self.network.id
-
+            
+            # Initialize player name only if not already set
+            if not hasattr(self.message, 'txtPlayerName') or not self.message.txtPlayerName:
+                # Handle case where ID might be empty or invalid
+                try:
+                    player_number = int(self.network.id) + 1
+                except (ValueError, TypeError):
+                    player_number = 1  # Default to Player 1 if ID is invalid
+                self.message.txtPlayerName = f"Player {player_number}"
+            
+            # Start the listener thread once when entering the lobby
             if not hasattr(self, '_lobby_listener_started'):
                 self.network.start_lobby_listener()
                 self._lobby_listener_started = True

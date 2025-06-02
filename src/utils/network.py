@@ -9,7 +9,7 @@ class Network:
         self.host = "26.189.170.88"
         self.port = 5555
         self.addr = (self.host, self.port)
-        self.id = None
+        self.id = "0"  # Initialize with default value instead of None
         self.lobby_state = []
         self.room_num = None
         self.running = True
@@ -30,7 +30,18 @@ class Network:
     def send_receive_id(self, data):
         self.send(data)
         reply = self.client.recv(2048).decode()
-        self.id = reply.split(":")[2]
+        
+        # Parse the ID from the reply
+        try:
+            parts = reply.split(":")
+            if len(parts) >= 3:
+                self.id = parts[2]
+            else:
+                print(f"Unexpected reply format: {reply}")
+                self.id = "0"  # Default ID
+        except Exception as e:
+            print(f"Error parsing reply: {e}")
+            self.id = "0"  # Default ID
         
         # Wait a moment for the initial lobby state
         import time

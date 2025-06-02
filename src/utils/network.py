@@ -30,40 +30,61 @@ class Network:
     def send_receive_id(self, data):
         print(f"Sending to server: {data}")
         self.send(data)
-        reply = self.client.recv(2048).decode()
-        print(f"Received from server: {reply}")
         
-        # Parse the ID from the reply
-        try:
-            parts = reply.split(":")
-            if len(parts) >= 3:
-                self.id = parts[2]
-                print(f"Parsed ID: {self.id}")
-            else:
-                print(f"Unexpected reply format: {reply}")
-                self.id = "0"  # Default ID
-        except Exception as e:
-            print(f"Error parsing reply: {e}")
-            self.id = "0"  # Default ID
-        
-        # Wait a moment for the initial lobby state
-        import time
-        time.sleep(0.1)
-        
-        # Try to receive initial lobby state
-        try:
-            self.client.settimeout(0.5)
-            initial_data = self.client.recv(2048).decode()
-            if initial_data and '{' in initial_data:
-                message = json.loads(initial_data)
-                if message.get("type") == "LobbyUpdate":
-                    self.lobby_state = message["players"]
-                    print("Initial Lobby State:", self.lobby_state)
-            self.client.settimeout(None)  # Reset timeout
-        except:
-            self.client.settimeout(None)  # Reset timeout
-            pass
+        # Keep trying to receive until we get the correct response
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            reply = self.client.recv(2048).decode()
+            print(f"Received from server (attempt {attempt + 1}): {reply}")
             
+            # Check if this is a room list response (JSON array)
+            if reply.startswith('['):
+                print("Received room list instead of join response, retrying...")
+                continue
+            
+            # Check if this is the expected join/create response
+            if "Joined:" in reply:
+                # Parse the ID from the reply
+                try:
+                    parts = reply.split(":")
+                    if len(parts) >= 3:
+                        self.id = parts[2]
+                        print(f"Parsed ID: {self.id}")
+                        
+                        # Set room number from the reply
+                        if len(parts) >= 2:
+                            self.room_num = parts[1]
+                        
+                        # Wait a moment for the initial lobby state
+                        import time
+                        time.sleep(0.1)
+                        
+                        # Try to receive initial lobby state
+                        try:
+                            self.client.settimeout(0.5)
+                            initial_data = self.client.recv(2048).decode()
+                            if initial_data and '{' in initial_data:
+                                message = json.loads(initial_data)
+                                if message.get("type") == "LobbyUpdate":
+                                    self.lobby_state = message["players"]
+                                    print("Initial Lobby State:", self.lobby_state)
+                            self.client.settimeout(None)  # Reset timeout
+                        except:
+                            self.client.settimeout(None)  # Reset timeout
+                            pass
+                        
+                        return reply
+                    else:
+                        print(f"Unexpected reply format: {reply}")
+                        self.id = "0"  # Default ID
+                except Exception as e:
+                    print(f"Error parsing reply: {e}")
+                    self.id = "0"  # Default ID
+                break
+        
+        # If we didn't get a proper response, set defaults
+        print("Failed to get proper join response from server")
+        self.id = "0"
         return reply
 
     def receive_room_list(self):

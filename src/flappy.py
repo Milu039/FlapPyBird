@@ -433,8 +433,9 @@ class Flappy:
                         self.roomPassword = self.message.rooms[self.selected_room].split(':')[2].strip()
                         if self.roomPassword == "":
                             self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
+                            # Add a small delay to ensure room list updates have stopped
+                            await asyncio.sleep(0.1)
                             reply = self.get_player_id(f"Join Room:{self.message.room_num}")
-                            print(f"Join Room reply: {reply}")
                             permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)
                             return
@@ -460,7 +461,6 @@ class Flappy:
                                 self.message.password_error = False
                                 self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
                                 reply = self.get_player_id(f"Join Room:{self.message.room_num}")
-                                print(f"Join Room reply: {reply}")
                                 permission = reply.split(":")[3]
                                 await self.room_lobby_interface(permission)
                                 return
@@ -484,7 +484,6 @@ class Flappy:
                             self.message.password_error = False
                             self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
                             reply = self.get_player_id(f"Join Room:{self.message.room_num}")
-                            print(f"Join Room reply: {reply}")
                             permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)
                             return
@@ -530,7 +529,6 @@ class Flappy:
                         self.network.kicked = False
                         self.message.password_active = False
                         reply = self.get_player_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
-                        print(f"Create Room reply: {reply}")
                         permission = reply.split(":")[3]
                         await self.room_lobby_interface(permission)
                         return
@@ -542,7 +540,6 @@ class Flappy:
                         self.network.kicked = False
                         self.message.password_active = False
                         reply = self.get_player_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
-                        print(f"Create Room reply: {reply}")
                         permission = reply.split(":")[3]
                         await self.room_lobby_interface(permission)
                         return

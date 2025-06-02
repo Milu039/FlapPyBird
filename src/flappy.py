@@ -591,20 +591,23 @@ class Flappy:
 
             while True:
            
+                # Check if kicked
                 if hasattr(self.network, "kicked") and self.network.kicked:
                     print("You have been kicked from the room.")
                     self.network.kicked = False  # Reset for future
+                    # Cleanup before returning
                     self.network.stop_lobby_listener()
-                    self.network.flush_socket()
-                    self.network.lobby_state = []
-                    self.network.room_num = None
-
-                    if self.network.listener_thread and self.network.listener_thread.is_alive():
-                        self.network.listener_thread.join(timeout=0.2)  # Clean up
-                        self.network.listener_thread = None
-
                     self._lobby_listener_started = False
-
+                    await self.game_room_interface()
+                    return
+                
+                # Check if room closed
+                if hasattr(self.network, "room_closed") and self.network.room_closed:
+                    print("Room has been closed by the host.")
+                    self.network.room_closed = False  # Reset for future
+                    # Cleanup before returning
+                    self.network.stop_lobby_listener()
+                    self._lobby_listener_started = False
                     await self.game_room_interface()
                     return
                 

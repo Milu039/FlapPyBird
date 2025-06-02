@@ -14,6 +14,7 @@ class Network:
         self.room_num = None
         self.running = True
         self.kicked = False
+        self.room_closed = False
         self.listener_thread = None
 
         try:
@@ -158,6 +159,9 @@ class Network:
                                 if message.get("type") == "LobbyUpdate":
                                     self.lobby_state = message["players"]
                                     print("Updated Lobby State:", self.lobby_state)
+                                elif message.get("type") == "RoomClosed":
+                                    print("Room has been closed by host")
+                                    self.room_closed = True
                                 
                                 # Remove processed message from buffer
                                 buffer = buffer[end_pos:]

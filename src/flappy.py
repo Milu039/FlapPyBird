@@ -595,12 +595,27 @@ class Flappy:
                     print("You have been kicked from the room.")
                     self.network.kicked = False  # Reset for future
                     self.network.stop_lobby_listener()
-                    self.network.flush_socket()
                     self.network.lobby_state = []
                     self.network.room_num = None
 
                     if self.network.listener_thread and self.network.listener_thread.is_alive():
-                        self.network.listener_thread.join(timeout=0.2)  # Clean up
+                        self.network.listener_thread.join(timeout=0.1)  # Clean up
+                        self.network.listener_thread = None
+
+                    self._lobby_listener_started = False
+
+                    await self.game_room_interface()
+                    return
+                
+                if hasattr(self.network, "room_closed") and self.network.room_closed:
+                    print("Room has been closed by the host.")
+                    self.network.room_closed = False  # Reset flag
+                    self.network.stop_lobby_listener()
+                    self.network.lobby_state = []
+                    self.network.room_num = None
+
+                    if self.network.listener_thread and self.network.listener_thread.is_alive():
+                        self.network.listener_thread.join(timeout=0.1)
                         self.network.listener_thread = None
 
                     self._lobby_listener_started = False
@@ -626,12 +641,12 @@ class Flappy:
                         if rectBack.collidepoint(event.pos):
                             if state == "host":
                                 self.network.send(f"Remove Room:{self.message.room_num}")
-                                self.network.stop_lobby_listener()
-                                self._lobby_listener_started = False
                             elif state == "member":
                                 self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
-                                self.network.stop_lobby_listener()
-                                self._lobby_listener_started = False
+                            
+                            self.network.stop_lobby_listener()
+                            self._lobby_listener_started = False
+
                             await self.game_room_interface()
                             return
 
@@ -710,7 +725,8 @@ class Flappy:
                         else:
                             self.message.txtPlayerName += event.unicode
 
-                self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}")
+                if not self.network.kicked:
+                    self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}")
                 
                 self.background.tick()
                 self.floor.tick()
@@ -718,7 +734,6 @@ class Flappy:
                 self.skin.tick()
                 self.config.screen.blit(btnBack, rectBack)
                 
-
                 # Draw all players
                 if state == "host":
                     self.button.update_kick_buttons(self.network.lobby_state)
@@ -726,7 +741,6 @@ class Flappy:
                 self.message.draw_name(self.network.lobby_state)
                 self.message.tick()
                 self.button.tick()
-                
 
                 pygame.display.update()
                 await asyncio.sleep(0)

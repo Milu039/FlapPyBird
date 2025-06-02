@@ -150,11 +150,22 @@ def threaded_client(conn):
                             except:
                                 pass
                             room_members[room_num].pop(i)
+                            print(f"Player {target_id} kicked. Remaining players: {len(room_members[room_num])}")
+                            
                             # Shift remaining player IDs
                             for j, player in enumerate(room_members[room_num]):
                                 player["player_id"] = j
                             broadcast_lobby_update(room_num)
                             break
+
+                    new_capacity = len(room_members[room_num])
+                    for i in range(len(room_list)):
+                        room_id, name, password, capacity = room_list[i].split(":")
+                        if name == room_num:
+                            room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
+                            break
+                    print(room_list)
+
         
         except Exception as e:
             print("Error:", e)

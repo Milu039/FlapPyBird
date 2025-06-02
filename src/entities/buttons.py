@@ -46,28 +46,24 @@ class Button(Entity):
 
     def update_kick_buttons(self, lobby_state):
         kick_positions_map = {
-                2: [(515, 185)],
-                3: [(515, 185), (295, 345)],
-                4: [(515, 185), (295, 345), (515, 345)],
-            }
-        
+            2: [(515, 185)],
+            3: [(515, 185), (295, 345)],
+            4: [(515, 185), (295, 345), (515, 345)],
+        }
+
         self.rectKicks = []
         self.kick_targets = []
 
-        num_players = len(lobby_state)
-        positions = kick_positions_map.get(num_players, [])
+        # Get the correct number of positions for other players (excluding self)
+        other_players = [p for p in lobby_state if p["player_id"] != int(self.player_id)]
+        positions = kick_positions_map.get(len(lobby_state), [])
 
-        for i, pos in enumerate(positions):
-            # Don't draw kick button for yourself (player_id == self.player_id)
-            if i >= len(lobby_state):
-                continue
-            target = lobby_state[i]
-            
-            if target["player_id"] != self.player_id:
-                self.draw_button(self.btnKickPlayer, pos)
-                rect = self.btnrectCreate(pos, self.btnKickPlayer)
-                self.rectKicks.append(rect)
-                self.kick_targets.append(target["player_id"])
+        for target, pos in zip(other_players, positions):
+            self.draw_button(self.btnKickPlayer, pos)
+            rect = self.btnrectCreate(pos, self.btnKickPlayer)
+            self.rectKicks.append(rect)
+            self.kick_targets.append(target["player_id"])
+
 
     def draw_enter_cancel_button(self):
         self.posEnter = (self.config.window.width // 2 - 150, 425)

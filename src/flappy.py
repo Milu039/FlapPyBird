@@ -556,17 +556,17 @@ class Flappy:
                     await self.game_room_interface()
                     return
                 
-                for p in self.network.lobby_state:
-                    if p["player_id"] == int(self.network.id):
-                        if p["name"] and p["name"].strip():
-                            self.message.txtPlayerName = p["name"]
+                if not self.message.change_name_active:
+                    for p in self.network.lobby_state:
+                        if p["player_id"] == int(self.network.id):
+                            if p["name"] and p["name"].strip():
+                                self.message.txtPlayerName = p["name"]
 
                 btnBack, rectBack = self.back_button()
 
                 if state == "host":
                     self.button.roomCapacity = int(len(self.network.lobby_state))
                     self.button.ready_count = sum(1 for player in self.network.lobby_state if player["ready"])
-                    self.button.update_kick_buttons(self.network.lobby_state)
 
                 for event in pygame.event.get():
                     self.check_quit_event(event)
@@ -668,6 +668,8 @@ class Flappy:
                 
 
                 # Draw all players
+                if state == "host":
+                    self.button.update_kick_buttons(self.network.lobby_state)
                 self.skin.draw_other(self.network.lobby_state)
                 self.message.draw_name(self.network.lobby_state)
                 self.message.tick()

@@ -156,6 +156,9 @@ class Flappy:
         )
         screen_tap = event.type == pygame.FINGERDOWN
         return m_left or space_or_up or screen_tap
+
+    def get_player_id(self, data):
+        return self.network.send_receive_id(data)
     
     def restart(self):
         self.container = Container(self.config, self.mode)
@@ -399,13 +402,14 @@ class Flappy:
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         await self.create_room_interface()
+                        #await self.multi_gameplay()
                         return
 
                     if self.button.rectJoin.collidepoint(event.pos) and self.selected_room is not None:
                         self.roomPassword = self.message.rooms[self.selected_room].split(':')[2].strip()
                         if self.roomPassword == "":
                             self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
-                            reply = self.network.send_receive_id(f"Join Room:{self.message.room_num}")
+                            reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                             permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)
                             return
@@ -430,7 +434,7 @@ class Flappy:
                                 self.message.password_active = False
                                 self.message.password_error = False
                                 self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
-                                reply = self.network.send_receive_id(f"Join Room:{self.message.room_num}")
+                                reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                                 permission = reply.split(":")[3]
                                 await self.room_lobby_interface(permission)
                                 return
@@ -453,7 +457,8 @@ class Flappy:
                             self.message.password_active = False
                             self.message.password_error = False
                             self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
-                            reply = self.network.send_receive_id(f"Join Room:{self.message.room_num}")
+                            reply = self.get_player_id(f"Join Room:{self.message.room_num}")
+                            permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)
                             return
                         else:
@@ -496,7 +501,7 @@ class Flappy:
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         self.message.password_active = False
-                        reply = self.network.send_receive_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
+                        reply = self.get_player_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
                         permission = reply.split(":")[3]
                         await self.room_lobby_interface(permission)
                         return
@@ -506,7 +511,7 @@ class Flappy:
                         self.message.txtPassword = self.message.txtPassword[:-1]
                     elif event.key == pygame.K_RETURN:
                         self.message.password_active = False
-                        reply = self.network.send_receive_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
+                        reply = self.get_player_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
                         permission = reply.split(":")[3]
                         await self.room_lobby_interface(permission)
                         return
@@ -545,6 +550,7 @@ class Flappy:
                 for p in self.network.lobby_state:
                     if p["player_id"] == int(self.network.id):
                         self.message.txtPlayerName = p["name"]
+
                 btnBack, rectBack = self.back_button()
 
                 if state == "host":
@@ -592,6 +598,10 @@ class Flappy:
                         else:
                             self.message.isHost = True
                             self.message.isReady = False
+                        
+                        if hasattr(self.button, "rectStart") and self.button.rectStart.collidepoint(event.pos):
+                            await self.multi_gameplay()
+                            return
 
                     if event.type == pygame.KEYDOWN and self.message.change_name_active:
                         if event.key == pygame.K_BACKSPACE:

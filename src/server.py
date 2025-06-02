@@ -19,7 +19,6 @@ room_members = {}
 full_room_list = []
 
 def broadcast_lobby_update(room_num):
-    print(room_num)
     if room_num in room_members:
         players_info = [
             {"player_id": m["player_id"], "name": m["name"], "skin_id": m["skin_id"], "ready": m["ready"], "host":m["host"]}
@@ -108,11 +107,25 @@ def threaded_client(conn):
                             break
                     broadcast_lobby_update(room_num)
 
-            elif command == "Remove Room": # need test
+            elif command == "Remove Room":  # host wants to remove room
                 room_num = parts[1]
-                room_list = [r for r in room_list if room_num not in r]
+
+                # Notify all members in the room before deleting it
                 if room_num in room_members:
+                    for member in room_members[room_num]:
+                        conn = member.get("conn")
+                        if conn:
+                            try:
+                                conn.sendall(f"Room Closed:{room_num}".encode())
+                            except:
+                                pass  # Optional: handle broken connections
+
+                    # Delete room members
                     del room_members[room_num]
+
+                # Remove the room from the room list
+                room_list = [r for r in room_list if room_num not in r]
+
 
             elif command == "Update":
                 room_num, pid, name, skin_id, ready_str = parts[1], int(parts[2]), parts[3], int(parts[4]), parts[5]

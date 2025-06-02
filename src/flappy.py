@@ -408,6 +408,7 @@ class Flappy:
                     if self.button.rectJoin.collidepoint(event.pos) and self.selected_room is not None:
                         self.roomPassword = self.message.rooms[self.selected_room].split(':')[2].strip()
                         if self.roomPassword == "":
+                            self.network.kicked = False
                             self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
                             reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                             permission = reply.split(":")[3]
@@ -429,6 +430,7 @@ class Flappy:
                     if self.message.show_password_prompt and self.button.show_password_prompt:
                         if hasattr(self.button, "rectEnter") and self.button.rectEnter.collidepoint(event.pos):
                             if self.message.txtPassword == self.roomPassword:
+                                self.network.kicked = False
                                 self.message.show_password_prompt = False
                                 self.button.show_password_prompt = False
                                 self.message.password_active = False
@@ -452,6 +454,7 @@ class Flappy:
                         self.message.txtPassword = self.message.txtPassword[:-1]
                     elif event.key == pygame.K_RETURN:
                         if self.message.txtPassword == self.roomPassword:
+                            self.network.kicked = False
                             self.message.show_password_prompt = False
                             self.button.show_password_prompt = False
                             self.message.password_active = False
@@ -500,6 +503,7 @@ class Flappy:
                         self.message.password_active = False
 
                     if self.button.rectCreate.collidepoint(event.pos):
+                        self.network.kicked = False
                         self.message.password_active = False
                         reply = self.get_player_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
                         permission = reply.split(":")[3]
@@ -510,6 +514,7 @@ class Flappy:
                     if event.key == pygame.K_BACKSPACE:
                         self.message.txtPassword = self.message.txtPassword[:-1]
                     elif event.key == pygame.K_RETURN:
+                        self.network.kicked = False
                         self.message.password_active = False
                         reply = self.get_player_id(f"Create Room:{self.message.random_number}:{self.message.txtPassword}")
                         permission = reply.split(":")[3]
@@ -552,7 +557,12 @@ class Flappy:
                     print("You have been kicked from the room.")
                     self.network.kicked = False  # Reset for future
                     self.network.stop_lobby_listener()
-                    self._lobby_listener_started = False    
+                    self._lobby_listener_started = False
+
+                    if self.network.listener_thread:
+                        self.network.listener_thread.join(timeout=0.1)  # Clean up
+                        self.network.listener_thread = None 
+
                     await self.game_room_interface()
                     return
                 

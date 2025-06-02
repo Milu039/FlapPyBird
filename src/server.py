@@ -126,7 +126,6 @@ def threaded_client(conn):
                 # Remove the room from the room list
                 room_list = [r for r in room_list if room_num not in r]
 
-
             elif command == "Update":
                 room_num, pid, name, skin_id, ready_str = parts[1], int(parts[2]), parts[3], int(parts[4]), parts[5]
                 ready = ready_str == "True"

@@ -65,6 +65,8 @@ class Network:
             self.running = True
             self.listener_thread = threading.Thread(target=self._listen_for_updates, daemon=True)
             self.listener_thread.start()
+        else:
+            print("[DEBUG] Listener already running")
 
     def stop_lobby_listener(self):
         """Stop the background thread"""
@@ -135,3 +137,14 @@ class Network:
         """This method now just ensures the listener thread is running"""
         if self.listener_thread is None or not self.listener_thread.is_alive():
             self.start_lobby_listener()
+            
+    def flush_socket(self):
+        try:
+            self.client.settimeout(0.05)
+            while True:
+                if not self.client.recv(2048):
+                    break
+        except:
+            pass
+        finally:
+            self.client.settimeout(None)

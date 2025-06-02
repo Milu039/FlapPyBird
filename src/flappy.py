@@ -557,11 +557,15 @@ class Flappy:
                     print("You have been kicked from the room.")
                     self.network.kicked = False  # Reset for future
                     self.network.stop_lobby_listener()
-                    self._lobby_listener_started = False
+                    self.network.flush_socket()
+                    self.network.lobby_state = []
+                    self.network.room_num = None
 
-                    if self.network.listener_thread:
-                        self.network.listener_thread.join(timeout=0.1)  # Clean up
-                        self.network.listener_thread = None 
+                    if self.network.listener_thread and self.network.listener_thread.is_alive():
+                        self.network.listener_thread.join(timeout=0.2)  # Clean up
+                        self.network.listener_thread = None
+
+                    self._lobby_listener_started = False
 
                     await self.game_room_interface()
                     return

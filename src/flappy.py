@@ -381,10 +381,35 @@ class Flappy:
         self.button.set_mode(self.mode.get_mode())
         self.selected_room = None
         
+        # Initialize timing for room list updates
+        last_room_update = 0
+        update_interval = 1.0  # Update room list every 1 second
+        current_time = pygame.time.get_ticks() / 1000.0
+        
+        # Request initial room list
+        self.network.send(self.mode.get_mode())
+        room_list_data = self.network.receive_room_list()
+        self.message.set_rooms(room_list_data)
+        
         while True:
-            self.network.send(self.mode.get_mode())
-            room_list_data = self.network.receive_room_list()
-            self.message.set_rooms(room_list_data)
+            # Get current time
+            current_time = pygame.time.get_ticks() / 1000.0
+            
+            # Only request room list update periodically
+            if current_time - last_room_update >= update_interval:
+                try:
+                    # Set socket to non-blocking for this check
+                    self.network.client.settimeout(0.05)  # 50ms timeout
+                    self.network.send(self.mode.get_mode())
+                    room_list_data = self.network.receive_room_list()
+                    self.message.set_rooms(room_list_data)
+                    last_room_update = current_time
+                except:
+                    # If timeout or error, just continue with existing room list
+                    pass
+                finally:
+                    # Reset socket to blocking mode
+                    self.network.client.settimeout(None)
 
             btnBack, rectBack = self.back_button()
 
@@ -402,13 +427,11 @@ class Flappy:
 
                     if self.button.rectCreate.collidepoint(event.pos):
                         await self.create_room_interface()
-                        #await self.multi_gameplay()
                         return
 
                     if self.button.rectJoin.collidepoint(event.pos) and self.selected_room is not None:
                         self.roomPassword = self.message.rooms[self.selected_room].split(':')[2].strip()
                         if self.roomPassword == "":
-                            self.network.kicked = False
                             self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
                             reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                             permission = reply.split(":")[3]
@@ -430,12 +453,11 @@ class Flappy:
                     if self.message.show_password_prompt and self.button.show_password_prompt:
                         if hasattr(self.button, "rectEnter") and self.button.rectEnter.collidepoint(event.pos):
                             if self.message.txtPassword == self.roomPassword:
-                                self.network.kicked = False
                                 self.message.show_password_prompt = False
                                 self.button.show_password_prompt = False
                                 self.message.password_active = False
                                 self.message.password_error = False
-                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
+                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
                                 reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                                 permission = reply.split(":")[3]
                                 await self.room_lobby_interface(permission)
@@ -454,12 +476,11 @@ class Flappy:
                         self.message.txtPassword = self.message.txtPassword[:-1]
                     elif event.key == pygame.K_RETURN:
                         if self.message.txtPassword == self.roomPassword:
-                            self.network.kicked = False
                             self.message.show_password_prompt = False
                             self.button.show_password_prompt = False
                             self.message.password_active = False
                             self.message.password_error = False
-                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
+                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
                             reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                             permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)

@@ -55,8 +55,14 @@ class Network:
     def receive_room_list(self):
         try:
             data = self.client.recv(2048).decode()
-            return json.loads(data)
-        except:
+            if data:
+                return json.loads(data)
+            return []
+        except socket.timeout:
+            # Timeout is fine, just return empty list
+            return []
+        except Exception as e:
+            print(f"Error receiving room list: {e}")
             return []
 
     def start_lobby_listener(self):
@@ -65,71 +71,83 @@ class Network:
             self.running = True
             self.listener_thread = threading.Thread(target=self._listen_for_updates, daemon=True)
             self.listener_thread.start()
-        else:
-            print("[DEBUG] Listener already running")
 
     def stop_lobby_listener(self):
         """Stop the background thread"""
         self.running = False
 
     def _listen_for_updates(self):
+        """Background thread method that continuously listens for updates"""
         buffer = ""
-
+        
         while self.running:
             try:
+                # Set a timeout so the thread can check self.running periodically
                 self.client.settimeout(0.5)
                 data = self.client.recv(2048).decode()
-
+                
                 if not data:
                     continue
-
+                
+                # Add new data to buffer
                 buffer += data
-
+                
+                # Process complete messages in the buffer
                 while buffer:
                     if buffer.startswith("Kicked"):
                         self.kicked = True
-                        buffer = buffer[len("Kicked"):]  # Clear 'Kicked' part
+                        buffer = buffer[6:]  # Remove "Kicked" from buffer
                         continue
-
-                    elif buffer.startswith("Room Closed"):
-                        print("Room has been closed by host.")
-                        self.kicked = True  # Reuse the same logic to return to room screen
-                        buffer = buffer[len("Room Closed"):]  # Clear it from buffer
-                        continue
-
-                    # ... JSON message handling (existing code) ...
-                    if '{' in buffer:
-                        start = buffer.index('{')
-                        brace_count = 0
-                        end_pos = start
-                        for i in range(start, len(buffer)):
-                            if buffer[i] == '{':
-                                brace_count += 1
-                            elif buffer[i] == '}':
-                                brace_count -= 1
-                                if brace_count == 0:
-                                    end_pos = i + 1
-                                    break
-
-                        if brace_count == 0:
-                            json_str = buffer[start:end_pos]
-                            message = json.loads(json_str)
-
-                            if message.get("type") == "LobbyUpdate":
-                                self.lobby_state = message["players"]
-                                print("Updated Lobby State:", self.lobby_state)
-
-                            buffer = buffer[end_pos:]
+                    
+                    # Try to find a complete JSON message
+                    try:
+                        # Check if we have a complete JSON object
+                        if '{' in buffer:
+                            start = buffer.index('{')
+                            # Try to parse from the start of JSON
+                            brace_count = 0
+                            end_pos = start
+                            for i in range(start, len(buffer)):
+                                if buffer[i] == '{':
+                                    brace_count += 1
+                                elif buffer[i] == '}':
+                                    brace_count -= 1
+                                    if brace_count == 0:
+                                        end_pos = i + 1
+                                        break
+                            
+                            if brace_count == 0:  # We have a complete JSON object
+                                json_str = buffer[start:end_pos]
+                                message = json.loads(json_str)
+                                
+                                if message.get("type") == "LobbyUpdate":
+                                    self.lobby_state = message["players"]
+                                    print("Updated Lobby State:", self.lobby_state)
+                                
+                                # Remove processed message from buffer
+                                buffer = buffer[end_pos:]
+                            else:
+                                # Incomplete JSON, wait for more data
+                                break
                         else:
+                            # No JSON start found, clear any non-JSON data
+                            buffer = ""
                             break
-                    else:
-                        buffer = ""
-                        break
-
+                            
+                    except (json.JSONDecodeError, ValueError) as e:
+                        # Don't print error for concatenated messages, just try to recover
+                        # Try to recover by finding the next JSON start
+                        next_start = buffer.find('{', 1)
+                        if next_start != -1:
+                            buffer = buffer[next_start:]
+                        else:
+                            buffer = ""
+                        
             except socket.timeout:
+                # Timeout is expected, just continue
                 continue
             except Exception as e:
-                if self.running:
+                if self.running:  # Only print error if we're supposed to be running
                     print(f"Error in lobby listener: {e}")
                 break
 
@@ -137,14 +155,3 @@ class Network:
         """This method now just ensures the listener thread is running"""
         if self.listener_thread is None or not self.listener_thread.is_alive():
             self.start_lobby_listener()
-            
-    def flush_socket(self):
-        try:
-            self.client.settimeout(0.05)
-            while True:
-                if not self.client.recv(2048):
-                    break
-        except:
-            pass
-        finally:
-            self.client.settimeout(None)

@@ -43,6 +43,30 @@ class Button(Entity):
     def set_mode(self, mode) -> None:
         self.mode = mode
 
+    def update_kick_buttons(self, lobby_state):
+        kick_positions_map = {
+                2: [(515, 185)],
+                3: [(515, 185), (295, 345)],
+                4: [(515, 185), (295, 345), (515, 345)],
+            }
+        
+        self.rectKicks = []
+        self.kick_targets = []
+
+        num_players = len(lobby_state)
+        positions = kick_positions_map.get(num_players, [])
+
+        for i, pos in enumerate(positions):
+            # Don't draw kick button for yourself (player_id == self.player_id)
+            if i >= len(lobby_state):
+                continue
+            target = lobby_state[i]
+            if target["player_id"] != self.player_id:
+                self.draw_button(self.btnKickPlayer, pos)
+                rect = self.btnrectCreate(pos, self.btnKickPlayer)
+                self.rectKicks.append(rect)
+                self.kick_targets.append(target["player_id"])
+
     def draw(self) -> None:
         # Draw the buttons based on the game mode
         if self.mode == "Pause":
@@ -100,23 +124,6 @@ class Button(Entity):
             self.draw_button(self.btnPreSkin, self.posPrevious)
             self.rectPreSkin = self.btnrectCreate(self.posPrevious, self.btnPreSkin)
             self.rectNextSkin = self.btnrectCreate(self.posNext, self.btnNextSkin)
-
-            kick_positions_map = {
-                2: [(515, 185)],
-                3: [(515, 185), (295, 345)],
-                4: [(515, 185), (295, 345), (515, 345)],
-            }
-
-            positions = kick_positions_map.get(self.roomCapacity, [])
-
-            self.rectKicks = []
-            self.kick_targets = []
-
-            for i, pos in enumerate(positions):
-                self.draw_button(self.btnKickPlayer, pos)
-                rect = self.btnrectCreate(pos, self.btnKickPlayer)
-                self.rectKicks.append(rect)
-                self.kick_targets.append(i + 1)
 
             start_buttons = {
                 0: self.btnStart_1_4,

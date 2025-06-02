@@ -536,9 +536,9 @@ class Flappy:
             while True:
                 self.network.listen_for_lobby_updates()
 
-                if hasattr(self.network, "kicked") and self.network.kicked and state == "member":
+                if hasattr(self.network, "kicked") and self.network.kicked:
                     print("You have been kicked from the room.")
-                    self.network.kicked = False  # Reset for future room entries
+                    self.network.kicked = False  # Reset for future
                     await self.game_room_interface()
                     return
                 
@@ -550,6 +550,7 @@ class Flappy:
                 if state == "host":
                     self.button.roomCapacity = int(len(self.network.lobby_state))
                     self.button.ready_count = sum(1 for player in self.network.lobby_state if player["ready"])
+                    self.button.update_kick_buttons(self.network.lobby_state)
 
                 for event in pygame.event.get():
                     self.check_quit_event(event)
@@ -574,7 +575,8 @@ class Flappy:
 
                         for i, rect in enumerate(self.button.rectKicks):
                             if rect.collidepoint(event.pos):
-                                self.network.send(f"Kick:{self.message.room_num}:{self.network.id}")
+                                target_id = self.button.kick_targets[i]
+                                self.network.send(f"Kick:{self.message.room_num}:{target_id}")
                                 break
 
                         if int(self.network.id) > 0:

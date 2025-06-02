@@ -28,14 +28,17 @@ class Network:
             print(f"Failed to send data: {e}")
 
     def send_receive_id(self, data):
+        print(f"Sending to server: {data}")
         self.send(data)
         reply = self.client.recv(2048).decode()
+        print(f"Received from server: {reply}")
         
         # Parse the ID from the reply
         try:
             parts = reply.split(":")
             if len(parts) >= 3:
                 self.id = parts[2]
+                print(f"Parsed ID: {self.id}")
             else:
                 print(f"Unexpected reply format: {reply}")
                 self.id = "0"  # Default ID

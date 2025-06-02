@@ -433,7 +433,7 @@ class Flappy:
                                 self.button.show_password_prompt = False
                                 self.message.password_active = False
                                 self.message.password_error = False
-                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
+                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
                                 reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                                 permission = reply.split(":")[3]
                                 await self.room_lobby_interface(permission)
@@ -456,7 +456,7 @@ class Flappy:
                             self.button.show_password_prompt = False
                             self.message.password_active = False
                             self.message.password_error = False
-                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
+                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
                             reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                             permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)
@@ -538,18 +538,28 @@ class Flappy:
             self.message.player_id = self.network.id
             self.button.player_id = self.network.id
 
-            while True:
-                self.network.listen_for_lobby_updates()
+            if not hasattr(self, '_lobby_listener_started'):
+                self.network.start_lobby_listener()
+                self._lobby_listener_started = True
 
+            # Initialize player name if not already set
+            if not hasattr(self.message, 'txtPlayerName') or not self.message.txtPlayerName:
+                self.message.txtPlayerName = f"Player {int(self.network.id) + 1}"   
+
+            while True:
+           
                 if hasattr(self.network, "kicked") and self.network.kicked:
                     print("You have been kicked from the room.")
                     self.network.kicked = False  # Reset for future
+                    self.network.stop_lobby_listener()
+                    self._lobby_listener_started = False    
                     await self.game_room_interface()
                     return
                 
                 for p in self.network.lobby_state:
                     if p["player_id"] == int(self.network.id):
-                        self.message.txtPlayerName = p["name"]
+                        if p["name"] and p["name"].strip():
+                            self.message.txtPlayerName = p["name"]
 
                 btnBack, rectBack = self.back_button()
 
@@ -564,8 +574,12 @@ class Flappy:
                         if rectBack.collidepoint(event.pos):
                             if state == "host":
                                 self.network.send(f"Remove Room:{self.message.room_num}")
+                                self.network.stop_lobby_listener()
+                                self._lobby_listener_started = False
                             elif state == "member":
                                 self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
+                                self.network.stop_lobby_listener()
+                                self._lobby_listener_started = False
                             await self.game_room_interface()
                             return
 
@@ -575,9 +589,34 @@ class Flappy:
                             self.skin.previous()
 
                         if hasattr(self.message, "rectPlayer") and self.message.rectPlayer.collidepoint(event.pos):
+                            self.message.show_name_prompt = True
+                            self.message.txtPlayerName = self.message.txtPlayerName
+                            self.message.name_error = False
+                            self.button.show_name_prompt = True
                             self.message.change_name_active = True
                         else:
                             self.message.change_name_active = False
+
+                        if self.message.name_input_rect.collidepoint(event.pos):
+                            self.message.change_name_active = True
+                        else:
+                            self.message.change_name_active = False
+
+                        if self.message.show_name_prompt and self.button.show_name_prompt:
+                            if hasattr(self.button, "rectEnter") and self.button.rectEnter.collidepoint(event.pos):
+                                if self.message.txtPlayerName != "":
+                                    self.message.show_name_prompt = False
+                                    self.button.show_name_prompt = False
+                                    self.message.change_name_active = False
+                                    self.message.txtPlayerName = self.message.txtPlayerName
+                                else:
+                                    self.message.name_error = True
+
+                            elif hasattr(self.button, "rectCancel") and self.button.rectCancel.collidepoint(event.pos):
+                                self.message.show_name_prompt = False
+                                self.button.show_name_prompt = False
+                                self.message.change_name_active = False
+                                self.message.name_error = False
 
                         for i, rect in enumerate(self.button.rectKicks):
                             if rect.collidepoint(event.pos):
@@ -600,14 +639,22 @@ class Flappy:
                             self.message.isReady = False
                         
                         if hasattr(self.button, "rectStart") and self.button.rectStart.collidepoint(event.pos):
+                            self.network.stop_lobby_listener()
+                            self._lobby_listener_started = False
                             await self.multi_gameplay()
                             return
 
-                    if event.type == pygame.KEYDOWN and self.message.change_name_active:
+                    if event.type == pygame.KEYDOWN and self.message.show_name_prompt and self.message.change_name_active:
                         if event.key == pygame.K_BACKSPACE:
                             self.message.txtPlayerName = self.message.txtPlayerName[:-1]
                         elif event.key == pygame.K_RETURN:
-                            self.message.change_name_active = False
+                            if self.message.txtPlayerName != "":
+                                self.message.show_name_prompt = False
+                                self.button.show_name_prompt = False
+                                self.message.change_name_active = False
+                                self.message.txtPlayerName = self.message.txtPlayerName
+                            else:
+                                    self.message.name_error = True
                         else:
                             self.message.txtPlayerName += event.unicode
 
@@ -616,14 +663,16 @@ class Flappy:
                 self.background.tick()
                 self.floor.tick()
                 self.container.tick()
-                self.message.tick()
-                self.config.screen.blit(btnBack, rectBack)
-                self.button.tick()
                 self.skin.tick()
+                self.config.screen.blit(btnBack, rectBack)
+                
 
                 # Draw all players
                 self.skin.draw_other(self.network.lobby_state)
                 self.message.draw_name(self.network.lobby_state)
+                self.message.tick()
+                self.button.tick()
+                
 
                 pygame.display.update()
                 await asyncio.sleep(0)

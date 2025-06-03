@@ -198,7 +198,6 @@ class Flappy:
                         await self.solo_ready_interface()
                         return
                     if multi_button_rect.collidepoint(event.pos):
-                        self.network = Network()
                         await self.game_room_interface()
                         return
                     if skill_button_rect.collidepoint(event.pos):
@@ -375,6 +374,7 @@ class Flappy:
 
     async def game_room_interface(self): # receive the room list from the server
         self.restart()
+        self.network = Network()
         self.mode.set_mode("Game Room")
         self.message.set_mode(self.mode.get_mode())
         self.container.set_mode(self.mode.get_mode())
@@ -593,28 +593,15 @@ class Flappy:
                 # Check kick/room closed status IMMEDIATELY at the start of each loop
                 if hasattr(self.network, "kicked") and self.network.kicked:
                     print("You have been kicked from the room.")
-                    # Close the old connection cleanly
-                    self.network.close_connection()
-                    
-                    # Create a new network connection for the game room
-                    self.network = Network()
+                    self.network.stop_lobby_listener()
+                    self._lobby_listener_started = False
                     await self.game_room_interface()
                     return
                         
                 if hasattr(self.network, "room_closed") and self.network.room_closed:
                     print("Room has been closed by the host.")
-                    # Close the old connection cleanly
-                    self.network.close_connection()
-                    
-                    # Create a new network connection for the game room
-                    self.network = Network()
-                    await self.game_room_interface()
-                    return
-                # Check for connection lost
-                if hasattr(self.network, "connection_lost") and self.network.connection_lost:
-                    print("Connection lost.")
-                    # Create a new network connection for the game room
-                    self.network = Network()
+                    self.network.stop_lobby_listener()
+                    self._lobby_listener_started = False
                     await self.game_room_interface()
                     return
                 
@@ -641,7 +628,6 @@ class Flappy:
                             
                             self.network.stop_lobby_listener()
                             self._lobby_listener_started = False
-
                             await self.game_room_interface()
                             return
 
@@ -682,6 +668,7 @@ class Flappy:
 
                         for i, rect in enumerate(self.button.rectKicks):
                             if rect.collidepoint(event.pos):
+                                self.kick = True
                                 target_id = self.button.kick_targets[i]
                                 self.network.send(f"Kick:{self.message.room_num}:{target_id}")
                                 break
@@ -720,15 +707,8 @@ class Flappy:
                         else:
                             self.message.txtPlayerName += event.unicode
 
-                try:
-                    if not (hasattr(self.network, "kicked") and self.network.kicked):
-                        self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}")
-                except:
-                    # If send fails, connection is likely lost
-                    print("Failed to send update, returning to game room")
-                    self.network = Network()
-                    await self.game_room_interface()
-                    return        
+                if not (hasattr(self.network, "kicked") and self.network.kicked and self.kick):
+                        self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}:")
                 
                 self.background.tick()
                 self.floor.tick()

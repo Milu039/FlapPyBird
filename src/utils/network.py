@@ -224,39 +224,3 @@ class Network:
         """This method now just ensures the listener thread is running"""
         if self.listener_thread is None or not self.listener_thread.is_alive():
             self.start_lobby_listener()
-    
-    def close_connection(self):
-        """Cleanly close the connection"""
-        self.running = False
-        self.stop_lobby_listener()
-        try:
-            self.client.close()
-        except:
-            pass
-    
-    def reconnect(self):
-        """Attempt to reconnect to the server"""
-        print("Attempting to reconnect...")
-        try:
-            # Close the old socket
-            try:
-                self.client.close()
-            except:
-                pass
-            
-            # Create a new socket
-            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client.connect(self.addr)
-            
-            # Reset connection state
-            self.connection_lost = False
-            self.running = True
-            self.kicked = False
-            self.room_closed = False
-            
-            print("Reconnected successfully")
-            return True
-        except Exception as e:
-            print(f"Failed to reconnect: {e}")
-            self.connection_lost = True
-            return False

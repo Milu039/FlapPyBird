@@ -126,7 +126,6 @@ class Message(Entity):
                     self.roomCapacity = int(room.split(':')[3].strip())
                     txtRoomNo = self.FONT.render(roomNo, True, self.BLACK)
                     txtRoomNum = self.FONT.render(self.roomNum, True, self.BLACK)
-                    print(self.roomCapacity)
 
                     if self.roomCapacity == 1:
                         txtPerson = self.FONT.render("1/4", True, self.BLACK)

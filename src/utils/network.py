@@ -161,8 +161,7 @@ class Network:
                                 if message.get("type") == "LobbyUpdate":
                                     self.lobby_state = message["players"]
                                     print("Updated Lobby State:", self.lobby_state)
-                                
-                                # Remove processed message from buffer
+
                                 buffer = buffer[end_pos:]
                             else:
                                 break

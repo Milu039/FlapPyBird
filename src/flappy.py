@@ -624,16 +624,6 @@ class Flappy:
                     await self.game_room_interface()
                     return
                 
-                # Check if room closed
-                if hasattr(self.network, "room_closed") and self.network.room_closed:
-                    print("Room has been closed by the host.")
-                    self.network.room_closed = False  # Reset for future
-                    # Cleanup before returning
-                    self.network.stop_lobby_listener()
-                    self._lobby_listener_started = False
-                    await self.game_room_interface()
-                    return
-                
                 if not self.message.change_name_active:
                     for p in self.network.lobby_state:
                         if p["player_id"] == int(self.network.id):
@@ -736,8 +726,7 @@ class Flappy:
                         else:
                             self.message.txtPlayerName += event.unicode
 
-                if not self.network.kicked:
-                    self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}")
+                self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}")
                 
                 self.background.tick()
                 self.floor.tick()

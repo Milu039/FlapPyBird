@@ -26,12 +26,18 @@ class Network:
 
     def send(self, data):
         try:
+            # Check if we should stop sending (kicked or connection lost)
+            if hasattr(self, 'kicked') and self.kicked:
+                return
+            if hasattr(self, 'connection_lost') and self.connection_lost:
+                return
+                
             self.client.send(data.encode())
         except (ConnectionResetError, ConnectionAbortedError, OSError) as e:
             print(f"Failed to send data: {e}")
             # Connection is broken, set a flag
             self.connection_lost = True
-            raise e
+            # Don't re-raise the exception, just return
 
     def send_receive_id(self, data):
         print(f"Sending to server: {data}")
@@ -218,6 +224,15 @@ class Network:
         """This method now just ensures the listener thread is running"""
         if self.listener_thread is None or not self.listener_thread.is_alive():
             self.start_lobby_listener()
+    
+    def close_connection(self):
+        """Cleanly close the connection"""
+        self.running = False
+        self.stop_lobby_listener()
+        try:
+            self.client.close()
+        except:
+            pass
     
     def reconnect(self):
         """Attempt to reconnect to the server"""

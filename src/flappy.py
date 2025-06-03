@@ -590,27 +590,29 @@ class Flappy:
                 self.message.txtPlayerName = f"Player {int(self.network.id) + 1}"   
 
             while True:
-                # Check if kicked - handle this FIRST before any network operations
+                # Check kick/room closed status IMMEDIATELY at the start of each loop
                 if hasattr(self.network, "kicked") and self.network.kicked:
                     print("You have been kicked from the room.")
-                    self.network.kicked = False  # Reset for future
-                    # Cleanup before returning
-                    self.network.stop_lobby_listener()
-                    self._lobby_listener_started = False
+                    # Close the old connection cleanly
+                    self.network.close_connection()
                     
                     # Create a new network connection for the game room
                     self.network = Network()
                     await self.game_room_interface()
                     return
                         
-                # Check if room closed
                 if hasattr(self.network, "room_closed") and self.network.room_closed:
                     print("Room has been closed by the host.")
-                    self.network.room_closed = False  # Reset for future
-                    # Cleanup before returning
-                    self.network.stop_lobby_listener()
-                    self._lobby_listener_started = False
+                    # Close the old connection cleanly
+                    self.network.close_connection()
                     
+                    # Create a new network connection for the game room
+                    self.network = Network()
+                    await self.game_room_interface()
+                    return
+                # Check for connection lost
+                if hasattr(self.network, "connection_lost") and self.network.connection_lost:
+                    print("Connection lost.")
                     # Create a new network connection for the game room
                     self.network = Network()
                     await self.game_room_interface()
@@ -718,10 +720,15 @@ class Flappy:
                         else:
                             self.message.txtPlayerName += event.unicode
 
-                # Only send updates if not kicked
-                if not (hasattr(self.network, "kicked") and self.network.kicked):
-                    self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}")
-                        
+                try:
+                    if not (hasattr(self.network, "kicked") and self.network.kicked):
+                        self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}")
+                except:
+                    # If send fails, connection is likely lost
+                    print("Failed to send update, returning to game room")
+                    self.network = Network()
+                    await self.game_room_interface()
+                    return        
                 
                 self.background.tick()
                 self.floor.tick()

@@ -32,6 +32,20 @@ def broadcast_lobby_update(room_num):
             except:
                 pass
 
+def broadcast_flappy_udpate(room_num):
+    if room_num in room_members:
+        games_info = [
+            {"player_id": m["player_id"], "name": m["name"], "skin_id": m["skin_id"], "x": m["x"], "y":m["y"], "rotate":m["rotate"]}
+            for m in room_members[room_num]
+        ]
+
+        message = json.dumps({"type": "GameUpdate", "players": games_info})
+        for m in room_members[room_num]:
+            try:
+                m["conn"].send(message.encode())
+            except:
+                pass
+
 def threaded_client(conn):
     global room_list, room_members
 

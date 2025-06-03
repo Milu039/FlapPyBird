@@ -52,14 +52,25 @@ class Network:
                         try:
                             self.client.settimeout(0.5)
                             initial_data = self.client.recv(2048).decode()
-                            if initial_data and '{' in initial_data:
-                                message = json.loads(initial_data)
-                                if message.get("type") == "LobbyUpdate":
-                                    self.lobby_state = message["players"]
-                                    print("Initial Lobby State:", self.lobby_state)
                             self.client.settimeout(None)
-                        except:
-                            self.client.settimeout(None)
+
+                            # Parse multiple JSON objects safely
+                            buffer = initial_data.strip()
+                            while buffer:
+                                try:
+                                    # Try to parse one complete JSON object
+                                    message, index = json.JSONDecoder().raw_decode(buffer)
+                                    buffer = buffer[index:].lstrip()  # Remove the parsed object and any whitespace
+
+                                    if message.get("type") == "LobbyUpdate":
+                                        self.lobby_state = message["players"]
+                                        print("Initial Lobby State:", self.lobby_state)
+                                except json.JSONDecodeError:
+                                    # Incomplete data or parse error
+                                    print("JSON Decode Error: Incomplete or invalid data")
+                                    break
+                        except :
+                            self.client.timeout(None)
                             pass
 
                         return reply

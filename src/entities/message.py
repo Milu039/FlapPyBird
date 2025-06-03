@@ -34,7 +34,10 @@ class Message(Entity):
         self.roomCapacity = 0
         self.player_id = None
         self.txtPlayerName = ""
+        self.show_name_prompt = False
+        self.name_error = False
         self.change_name_active = False
+        self.name_input_rect = pygame.Rect(self.config.window.width // 2 - 150, 325, 300, 40)
         self.host_icon = config.images.icon["host"]
         self.isHost = False
         self.kick_icon = config.images.icon["kick"]
@@ -87,6 +90,7 @@ class Message(Entity):
             # Only set rectPlayer if it's the local player
             if player_id == int(self.player_id):
                 self.rectPlayer = name_rect
+
 
     def draw(self, selected_room=None, mouse_pos=None):
         if self.mode == "Solo":
@@ -207,6 +211,27 @@ class Message(Entity):
             text_surface = font.render(room_title, True, self.WHITE)
             text_rect = text_surface.get_rect(center=(x + width // 2, y + height // 2))
             self.draw_message(text_surface, text_rect)
+
+            if self.show_name_prompt:
+                messageBox = self.config.images.container["message box"]
+                posMessageBox = (int((self.config.window.width - messageBox.get_width()) // 2), int((self.config.window.height - messageBox.get_height()) // 2))
+                self.draw_message(messageBox, posMessageBox)
+
+                lblName = self.FONT.render("Name:", True, self.BLACK)
+                posName = (self.config.window.width // 2 - lblName.get_width() // 2, 275)
+                self.draw_message(lblName, posName)
+
+                color = (255, 0, 0) if self.password_error else self.BLACK
+                pygame.draw.rect(self.config.screen, self.WHITE, self.name_input_rect)
+                pygame.draw.rect(self.config.screen, color, self.name_input_rect, 2)
+
+                name_surface = self.FONT.render(self.txtPlayerName, True, self.BLACK)
+                self.config.screen.blit(name_surface, (self.name_input_rect.x + 10, self.name_input_rect.y + 8))
+
+                if self.name_error:
+                    error_msg = self.FONT.render("No Empty Name", True, (255, 0, 0))
+                    error_pos = (self.config.window.width // 2 - error_msg.get_width() // 2, self.name_input_rect.y + 60)
+                    self.config.screen.blit(error_msg, error_pos)
 
         elif self.mode == "Leaderboard":
             pass

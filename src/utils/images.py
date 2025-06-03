@@ -102,6 +102,7 @@ class Images:
             pygame.image.load("assets/sprites/greenbird-upflap.png").convert_alpha(),
             pygame.image.load("assets/sprites/redbird-upflap.png").convert_alpha(),
             pygame.image.load("assets/sprites/bluebird-upflap.png").convert_alpha(),
+            pygame.image.load("assets/sprites/unknow-flappy.png").convert_alpha()
         )
 
         self.skills = {

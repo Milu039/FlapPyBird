@@ -91,7 +91,6 @@ class Message(Entity):
             if player_id == int(self.player_id):
                 self.rectPlayer = name_rect
 
-
     def draw(self, selected_room=None, mouse_pos=None):
         if self.mode == "Solo":
             self.ready_pos = ((self.config.window.width - self.ready_message.get_width()) // 2, int(self.config.window.height * 0.12))

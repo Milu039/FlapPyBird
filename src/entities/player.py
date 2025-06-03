@@ -27,6 +27,8 @@ class Player(Entity):
         self.img_idx = 0
         self.img_gen = cycle([0, 1, 2, 1])
         self.frame = 0
+        self.id = 0
+        self.skin_id = 0
         self.respawn_timer = 0
         self.respawn_delay = 24
         self.waiting_to_respawn = False
@@ -60,6 +62,9 @@ class Player(Entity):
             self.reset_vals_multi()
             self.resume_wings()
             
+    def get_own_state(self):
+        return self.x, self.y, self.rot
+    
     def reset_vals_normal(self) -> None:
         self.vel_y = -9  # player's velocity along Y axis
         self.max_vel_y = 10  # max vel along Y, max descend speed
@@ -119,7 +124,12 @@ class Player(Entity):
         self.frame += 1
         if self.frame % 5 == 0:
             self.img_idx = next(self.img_gen)
-            self.image = self.config.images.player[self.img_idx]
+            if self.mode == PlayerMode.MULTI:
+                # Use skin images in MULTI mode
+                self.image = self.config.images.skin[self.skin_id][self.img_idx]
+            else:
+                # Use default player images in other modes
+                self.image = self.config.images.player[self.img_idx]
             self.w = self.image.get_width()
             self.h = self.image.get_height()
 
@@ -194,6 +204,35 @@ class Player(Entity):
         rotated_image = pygame.transform.rotate(self.image, self.rot)
         rotated_rect = rotated_image.get_rect(center=self.rect.center)
         self.config.screen.blit(rotated_image, rotated_rect)
+
+    def draw_other(self, players):
+        for i, player in enumerate(players):
+            if player is None:
+                continue
+
+            player_id = player.get("player_id")
+            if player_id == self.id:
+                continue 
+            skin_id = player.get("skin_id")
+            x = player.get("x")
+            y = player.get("y")
+            rot = player.get("rot",0)
+
+            # Use the current frame to animate (e.g., same frame cycle logic)
+            frame_idx = self.img_idx  # Sync animation frame with main player
+            image = self.config.images.skin[skin_id][frame_idx]
+
+            rotated_image = pygame.transform.rotate(image, rot)
+            rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
+            self.config.screen.blit(rotated_image, rect)
+
+            # Optional: Draw name tag
+            name = player.get("name")
+            if name:
+                font = pygame.font.SysFont(None, 20)
+                name_surface = font.render(name, True, (255, 255, 255))
+                name_rect = name_surface.get_rect(center=(x + image.get_width() // 2, y - 10))
+                self.config.screen.blit(name_surface, name_rect)
 
     def stop_wings(self) -> None:
         self.img_gen = cycle([self.img_idx])

@@ -404,9 +404,6 @@ class Flappy:
                     room_list_data = self.network.receive_room_list()
                     self.message.set_rooms(room_list_data)
                     last_room_update = current_time
-                except:
-                    # If timeout or error, just continue with existing room list
-                    pass
                 finally:
                     # Reset socket to blocking mode
                     self.network.client.settimeout(None)
@@ -459,7 +456,7 @@ class Flappy:
                                 self.button.show_password_prompt = False
                                 self.message.password_active = False
                                 self.message.password_error = False
-                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
+                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[0].strip()
                                 reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                                 permission = reply.split(":")[3]
                                 await self.room_lobby_interface(permission)
@@ -482,7 +479,7 @@ class Flappy:
                             self.button.show_password_prompt = False
                             self.message.password_active = False
                             self.message.password_error = False
-                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].split(',')[0].strip()
+                            self.message.room_num = self.message.rooms[self.selected_room].split(':')[0].strip()
                             reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                             permission = reply.split(":")[3]
                             await self.room_lobby_interface(permission)
@@ -585,24 +582,27 @@ class Flappy:
                 self.network.start_lobby_listener()
                 self._lobby_listener_started = True
 
-            # Initialize player name if not already set
-            if not hasattr(self.message, 'txtPlayerName') or not self.message.txtPlayerName:
-                self.message.txtPlayerName = f"Player {int(self.network.id) + 1}"   
-
             while True:
                 # Check kick/room closed status IMMEDIATELY at the start of each loop
                 if hasattr(self.network, "kicked") and self.network.kicked:
                     print("You have been kicked from the room.")
-                    self.network.stop_lobby_listener()
+                    self.network.stop_listeners()
                     self._lobby_listener_started = False
                     await self.game_room_interface()
                     return
                         
                 if hasattr(self.network, "room_closed") and self.network.room_closed:
                     print("Room has been closed by the host.")
-                    self.network.stop_lobby_listener()
+                    self.network.stop_listeners()
                     self._lobby_listener_started = False
                     await self.game_room_interface()
+                    return
+
+                if hasattr(self.network, "game_start") and self.network.game_start:
+                    print("Host start the game.")
+                    self.network.stop_listeners()
+                    self._lobby_listener_started = False
+                    await self.multi_gameplay()
                     return
                 
                 if not self.message.change_name_active:
@@ -626,7 +626,7 @@ class Flappy:
                             elif state == "member":
                                 self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
                             
-                            self.network.stop_lobby_listener()
+                            self.network.stop_listeners()
                             self._lobby_listener_started = False
                             await self.game_room_interface()
                             return
@@ -668,7 +668,6 @@ class Flappy:
 
                         for i, rect in enumerate(self.button.rectKicks):
                             if rect.collidepoint(event.pos):
-                                self.kick = True
                                 target_id = self.button.kick_targets[i]
                                 self.network.send(f"Kick:{self.message.room_num}:{target_id}")
                                 break
@@ -688,8 +687,9 @@ class Flappy:
                             self.message.isReady = False
                         
                         if hasattr(self.button, "rectStart") and self.button.rectStart.collidepoint(event.pos):
-                            self.network.stop_lobby_listener()
+                            self.network.stop_listeners()
                             self._lobby_listener_started = False
+                            self.network.send(f"Start")
                             await self.multi_gameplay()
                             return
 
@@ -707,7 +707,7 @@ class Flappy:
                         else:
                             self.message.txtPlayerName += event.unicode
 
-                if not (hasattr(self.network, "kicked") and self.network.kicked and self.kick):
+                if not (hasattr(self.network, "kicked") and self.network.kicked):
                         self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}:")
                 
                 self.background.tick()
@@ -729,16 +729,56 @@ class Flappy:
                 self.config.tick()
 
     async def multi_gameplay(self):
-        self.player.set_mode(PlayerMode.MULTI)
+        self.player.id = int(self.network.id)
+
+        # Wait until lobby_state is received and includes this player
+        while not self.network.lobby_state or not any(p["player_id"] == self.player.id for p in self.network.lobby_state):
+            await asyncio.sleep(0.1)
+
+        # Start game listener BEFORE sending ready
+        if not hasattr(self, '_game_listener_started'):
+            self.network.start_game_listener()
+            self._game_listener_started = True
+
+        # Send ready signal to server
+        if self.network.running:
+            self.network.send(f"Ready:{self.message.room_num}:{self.player.id}")
+
+        # Wait for "AllReady" signal from server
+        while not getattr(self.network, "all_ready", False):
+            await asyncio.sleep(0.1)
+
+        # Now everyone is ready – begin countdown
         countdown_timer = CountdownTimer(self.config)
         countdown_timer.pause_with_countdown()
+
+        self.player.set_mode(PlayerMode.MULTI)
+
+        # Wait for at least one other player in game state
+        ''' having problem with taking the skin id
+        while len(self.network.game_state) <= 1:
+            await asyncio.sleep(0.05)
+
+        while True:
+            for p in self.network.game_state:
+                if p["player_id"] == self.player.id:
+                    self.player.skin_id = p["skin_id"]
+                    break
+            else:
+                await asyncio.sleep(0.05)
+                continue
+            break'''
+
         while True:
             if self.player.collided_push(self.pipes):
                 pass
             if self.player.respawn(self.config):
                 pass    
             if self.timer.time_up():
+                self.network.stop_listeners()
+                self._game_listener_started = False
                 await self.leaderboard_interface()
+                return
 
             for event in pygame.event.get():
                 if event.type == KEYDOWN and event.key == K_ESCAPE:
@@ -752,6 +792,9 @@ class Flappy:
             self.timer.update_timer()
             self.timer.tick()
             self.player.tick()
+            x,y,rot = self.player.get_own_state()
+            self.network.send(f"{self.message.room_num}:{self.network.id}:{x}:{y}:{rot}")
+            self.player.draw_other(self.network.game_state)
         
             pygame.display.update()
             await asyncio.sleep(0)

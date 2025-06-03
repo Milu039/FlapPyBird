@@ -17,29 +17,56 @@ print("Waiting for a connection")
 room_list = []
 room_members = {}
 full_room_list = []
+room_states = {}
+ready_players = {}
+ready_next_index = {}
+default_pos = ["0:50:50:0", "1:100:100:0", "2:150:150:0","3:200:200:0"]
 
 def broadcast_lobby_update(room_num):
     if room_num in room_members:
         players_info = [
-            {"player_id": m["player_id"], "name": m["name"], "skin_id": m["skin_id"], "ready": m["ready"], "host":m["host"]}
+            {
+                "player_id": m["player_id"],
+                "name": m["name"],
+                "skin_id": m["skin_id"],
+                "ready": m["lobby"]["ready"],
+                "host": m["lobby"]["host"]
+            }
             for m in room_members[room_num]
         ]
-
         message = json.dumps({"type": "LobbyUpdate", "players": players_info})
+
         for m in room_members[room_num]:
             try:
                 m["conn"].send(message.encode())
             except:
                 pass
 
-def broadcast_flappy_udpate(room_num):
+def broadcast_game_update(room_num):
     if room_num in room_members:
-        games_info = [
-            {"player_id": m["player_id"], "name": m["name"], "skin_id": m["skin_id"], "x": m["x"], "y":m["y"], "rotate":m["rotate"]}
+        game_info = [
+            {
+                "player_id": m["player_id"],
+                "name": m["name"],
+                "skin_id": m["skin_id"],
+                "x": m["game"]["x"],
+                "y": m["game"]["y"],
+                "rot": m["game"]["rot"],
+            }
             for m in room_members[room_num]
         ]
+        print(game_info)
+        message = json.dumps({"type": "GameUpdate", "players": game_info})
+        for m in room_members[room_num]:
+            try:
+                m["conn"].send(message.encode())
+            except:
+                pass
 
-        message = json.dumps({"type": "GameUpdate", "players": games_info})
+def notify_room_closed(room_num):
+    """Notify all members that the room has been closed"""
+    if room_num in room_members:
+        message = json.dumps({"type": "RoomClosed"})
         for m in room_members[room_num]:
             try:
                 m["conn"].send(message.encode())
@@ -47,7 +74,7 @@ def broadcast_flappy_udpate(room_num):
                 pass
 
 def threaded_client(conn):
-    global room_list, room_members
+    global room_list, room_members, full_room_list, room_states, ready_players, ready_next_index, default_pos
 
     while True:
         try:
@@ -67,16 +94,32 @@ def threaded_client(conn):
                 room_num, room_password = parts[1], parts[2]
                 room_id = str(len(room_list) + 1)
                 room_list.append(f"{room_id}:{room_num}:{room_password}:{1}")
-                room_members[room_num] = [{"conn":conn, "player_id":0, "name":"Player 1", "skin_id":0, "ready":False, "host":True}]
+                room_members[room_num] = [{
+                    "conn": conn,
+                    "player_id": 0,
+                    "name": "Player 1",
+                    "skin_id": 0,
+                    "lobby": {"ready": False, "host": True},
+                    "game": {"x": 0, "y": 0, "rot": 0.0}
+                }]
+                room_states[room_num] = {"default_initialized": False,}
                 conn.sendall(f"Joined:{room_num}:0:host".encode())
                 broadcast_lobby_update(room_num)
 
             elif command == "Join Room":
                 room_num = parts[1]
+                
                 if room_num in room_members and len(room_members[room_num]) < 4:
                     player_id = len(room_members[room_num])
-                    room_members[room_num].append({"conn":conn, "player_id":player_id, "name":f"Player {player_id+1}", "skin_id":0, "ready":False, "host":False})
-                
+                    room_members[room_num].append({
+                        "conn":conn, 
+                        "player_id":player_id, 
+                        "name":f"Player {player_id+1}", 
+                        "skin_id":0, 
+                        "lobby": {"ready": False, "host": False},
+                        "game": {"x": 0, "y": 0, "rot": 0.0}
+                        })
+
                 # Update capacity in room_list
                 for i in range(len(room_list)):
                     room_id, name, password, capacity = room_list[i].split(":")
@@ -84,13 +127,13 @@ def threaded_client(conn):
                         new_capacity = str(len(room_members[room_num]))
                         updated_room = f"{room_id}:{name}:{password}:{new_capacity}"
 
-                    # If room is now full, move it to full_room_list and remove from room_list
-                    if int(new_capacity) >= 4:
-                        full_room_list.append(updated_room)
-                        room_list.pop(i)
-                    else:
-                        room_list[i] = updated_room
-                    break
+                        # If room is now full, move it to full_room_list and remove from room_list
+                        if int(new_capacity) >= 4:
+                            full_room_list.append(updated_room)
+                            room_list.pop(i)
+                        else:
+                            room_list[i] = updated_room
+                        break  # Done, exit loop
 
                 conn.sendall(f"Joined:{room_num}:{player_id}:member".encode())
                 broadcast_lobby_update(room_num)
@@ -121,24 +164,18 @@ def threaded_client(conn):
                             break
                     broadcast_lobby_update(room_num)
 
-            elif command == "Remove Room":  # host wants to remove room
+            elif command == "Remove Room": # need test
                 room_num = parts[1]
-
-                # Notify all members in the room before deleting it
-                if room_num in room_members:
-                    for member in room_members[room_num]:
-                        conn = member.get("conn")
-                        if conn:
-                            try:
-                                conn.sendall(f"Room Closed:{room_num}".encode())
-                            except:
-                                pass  # Optional: handle broken connections
-
-                    # Delete room members
-                    del room_members[room_num]
-
-                # Remove the room from the room list
+                # Notify all members before removing the room
+                notify_room_closed(room_num)
+                
+                # Remove from room lists
                 room_list = [r for r in room_list if room_num not in r]
+                full_room_list = [r for r in full_room_list if room_num not in r]
+                
+                # Remove room members
+                if room_num in room_members:
+                    del room_members[room_num]
 
             elif command == "Update":
                 room_num, pid, name, skin_id, ready_str = parts[1], int(parts[2]), parts[3], int(parts[4]), parts[5]
@@ -148,12 +185,12 @@ def threaded_client(conn):
                     if m["player_id"] == pid:
                         m["name"] = name
                         m["skin_id"] = skin_id
-                        m["ready"] =  ready
+                        m["lobby"]["ready"] =  ready
                         break
-                print("Updated")
+                #print("Updated")
                 broadcast_lobby_update(room_num)
 
-            elif command == "Kick":
+            elif command == "Kick": # need test
                 room_num, target_id = parts[1], int(parts[2])
 
                 if room_num in room_members:
@@ -177,7 +214,91 @@ def threaded_client(conn):
                         if name == room_num:
                             room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
                             break
-                    print(room_list)
+            
+            elif command == "Start":
+                # Reset ready info
+                ready_players[room_num] = set()
+                ready_next_index[room_num] = 0
+
+                # Send "Start" to all players
+                for player in room_members[room_num]:
+                    try:
+                        player["conn"].send("Start".encode())
+                    except:
+                        continue
+
+                # Prompt first player to send Ready
+                first_player = room_members[room_num][0]
+                try:
+                    first_player["conn"].send(f"ReadyNext:{first_player['player_id']}".encode())
+                except:
+                    pass
+
+            elif command == "Ready":
+                room_num, player_id = parts[1], int(parts[2])
+
+                if room_num not in ready_next_index:
+                    ready_next_index[room_num] = 0
+
+                current_index = ready_next_index[room_num]
+                players = room_members.get(room_num, [])
+
+                # Check if the ready is from the expected player
+                if current_index < len(players) and players[current_index]["player_id"] == player_id:
+                    # Accept ready
+                    ready_players.setdefault(room_num, set()).add(player_id)
+                    ready_next_index[room_num] += 1
+
+                    # If more players, prompt the next player
+                    if ready_next_index[room_num] < len(players):
+                        next_player = players[ready_next_index[room_num]]
+                        try:
+                            next_player["conn"].send(f"ReadyNext:{next_player['player_id']}".encode())
+                        except:
+                            pass
+                    else:
+                        # All players ready
+                        for player in players:
+                            try:
+                                player["conn"].send("AllReady".encode())
+                            except:
+                                pass
+                else:
+                    # Ignore ready from players not in turn
+                    print(f"Ignored Ready from player {player_id} (not in turn)")
+
+            elif parts[0] in room_members:
+                room_num = parts[0]
+                player_id = int(parts[1])
+
+                # On first call, send default positions (for countdown)
+                if not room_states[room_num]["default_initialized"]:
+                    for pos in default_pos:
+                        idx, x, y, rot = pos.split(":")
+                        idx = int(idx)
+                        if idx < len(room_members[room_num]):
+                            room_members[room_num][idx]["game"]["x"] = float(x)
+                            room_members[room_num][idx]["game"]["y"] = float(y)
+                            room_members[room_num][idx]["game"]["rot"] = float(rot)
+
+                    room_states[room_num]["default_initialized"] = True
+                    broadcast_game_update(room_num)
+
+                else:
+                    # After countdown, handle actual player game data
+                    x = float(parts[2])
+                    y = float(parts[3])
+                    rot = float(parts[4])
+
+                    for m in room_members[room_num]:
+                        if m["player_id"] == player_id:
+                            m["game"]["x"] = x
+                            m["game"]["y"] = y
+                            m["game"]["rot"] = rot
+                            break
+
+                    broadcast_game_update(room_num)
+
         
         except Exception as e:
             print("Error:", e)

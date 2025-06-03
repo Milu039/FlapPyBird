@@ -97,13 +97,32 @@ class Images:
             "ready": pygame.image.load("assets/sprites/ready.png").convert_alpha(),
         }
 
-        self.skin = (
-            pygame.image.load("assets/sprites/yellowbird-upflap.png").convert_alpha(),
-            pygame.image.load("assets/sprites/greenbird-upflap.png").convert_alpha(),
-            pygame.image.load("assets/sprites/redbird-upflap.png").convert_alpha(),
-            pygame.image.load("assets/sprites/bluebird-upflap.png").convert_alpha(),
-            pygame.image.load("assets/sprites/unknow-flappy.png").convert_alpha()
-        )
+        # Each entry = (upflap, midflap, downflap)
+        self.skin = [
+            (
+                pygame.image.load("assets/sprites/yellowbird-upflap.png").convert_alpha(),
+                pygame.image.load("assets/sprites/yellowbird-midflap.png").convert_alpha(),
+                pygame.image.load("assets/sprites/yellowbird-downflap.png").convert_alpha(),
+            ),
+            (
+                pygame.image.load("assets/sprites/greenbird-upflap.png").convert_alpha(),
+                pygame.image.load("assets/sprites/greenbird-midflap.png").convert_alpha(),
+                pygame.image.load("assets/sprites/greenbird-downflap.png").convert_alpha(),
+            ),
+            (
+                pygame.image.load("assets/sprites/redbird-upflap.png").convert_alpha(),
+                pygame.image.load("assets/sprites/redbird-midflap.png").convert_alpha(),
+                pygame.image.load("assets/sprites/redbird-downflap.png").convert_alpha(),
+            ),
+            (
+                pygame.image.load("assets/sprites/bluebird-upflap.png").convert_alpha(),
+                pygame.image.load("assets/sprites/bluebird-midflap.png").convert_alpha(),
+                pygame.image.load("assets/sprites/bluebird-downflap.png").convert_alpha(),
+            ),
+            (
+                pygame.image.load("assets/sprites/unknow-flappy.png").convert_alpha(),
+            ),
+        ]
 
         self.skills = {
             "speed_boost": pygame.image.load("assets/sprites/speed_boost.png").convert_alpha(),

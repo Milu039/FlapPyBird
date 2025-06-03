@@ -6,17 +6,17 @@ class Skin(Entity):
     def __init__(self, config: GameConfig, player_id):
         super().__init__(config)
         self.skin_id = 0
-        self.skin = config.images.skin[self.skin_id]
-        self.unknow_skin = config.images.skin[4]
+        self.skin = config.images.skin[self.skin_id][0]
+        self.unknow_skin = config.images.skin[4][0]
         self.player_id = player_id
 
     def next(self):
         self.skin_id = (self.skin_id + 1) % 4
-        self.skin = self.config.images.skin[self.skin_id]
+        self.skin = self.config.images.skin[self.skin_id][0]
 
     def previous(self):
         self.skin_id = (self.skin_id - 1) % 4
-        self.skin = self.config.images.skin[self.skin_id]
+        self.skin = self.config.images.skin[self.skin_id][0]
     
     def get_skin_id(self):
         return self.skin_id
@@ -41,7 +41,7 @@ class Skin(Entity):
             posSkin = self.get_position_by_id(pid)
 
             # Draw skin
-            skin_img = self.config.images.skin[skin_id]
+            skin_img = self.config.images.skin[skin_id][0]
             self.config.screen.blit(skin_img, posSkin)
 
     def get_position_by_id(self, player_id):

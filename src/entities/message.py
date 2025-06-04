@@ -40,7 +40,6 @@ class Message(Entity):
         self.name_input_rect = pygame.Rect(self.config.window.width // 2 - 150, 325, 300, 40)
         self.host_icon = config.images.icon["host"]
         self.isHost = False
-        self.kick_icon = config.images.icon["kick"]
         self.ready_icon = config.images.icon["ready"]
         self.isReady = False
     

@@ -14,10 +14,9 @@ class Network:
         self.game_state = []
         self.room_num = None
         self.running = True
-        self.kicked = False
         self.room_closed = False
         self.game_start = False
-
+        self.pipe_callback = None 
         self.lobby_listener_thread = None
         self.game_listener_thread = None
 
@@ -117,13 +116,11 @@ class Network:
             self.game_listener_thread.join(timeout=1)
             self.game_listener_thread = None
 
-    def handle_room_termination(self, reason="kicked"):
+    def handle_room_termination(self, reason="closed"):
         print(f"Handling room termination due to {reason}")
         self.running = False
         self.lobby_state = []
-        self.game_state = []
         self.room_num = None
-        self.kicked = (reason == "kicked")
         self.room_closed = (reason == "closed")
 
     def _listen_lobby_updates(self):
@@ -139,12 +136,6 @@ class Network:
 
                 while buffer:
                     # Process special commands
-                    if buffer.startswith("Kicked"):
-                        print("[INFO] You were kicked from the room.")
-                        self.handle_room_termination(reason="kicked")
-                        buffer = buffer[6:]
-                        continue
-
                     if buffer.startswith("RoomClosed"):
                         print("[INFO] Room was closed by host.")
                         self.handle_room_termination(reason="closed")
@@ -213,6 +204,23 @@ class Network:
                         buffer = buffer[len("AllReady"):]
                         continue
 
+                    if buffer.startswith("Pipe:"):
+                        try:
+                            parts = buffer.strip().split(":")
+                            if len(parts) >= 3:
+                                gap_y = int(parts[2])
+                                # Only spawn pipe if this is NOT player 1
+                                if self.id != "0":
+                                    if hasattr(self, "pipe_callback") and self.pipe_callback:
+                                        self.pipe_callback(gap_y)
+                                # Trim the message to avoid duplication
+                                buffer = ""
+                                continue
+                        except Exception as e:
+                            print(f"Failed to handle pipe spawn: {e}")
+                            buffer = ""
+                            continue
+
                     if '{' in buffer:
                         start = buffer.index('{')
                         brace_count = 0
@@ -231,7 +239,7 @@ class Network:
                                 message = json.loads(json_str)
                                 if message.get("type") == "GameUpdate":
                                     self.game_state = message["players"]
-                                    print("Game Update:", self.game_state)
+                                    #print("Game Update:", self.game_state)
                             except Exception as e:
                                 print(f"Error parsing JSON message: {e}")
                             buffer = buffer[end_pos:]
@@ -255,3 +263,6 @@ class Network:
 
     def listen_for_game_updates(self):
         self.start_game_listener()
+
+    def disconnect(self):
+        self.client.shutdown(socket.SHUT_RDWR)

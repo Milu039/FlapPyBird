@@ -35,44 +35,13 @@ class Button(Entity):
         self.btnNextSkin = config.images.buttons["next"]
         self.btnPreSkin = config.images.buttons["previous"]
 
-        # kick button
-        self.roomCapacity = 0
-        self.btnKickPlayer = config.images.icon["kick"]
-        self.rectKicks = []
-        self.kick_targets = []
-
     def set_mode(self, mode) -> None:
         self.mode = mode
 
-    def update_kick_buttons(self, lobby_state):
-        kick_positions_map = {
-            2: [(515, 185)],
-            3: [(515, 185), (295, 345)],
-            4: [(515, 185), (295, 345), (515, 345)],
-        }
-
-        self.rectKicks = []
-        self.kick_targets = []
-
-        # Get the correct number of positions for other players (excluding self)
-        other_players = [p for p in lobby_state if p["player_id"] != int(self.player_id)]
-        positions = kick_positions_map.get(len(lobby_state), [])
-
-        for target, pos in zip(other_players, positions):
-            self.draw_button(self.btnKickPlayer, pos)
-            rect = self.btnrectCreate(pos, self.btnKickPlayer)
-            self.rectKicks.append(rect)
-            self.kick_targets.append(target["player_id"])
-
-
-    def draw_enter_cancel_button(self):
-        self.posEnter = (self.config.window.width // 2 - 150, 425)
+    def draw_enter_button(self):
+        self.posEnter = (int(self.config.window.width - self.btnEnter.get_width()) // 2, 425)
         self.draw_button(self.btnEnter, self.posEnter)
         self.rectEnter = self.btnrectCreate(self.posEnter, self.btnEnter)
-
-        self.posCancel = (self.config.window.width // 2 + 7, 425)
-        self.draw_button(self.btnCancel, self.posCancel)
-        self.rectCancel = self.btnrectCreate(self.posCancel, self.btnCancel)
 
     def draw(self) -> None:
         # Draw the buttons based on the game mode
@@ -110,7 +79,7 @@ class Button(Entity):
             self.rectJoin = self.btnrectCreate(self.posJoin, self.btnJoin)
 
             if self.show_password_prompt:
-                self.draw_enter_cancel_button()
+                self.draw_enter_button()
 
         if self.mode == "Create Room":
             self.posCreate = ((self.config.window.width - self.btnCreate.get_width()) // 2, self.config.window.height // 2 + 100)
@@ -131,7 +100,7 @@ class Button(Entity):
                 1: self.btnStart_2_4,
                 2: self.btnStart_3_4
             }
-            
+            '''
             if self.ready_count in start_buttons:
                 button = start_buttons[self.ready_count]
                 button.set_alpha(191)
@@ -143,13 +112,13 @@ class Button(Entity):
                 self.draw_button(self.btnStart, self.posStart)
                 self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
             '''
-            if self.ready.count == 1:
+            if self.ready_count == 1:
                 self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnStart, self.posStart)
-                self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)'''
+                self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
 
             if self.show_name_prompt:
-                self.draw_enter_cancel_button()
+                self.draw_enter_button()
 
         if self.mode == "Room Lobby: member":
             if self.player_id == "1":
@@ -178,7 +147,7 @@ class Button(Entity):
                 self.rectReady = self.btnrectCreate(self.posReady, self.btnReady)
 
             if self.show_name_prompt:
-                self.draw_enter_cancel_button()
+                self.draw_enter_button()
 
     def draw_button(self,image,pos) -> None:
         self.config.screen.blit(image, pos)

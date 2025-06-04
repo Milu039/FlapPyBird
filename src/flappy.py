@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import pygame
+import random
 from pygame.locals import K_ESCAPE, K_SPACE, K_UP, KEYDOWN, QUIT
 
 from .entities import (
@@ -159,6 +160,10 @@ class Flappy:
 
     def get_player_id(self, data):
         return self.network.send_receive_id(data)
+
+    def on_pipe_received(self, gap_y):
+        """Called by network thread when a new pipe needs to be spawned."""
+        self.pipes.multi_spawn_new_pipes(gap_y)
     
     def restart(self):
         self.container = Container(self.config, self.mode)
@@ -456,7 +461,7 @@ class Flappy:
                                 self.button.show_password_prompt = False
                                 self.message.password_active = False
                                 self.message.password_error = False
-                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[0].strip()
+                                self.message.room_num = self.message.rooms[self.selected_room].split(':')[1].strip()
                                 reply = self.get_player_id(f"Join Room:{self.message.room_num}")
                                 permission = reply.split(":")[3]
                                 await self.room_lobby_interface(permission)
@@ -582,16 +587,9 @@ class Flappy:
                 self.network.start_lobby_listener()
                 self._lobby_listener_started = True
 
-            while True:
-                # Check kick/room closed status IMMEDIATELY at the start of each loop
-                if hasattr(self.network, "kicked") and self.network.kicked:
-                    print("You have been kicked from the room.")
-                    self.network.stop_listeners()
-                    self._lobby_listener_started = False
-                    await self.game_room_interface()
-                    return
-                        
+            while True:    
                 if hasattr(self.network, "room_closed") and self.network.room_closed:
+                    self.network.disconnect()
                     print("Room has been closed by the host.")
                     self.network.stop_listeners()
                     self._lobby_listener_started = False
@@ -614,7 +612,6 @@ class Flappy:
                 btnBack, rectBack = self.back_button()
 
                 if state == "host":
-                    self.button.roomCapacity = int(len(self.network.lobby_state))
                     self.button.ready_count = sum(1 for player in self.network.lobby_state if player["ready"])
 
                 for event in pygame.event.get():
@@ -625,7 +622,7 @@ class Flappy:
                                 self.network.send(f"Remove Room:{self.message.room_num}")
                             elif state == "member":
                                 self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
-                            
+                            self.network.disconnect()
                             self.network.stop_listeners()
                             self._lobby_listener_started = False
                             await self.game_room_interface()
@@ -659,18 +656,6 @@ class Flappy:
                                     self.message.txtPlayerName = self.message.txtPlayerName
                                 else:
                                     self.message.name_error = True
-
-                            elif hasattr(self.button, "rectCancel") and self.button.rectCancel.collidepoint(event.pos):
-                                self.message.show_name_prompt = False
-                                self.button.show_name_prompt = False
-                                self.message.change_name_active = False
-                                self.message.name_error = False
-
-                        for i, rect in enumerate(self.button.rectKicks):
-                            if rect.collidepoint(event.pos):
-                                target_id = self.button.kick_targets[i]
-                                self.network.send(f"Kick:{self.message.room_num}:{target_id}")
-                                break
 
                         if int(self.network.id) > 0:
                             if not self.button.isReady and hasattr(self.button, "rectReady") and self.button.rectReady.collidepoint(event.pos):
@@ -707,8 +692,7 @@ class Flappy:
                         else:
                             self.message.txtPlayerName += event.unicode
 
-                if not (hasattr(self.network, "kicked") and self.network.kicked):
-                        self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}:")
+                self.network.send(f"Update:{self.message.room_num}:{self.network.id}:{self.message.txtPlayerName}:{self.skin.get_skin_id()}:{self.message.isReady}:{self.message.isHost}:")
                 
                 self.background.tick()
                 self.floor.tick()
@@ -717,8 +701,6 @@ class Flappy:
                 self.config.screen.blit(btnBack, rectBack)
                 
                 # Draw all players
-                if state == "host":
-                    self.button.update_kick_buttons(self.network.lobby_state)
                 self.skin.draw_other(self.network.lobby_state)
                 self.message.draw_name(self.network.lobby_state)
                 self.message.tick()
@@ -730,6 +712,8 @@ class Flappy:
 
     async def multi_gameplay(self):
         self.player.id = int(self.network.id)
+        self.pipes.set_mode("multi")
+        self.network.pipe_callback = self.on_pipe_received
 
         # Wait until lobby_state is received and includes this player
         while not self.network.lobby_state or not any(p["player_id"] == self.player.id for p in self.network.lobby_state):
@@ -770,6 +754,16 @@ class Flappy:
             break'''
 
         while True:
+            if self.player.id == 0 and self.pipes.can_spawn_pipes():
+                # Only player 1 generates and sends pipe position
+                base_y = self.config.window.viewport_height
+                gap_y = random.randint(
+                    int(base_y * 0.2),
+                    int(base_y * 0.6 - self.pipes.pipe_gap)
+                )
+                self.network.send(f"Pipe:{self.message.room_num}:{gap_y}")
+                self.pipes.multi_spawn_new_pipes(gap_y)
+
             if self.player.collided_push(self.pipes):
                 pass
             if self.player.respawn(self.config):

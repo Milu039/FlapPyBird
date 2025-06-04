@@ -20,6 +20,7 @@ full_room_list = []
 room_states = {}
 ready_players = {}
 ready_next_index = {}
+early_ready = {}
 default_pos = ["0:50:50:0", "1:100:100:0", "2:150:150:0","3:200:200:0"]
 
 def broadcast_lobby_update(room_num):
@@ -74,7 +75,7 @@ def notify_room_closed(room_num):
                 pass
 
 def threaded_client(conn):
-    global room_list, room_members, full_room_list, room_states, ready_players, ready_next_index, default_pos
+    global room_list, room_members, full_room_list, room_states, ready_players, ready_next_index, early_ready, default_pos
 
     while True:
         try:
@@ -189,31 +190,6 @@ def threaded_client(conn):
                         break
                 #print("Updated")
                 broadcast_lobby_update(room_num)
-
-            elif command == "Kick": # need test
-                room_num, target_id = parts[1], int(parts[2])
-
-                if room_num in room_members:
-                    for i, m in enumerate(room_members[room_num]):
-                        if m["player_id"] == target_id:
-                            try:
-                                m["conn"].send("Kicked".encode())  # Optional: notify the kicked player
-                            except:
-                                pass
-                            room_members[room_num].pop(i)
-                            print(f"Player {target_id} kicked. Remaining players: {len(room_members[room_num])}")
-                            # Shift remaining player IDs
-                            for j, player in enumerate(room_members[room_num]):
-                                player["player_id"] = j
-                            broadcast_lobby_update(room_num)
-                            break
-                    
-                    new_capacity = len(room_members[room_num])
-                    for i in range(len(room_list)):
-                        room_id, name, password, capacity = room_list[i].split(":")
-                        if name == room_num:
-                            room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
-                            break
             
             elif command == "Start":
                 # Reset ready info
@@ -240,32 +216,48 @@ def threaded_client(conn):
                 if room_num not in ready_next_index:
                     ready_next_index[room_num] = 0
 
-                current_index = ready_next_index[room_num]
                 players = room_members.get(room_num, [])
+                current_index = ready_next_index[room_num]
 
-                # Check if the ready is from the expected player
-                if current_index < len(players) and players[current_index]["player_id"] == player_id:
-                    # Accept ready
-                    ready_players.setdefault(room_num, set()).add(player_id)
-                    ready_next_index[room_num] += 1
+                if current_index < len(players):
+                    expected_player_id = players[current_index]["player_id"]
 
-                    # If more players, prompt the next player
-                    if ready_next_index[room_num] < len(players):
-                        next_player = players[ready_next_index[room_num]]
-                        try:
-                            next_player["conn"].send(f"ReadyNext:{next_player['player_id']}".encode())
-                        except:
-                            pass
+                    if player_id == expected_player_id:
+                        # Accept the ready in turn
+                        ready_players.setdefault(room_num, set()).add(player_id)
+                        ready_next_index[room_num] += 1
+
+                        # Check if next player had already sent Ready early
+                        while ready_next_index[room_num] < len(players):
+                            next_player = players[ready_next_index[room_num]]
+                            next_id = next_player["player_id"]
+
+                            if room_num in early_ready and next_id in early_ready[room_num]:
+                                # Remove from early_ready and process
+                                early_ready[room_num].remove(next_id)
+                                ready_players[room_num].add(next_id)
+                                ready_next_index[room_num] += 1
+                            else:
+                                # Prompt the next player
+                                try:
+                                    next_player["conn"].send(f"ReadyNext:{next_id}".encode())
+                                except:
+                                    pass
+                                break  # Exit loop once next_player is notified
+
+                        # If all players are ready
+                        if ready_next_index[room_num] >= len(players):
+                            for player in players:
+                                try:
+                                    player["conn"].send("AllReady".encode())
+                                except:
+                                    pass
+
                     else:
-                        # All players ready
-                        for player in players:
-                            try:
-                                player["conn"].send("AllReady".encode())
-                            except:
-                                pass
-                else:
-                    # Ignore ready from players not in turn
-                    print(f"Ignored Ready from player {player_id} (not in turn)")
+                        # Save this player's early Ready
+                        early_ready.setdefault(room_num, set()).add(player_id)
+                        print(f"[INFO] Queued early Ready from player {player_id} (waiting turn)")
+
 
             elif parts[0] in room_members:
                 room_num = parts[0]
@@ -298,6 +290,14 @@ def threaded_client(conn):
                             break
 
                     broadcast_game_update(room_num)
+
+            elif command == "Pipe":
+                room_num, gap_y = parts[1], parts[2]
+                for player in room_members.get(room_num, []):
+                    try:
+                        player["conn"].send(f"Pipe:{room_num}:{gap_y}".encode())
+                    except:
+                        pass
 
         
         except Exception as e:

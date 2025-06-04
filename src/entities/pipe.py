@@ -39,6 +39,11 @@ class Pipes(Entity):
         self.upper.append(upper)
         self.lower.append(lower)
 
+    def reset(self):
+        self.upper = []
+        self.lower = []
+        self.resume()
+
     def tick(self) -> None:
         if self.mode == "solo" and self.can_spawn_pipes():
             self.spawn_new_pipes()
@@ -57,10 +62,10 @@ class Pipes(Entity):
             pipe.vel_x = -8
 
     def can_spawn_pipes(self) -> bool:
-        last = self.upper[-1]
-        if not last:
+        if not self.upper:  # if the list is empty
             return True
 
+        last = self.upper[-1]
         return self.config.window.width - (last.x + last.w) > last.w * 2.5
 
     def spawn_new_pipes(self):

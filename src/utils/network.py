@@ -16,6 +16,7 @@ class Network:
         self.running = True
         self.room_closed = False
         self.game_start = False
+        self.restart = False
         self.pipe_callback = None
         self.timer_callback = None
         self.lobby_listener_thread = None
@@ -29,7 +30,7 @@ class Network:
 
     def send(self, data):
         try:
-            print(f"Sending: {data}")
+            #print(f"Sending: {data}")
             self.client.send(data.encode())
         except Exception as e:
             print(f"Failed to send data: {e}")
@@ -149,6 +150,12 @@ class Network:
                         buffer = buffer[len("Start"):]
                         continue
 
+                    if buffer.startswith("Restart"):
+                        print("[INFO] Restart command received. Returning to Room Lobby.")
+                        self.restart = True
+                        buffer = buffer[len("Restart"):]
+                        continue
+
                     # Process JSON messages
                     if '{' in buffer:
                         start = buffer.index('{')
@@ -266,4 +273,6 @@ class Network:
         self.start_game_listener()
 
     def disconnect(self):
+        self.running = False
         self.client.shutdown(socket.SHUT_RDWR)
+        self.client.close()

@@ -68,6 +68,7 @@ def notify_room_closed(room_num):
     """Notify all members that the room has been closed"""
     if room_num in room_members:
         message = json.dumps({"type": "RoomClosed"})
+        print(message)
         for m in room_members[room_num]:
             try:
                 m["conn"].send(message.encode())
@@ -139,30 +140,40 @@ def threaded_client(conn):
                 conn.sendall(f"Joined:{room_num}:{player_id}:member".encode())
                 broadcast_lobby_update(room_num)
 
-            elif command == "Leave Room": # need test
+            elif command == "Leave Room":
                 room_num, pid = parts[1], int(parts[2])
                 if room_num in room_members:
+                    # Remove player
                     room_members[room_num] = [m for m in room_members[room_num] if not (m["conn"] == conn and m["player_id"] == pid)]
-                    
-                    # Shift IDs
+
+                    # Reassign player IDs
                     for i, m in enumerate(room_members[room_num]):
                         m["player_id"] = i
-                    
-                    # Update capacity in room_list and full_room_list
+
                     new_capacity = len(room_members[room_num])
+
+                    # Update room_list
                     for i in range(len(room_list)):
-                        room_id, name, password, capacity = room_list[i].split(":")
+                        room_id, name, password, capacity = room_list[i].split(":", 3)
                         if name == room_num:
                             room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
                             break
 
+                    # Move from full_room_list to room_list if necessary
                     for i in range(len(full_room_list)):
-                        room_id, name, password, capacity = full_room_list[i].split(":")
+                        room_id, name, password, capacity = full_room_list[i].split(":", 3)
                         if name == room_num:
-                            # Room is no longer full, move back to room_list
-                            full_room = full_room_list.pop(i)
+                            full_room_list.pop(i)
                             room_list.append(f"{room_id}:{name}:{password}:{new_capacity}")
                             break
+
+                    # Optionally delete room if empty
+                    if new_capacity == 0:
+                        room_members.pop(room_num, None)
+                        room_list = [r for r in room_list if room_num not in r]
+                        full_room_list = [r for r in full_room_list if room_num not in r]
+                        return
+
                     broadcast_lobby_update(room_num)
 
             elif command == "Remove Room": # need test
@@ -299,7 +310,29 @@ def threaded_client(conn):
                         player["conn"].send(f"Pipe:{room_num}:{gap_y}:".encode())
                     except:
                         pass
-        
+            
+            elif command == "Restart":
+                if room_num in room_members:
+                    print(f"[INFO] Host restarted room {room_num}")
+
+                    # Notify all players in the room to return to lobby
+                    for p in room_members[room_num]:
+                        try:
+                            p["conn"].send("Restart".encode())
+                        except:
+                            continue
+
+                    # Reset game state values
+                    for m in room_members[room_num]:
+                        m["game"] = {"x": 0, "y": 0, "rot": 0.0}
+                        m["lobby"]["ready"] = False
+
+                    # Reset room tracking
+                    room_states[room_num]["default_initialized"] = False
+                    ready_players[room_num] = set()
+                    ready_next_index[room_num] = 0
+                    early_ready[room_num] = set()
+
         except Exception as e:
             print("Error:", e)
             break

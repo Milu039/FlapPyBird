@@ -8,7 +8,7 @@ class Timer(Entity):
     def __init__(self, config: GameConfig) -> None:
         super().__init__(config)
         self.y = self.config.window.height * 0.1
-        self.total_time = 1 * 5  # 5 minutes in seconds
+        self.total_time = 1 * 10  # 5 minutes in seconds
         self.start_time = None
         self.remaining_time = self.total_time
         self.colon_image = pygame.font.SysFont(None, 48).render(":", True, (255, 255, 255))

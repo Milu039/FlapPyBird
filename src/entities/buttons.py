@@ -112,7 +112,7 @@ class Button(Entity):
                 self.draw_button(self.btnStart, self.posStart)
                 self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
             '''
-            if self.ready_count == 3:
+            if self.ready_count == 1:
                 self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnStart, self.posStart)
                 self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
@@ -150,14 +150,20 @@ class Button(Entity):
                 self.draw_enter_button()
 
         if self.mode == "Leaderboard":
-            self.posRestart = (325, self.config.window.height // 2 + 275)
-            self.posQuit = (540, self.config.window.height // 2 + 275)
+            if self.player_id == "0":
+                self.posRestart = (325, self.config.window.height // 2 + 275)
+                self.posQuit = (540, self.config.window.height // 2 + 275)
 
-            self.draw_button(self.btnRestart, self.posRestart)
-            self.draw_button(self.btnQuit, self.posQuit)
+                self.draw_button(self.btnRestart, self.posRestart)
+                self.draw_button(self.btnQuit, self.posQuit)
 
-            self.rectRestart = self.btnrectCreate(self.posRestart, self.btnRestart)
-            self.rectQuit = self.btnrectCreate(self.posQuit, self.btnQuit)
+                self.rectRestart = self.btnrectCreate(self.posRestart, self.btnRestart)
+                self.rectQuit = self.btnrectCreate(self.posQuit, self.btnQuit)
+            else:
+                self.posQuit = (int(self.config.window.width - self.btnQuit.get_width()) // 2, self.config.window.height // 2 + 275)
+                self.draw_button(self.btnQuit, self.posQuit)
+                self.rectQuit = self.btnrectCreate(self.posQuit, self.btnQuit)
+
 
     def draw_button(self,image,pos) -> None:
         self.config.screen.blit(image, pos)

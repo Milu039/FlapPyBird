@@ -18,6 +18,10 @@ class Skin(Entity):
         self.skin_id = (self.skin_id - 1) % 4
         self.skin = self.config.images.skin[self.skin_id][0]
     
+    def set_skin(self, skin_id):
+        self.skin_id = skin_id
+        self.skin = self.config.images.skin[skin_id][0]
+    
     def get_skin_id(self):
         return self.skin_id
 
@@ -55,9 +59,7 @@ class Skin(Entity):
     
     def determine_rank(self,players):
         # Sort players by x (descending), then y (optional), and return the top one
-        print(players)
         sorted_players = sorted(players, key=lambda p: p['x'], reverse=True)
-        print(sorted_players)
         return sorted_players
 
     def draw_rank(self, other_players):

@@ -52,6 +52,9 @@ class Message(Entity):
     def set_rooms(self, room_list):
         self.rooms = room_list
 
+    def set_room_title(self, title):
+        self.room_num = title
+
     def draw_message(self, image, pos) -> None:
         self.config.screen.blit(image, pos)
 

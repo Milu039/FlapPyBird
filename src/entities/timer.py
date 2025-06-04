@@ -1,4 +1,5 @@
 import time
+import pygame
 from ..utils import GameConfig
 from .entity import Entity
 from .player import Player
@@ -7,9 +8,13 @@ class Timer(Entity):
     def __init__(self, config: GameConfig) -> None:
         super().__init__(config)
         self.y = self.config.window.height * 0.1
-        self.total_time = 1 * 300  # 5 minutes in seconds
-        self.start_time = time.time()
+        self.total_time = 1 * 5  # 5 minutes in seconds
+        self.start_time = None
         self.remaining_time = self.total_time
+        self.colon_image = pygame.font.SysFont(None, 48).render(":", True, (255, 255, 255))
+
+    def start(self):
+        self.start_time = time.time()
 
     def reset(self) -> None:
         self.start_time = time.time()
@@ -21,7 +26,7 @@ class Timer(Entity):
 
     def time_up(self) -> bool:
         self.update_timer()
-        return self.remaining_time <= 0
+        return time.time() - self.start_time >= self.total_time
 
     def get_time_digits(self) -> list:
         minutes = self.remaining_time // 60
@@ -30,16 +35,53 @@ class Timer(Entity):
         return [int(ch) for ch in time_str]
 
     def draw_timer(self) -> None:
+        digits = self.get_time_digits()  # Returns [0, 5, 0, 0]
+        digit_images = [self.config.images.numbers[d] for d in digits]
 
-        digits = self.get_time_digits()
-        images = [self.config.images.numbers[d] for d in digits]
+        # Create colon with black outline
+        font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 48)
+        colon_color = (255, 255, 255)
+        outline_color = (0, 0, 0)
 
-        total_width = sum(img.get_width() for img in images)
+        colon_surface = font.render(":", True, colon_color)
+        outline_surfaces = [
+            (font.render(":", True, outline_color), dx, dy)
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+        ]
+
+        # Compute total width including colon
+        total_width = (
+            digit_images[0].get_width() +
+            digit_images[1].get_width() +
+            colon_surface.get_width() +
+            digit_images[2].get_width() +
+            digit_images[3].get_width()
+        )
+
         x_offset = (self.config.window.width - total_width) / 2
+        y = self.y
 
-        for image in images:
-            self.config.screen.blit(image, (x_offset, self.y))
-            x_offset += image.get_width()
+        # Draw first two digits
+        self.config.screen.blit(digit_images[0], (x_offset, y))
+        x_offset += digit_images[0].get_width()
+
+        self.config.screen.blit(digit_images[1], (x_offset, y))
+        x_offset += digit_images[1].get_width()
+
+        # Draw colon outline (behind)
+        for surf, dx, dy in outline_surfaces:
+            self.config.screen.blit(surf, (x_offset + dx, y + dy))
+
+        # Draw colon foreground
+        self.config.screen.blit(colon_surface, (x_offset, y))
+        x_offset += colon_surface.get_width()
+
+        # Draw last two digits
+        self.config.screen.blit(digit_images[2], (x_offset, y))
+        x_offset += digit_images[2].get_width()
+
+        self.config.screen.blit(digit_images[3], (x_offset, y))
+
 
     def draw(self) -> None:
         self.draw_timer()

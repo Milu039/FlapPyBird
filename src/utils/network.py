@@ -16,7 +16,8 @@ class Network:
         self.running = True
         self.room_closed = False
         self.game_start = False
-        self.pipe_callback = None 
+        self.pipe_callback = None
+        self.timer_callback = None
         self.lobby_listener_thread = None
         self.game_listener_thread = None
 

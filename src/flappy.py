@@ -2,6 +2,7 @@ import asyncio
 import sys
 import pygame
 import random
+import time
 from pygame.locals import K_ESCAPE, K_SPACE, K_UP, KEYDOWN, QUIT
 
 from .entities import (
@@ -615,7 +616,6 @@ class Flappy:
                     self.button.ready_count = sum(1 for player in self.network.lobby_state if player["ready"])
 
                 for event in pygame.event.get():
-                    self.check_quit_event(event)
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         if rectBack.collidepoint(event.pos):
                             if state == "host":
@@ -735,23 +735,18 @@ class Flappy:
         # Now everyone is ready – begin countdown
         countdown_timer = CountdownTimer(self.config)
         countdown_timer.pause_with_countdown()
-
+        self.timer.start()
         self.player.set_mode(PlayerMode.MULTI)
 
-        # Wait for at least one other player in game state
-        ''' having problem with taking the skin id
-        while len(self.network.game_state) <= 1:
-            await asyncio.sleep(0.05)
-
         while True:
-            for p in self.network.game_state:
+            for p in self.network.lobby_state:
                 if p["player_id"] == self.player.id:
                     self.player.skin_id = p["skin_id"]
                     break
             else:
                 await asyncio.sleep(0.05)
                 continue
-            break'''
+            break
 
         while True:
             if self.player.id == 0 and self.pipes.can_spawn_pipes():
@@ -775,8 +770,6 @@ class Flappy:
                 return
 
             for event in pygame.event.get():
-                if event.type == KEYDOWN and event.key == K_ESCAPE:
-                    self.check_quit_event(event)
                 if self.is_tap_event(event):
                     self.player.flap()
 
@@ -795,27 +788,31 @@ class Flappy:
             self.config.tick()
 
     async def leaderboard_interface(self):
-        
+        self.player.stop_wings()
         self.pipes.stop()
         self.floor.stop()
         self.mode.set_mode("Leaderboard")
+        self.medal.set_mode("multi")
         self.button.set_mode(self.mode.get_mode())
         self.message.set_mode(self.mode.get_mode())
+        self.container.set_mode(self.mode.get_mode())
 
         while True:
             for event in pygame.event.get():
-                self.check_quit_event(event)
-                if self.is_tap_event(event):
-                    if self.button.rectRestart and self.button.rectRestart.collidepoint(event.pos):
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if hasattr(self.button, "rectRestart") and self.button.rectRestart.collidepoint(event.pos):
                         self.restart()
                         await self.room_lobby_interface()
-                    elif self.button.rectQuit and self.button.rectQuit.collidepoint(event.pos):
+                    elif hasattr(self.button, "rectQuit") and self.button.rectQuit.collidepoint(event.pos):
                         self.restart()
                         await self.game_room_interface()
 
             self.background.tick()
             self.floor.tick()
             self.pipes.tick()
+            self.container.tick()
+            self.skin.draw_rank(self.network.game_state)
+            self.medal.tick()
             self.player.tick()
             self.message.tick()
             self.button.tick()

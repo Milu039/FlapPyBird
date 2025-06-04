@@ -211,27 +211,27 @@ class Player(Entity):
                 continue
 
             player_id = player.get("player_id")
-            if player_id == self.id:
-                continue 
             skin_id = player.get("skin_id")
             x = player.get("x")
             y = player.get("y")
-            rot = player.get("rot",0)
+            rot = player.get("rot", 0)
 
             # Use the current frame to animate (e.g., same frame cycle logic)
             frame_idx = self.img_idx  # Sync animation frame with main player
             image = self.config.images.skin[skin_id][frame_idx]
 
-            rotated_image = pygame.transform.rotate(image, rot)
-            rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
-            self.config.screen.blit(rotated_image, rect)
+            # Only draw bird if it's not this client player
+            if player_id != self.id:
+                rotated_image = pygame.transform.rotate(image, rot)
+                rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
+                self.config.screen.blit(rotated_image, rect)
 
-            # Optional: Draw name tag
+            # Always draw name tag (even for self)
             name = player.get("name")
             if name:
-                font = pygame.font.SysFont(None, 20)
-                name_surface = font.render(name, True, (255, 255, 255))
-                name_rect = name_surface.get_rect(center=(x + image.get_width() // 2, y - 10))
+                font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 14)
+                name_surface = font.render(name, True, (0,0,0))
+                name_rect = name_surface.get_rect(center=(x + image.get_width() // 2, y + image.get_height() + 15))
                 self.config.screen.blit(name_surface, name_rect)
 
     def stop_wings(self) -> None:

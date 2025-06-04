@@ -192,6 +192,7 @@ def threaded_client(conn):
                 broadcast_lobby_update(room_num)
             
             elif command == "Start":
+                room_list = [r for r in room_list if room_num not in r]
                 # Reset ready info
                 ready_players[room_num] = set()
                 ready_next_index[room_num] = 0
@@ -295,10 +296,9 @@ def threaded_client(conn):
                 room_num, gap_y = parts[1], parts[2]
                 for player in room_members.get(room_num, []):
                     try:
-                        player["conn"].send(f"Pipe:{room_num}:{gap_y}".encode())
+                        player["conn"].send(f"Pipe:{room_num}:{gap_y}:".encode())
                     except:
                         pass
-
         
         except Exception as e:
             print("Error:", e)

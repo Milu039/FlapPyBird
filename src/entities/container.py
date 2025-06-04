@@ -11,6 +11,7 @@ class Container(Entity):
         self.conRoomList= config.images.container["room list"]
         self.conCreateRoom = config.images.container["create room"]
         self.conRoomLobby = config.images.container["room lobby"]
+        self.conLeaderboard = config.images.container["leaderboard"]
 
     def set_mode(self,mode):
         self.mode = mode
@@ -33,12 +34,19 @@ class Container(Entity):
             )
             self.draw_container(self.conCreateRoom, self.posCreateRoom)
 
-        elif self.mode == "Room Lobby: host" or "Room Lobby: member":
+        elif self.mode == "Room Lobby: host" or self.mode == "Room Lobby: member":
             self.posRoomLobby = (
                 int(self.config.window.width - self.conRoomLobby.get_width()) // 2,
                 int(self.config.window.height - self.conRoomLobby.get_height()) // 2 - 50
             )
             self.draw_container(self.conRoomLobby, self.posRoomLobby)
+        
+        elif self.mode == "Leaderboard":
+            self.posLeaderboard = (
+                int(self.config.window.width - self.conLeaderboard.get_width()) // 2,
+                int(self.config.window.height - self.conLeaderboard.get_height()) // 2
+            )
+            self.draw_container(self.conLeaderboard, self.posLeaderboard)
             
         
 

@@ -23,7 +23,7 @@ class Message(Entity):
         self.show_password_prompt = False
         self.password_error = False
         self.password_active = False
-        self.password_input_rect = pygame.Rect(self.config.window.width // 2 - 150, 325, 300, 40)
+        self.password_input_rect = pygame.Rect(config.window.width // 2 - 150, 325, 300, 40)
 
         # create room
         self.random_number = Random.randint(100000, 999999)
@@ -37,11 +37,14 @@ class Message(Entity):
         self.show_name_prompt = False
         self.name_error = False
         self.change_name_active = False
-        self.name_input_rect = pygame.Rect(self.config.window.width // 2 - 150, 325, 300, 40)
+        self.name_input_rect = pygame.Rect(config.window.width // 2 - 150, 325, 300, 40)
         self.host_icon = config.images.icon["host"]
         self.isHost = False
         self.ready_icon = config.images.icon["ready"]
         self.isReady = False
+
+        # leaderboard
+        self.leaderboard_message = config.images.message["leaderboard"]
     
     def set_mode(self, mode) -> None:
         self.mode = mode
@@ -192,7 +195,7 @@ class Message(Entity):
             password_input_surface = self.FONT.render(masked, True, self.BLACK)
             self.config.screen.blit(password_input_surface, (self.password_input_rect.x + 10, self.password_input_rect.y + 8))
 
-        elif self.mode == "Room Lobby: host" or "Room Lobby: member":
+        elif self.mode == "Room Lobby: host" or self.mode == "Room Lobby: member":
             room_title = f"Room {self.room_num}"
             font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 20)
             brown = (66, 36, 0)
@@ -232,7 +235,8 @@ class Message(Entity):
                     self.config.screen.blit(error_msg, error_pos)
 
         elif self.mode == "Leaderboard":
-            pass
+            self.leaderboard_pos = ((self.config.window.width - self.leaderboard_message.get_width()) // 2, int(self.config.window.height * 0.05))
+            self.draw_message(self.leaderboard_message, self.leaderboard_pos)
 
         elif self.mode == "skill_ability" or self.mode == "Skill Ability":
             # Draw the skill ability image instead of generating text

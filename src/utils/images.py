@@ -46,19 +46,23 @@ class Images:
             "game room": pygame.image.load("assets/sprites/Game room.png").convert_alpha(),
             "create": pygame.image.load("assets/sprites/Create room.png").convert_alpha(),
             "gameover": pygame.image.load("assets/sprites/gameover.png").convert_alpha(),
+            "leaderboard": pygame.image.load("assets/sprites/Leaderboard.png").convert_alpha(),
             "skill_ability": pygame.image.load("assets/sprites/skill_ability.png").convert_alpha(),
         }
 
         original_container = pygame.image.load("assets/sprites/container.png").convert_alpha()
+        leaderboard_container = pygame.image.load("assets/sprites/leaderboard container.png").convert_alpha()
         message_box = pygame.transform.scale(original_container, (350,275))
         room_list_container = pygame.transform.scale(original_container, (700,500))
         create_room_container = pygame.transform.scale(original_container, (400,400))
         room_lobby_container = pygame.transform.scale(original_container, (500,400))
+        resize_leaderboard_container = pygame.transform.scale(leaderboard_container, (600,500))
         self.container = {
             "message box" : message_box,
             "room list": room_list_container,
             "create room": create_room_container,
             "room lobby": room_lobby_container,
+            "leaderboard": resize_leaderboard_container
         }
         
         # base (ground) sprite

@@ -435,7 +435,36 @@ def threaded_client(conn):
                     ready_players[room_num] = set()
                     ready_next_index[room_num] = 0
                     early_ready[room_num] = set()
-
+                    
+            elif command == "UseFreeze":
+                room_num, user_id = parts[1], int(parts[2])
+                print(f"DEBUG SERVER: Player {user_id} used freeze in room {room_num}")
+                
+                if room_num in room_members:
+                    # Find the player with the highest X coordinate (furthest ahead)
+                    highest_x = -999999
+                    target_player = None
+                    
+                    for member in room_members[room_num]:
+                        player_id = member["player_id"]
+                        player_x = member["game"]["x"]
+                        
+                        # Don't target the player who used the skill
+                        if player_id != user_id:
+                            if player_x > highest_x:
+                                highest_x = player_x
+                                target_player = member
+                    
+                    if target_player:
+                        target_id = target_player["player_id"]
+                        try:
+                            # Send freeze command only to the player with highest X
+                            target_player["conn"].send(f"GetFrozen:{user_id}".encode())
+                            print(f"DEBUG SERVER: Player {user_id} froze player {target_id} (highest X: {highest_x})")
+                        except Exception as e:
+                            print(f"Failed to send freeze to player {target_id}: {e}")
+                    else:
+                        print(f"DEBUG SERVER: No valid target found for freeze from player {user_id}")
         except Exception as e:
             print("Error:", e)
             break

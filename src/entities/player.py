@@ -46,7 +46,7 @@ class Player(Entity):
         self.speed_boost_timer = 0
 
         # Time freeze
-        self.time_frozen = False
+        self.time_freeze = False
         self.freeze_timer = 0
         self.target_time_freeze = -1
         self.time_freeze_active = False
@@ -82,7 +82,7 @@ class Player(Entity):
             self.resume_wings()
 
     def get_own_state(self):
-        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active, self.time_frozen
+        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active, self.time_freeze
     
     def set_initial_position(self):
         self.x = int(self.config.window.width * 0.2)
@@ -224,30 +224,35 @@ class Player(Entity):
 
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
-        # Time freeze countdown (for the caster)
-        if self.time_freeze_active:
-            self.time_freeze_timer -= 1
-            if self.time_freeze_timer <= 0:
-                self.time_freeze_active = False
-                self.target_time_freeze = -1
-         
-        # Time freeze logic
-        if self.target_time_freeze == self.id and self.time_freeze_active:
-            if not self.time_frozen:
-                self.time_frozen = True
+        # Check if we received freeze from network (from another player)
+        if hasattr(self.network, 'freeze_active') and self.network.freeze_active:
+            if not hasattr(self, 'freeze_timer') or not self.time_freeze:
+                # Start freeze
+                self.time_freeze = True
                 self.freeze_timer = 2.0 * self.config.fps
-                self.vel_x = -2
-                
-            elif self.time_frozen:
+                self.vel_x = 0  # Stop horizontal movement
+                print(f"DEBUG PLAYER {self.id}: Got frozen by another player")
+            
+            # Count down freeze timer
+            if self.time_freeze:
                 self.freeze_timer -= 1
                 if self.freeze_timer <= 0:
-                    self.time_frozen = False
+                    # End freeze
+                    self.time_freeze = False
+                    self.network.freeze_active = False
                     self.vel_x = 0
+                    print(f"DEBUG PLAYER {self.id}: Freeze ended")
+                    
+                    # Send immediate update to server
+                    self._send_immediate_update()
+            
+            # Skip movement while frozen
+            if self.time_freeze:
                 return
 
         # Reduce speed boost timer if active
         if self.speed_boost_active:
-            self.speed_boost_timer -= 1  # or subtract delta time
+            self.speed_boost_timer -= 1
             if self.speed_boost_timer <= 0:
                 self.speed_boost_active = False
                 self.vel_x = 0  # Reset to normal speed
@@ -267,7 +272,16 @@ class Player(Entity):
             self.penetration_timer -= 1 / self.config.fps
             if self.penetration_timer <= 0:
                 self.penetration_active = False
-
+    
+    def _send_immediate_update(self):
+        """Send immediate state update to server"""
+        if hasattr(self, 'network') and self.network and self.network.running:
+            x, y, rot, respawn, penetration, time_freeze = self.get_own_state()
+            if hasattr(self.network, 'room_num') and self.network.room_num:
+                message = f"{self.network.room_num}:{self.network.id}:{x}:{y}:{rot}:{respawn}:{penetration}:{time_freeze}"
+                self.network.send(message)
+                print(f"DEBUG: Sent immediate update - time_freeze={time_freeze}")
+            
     def rotate(self):
         self.rot = clamp(self.rot + self.vel_rot, self.rot_min, self.rot_max)
 

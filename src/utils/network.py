@@ -227,6 +227,19 @@ class Network:
                 buffer += data
 
                 while buffer:
+                    if buffer.startswith("GetFrozen:"):
+                        # Extract who used the freeze skill
+                        freeze_user = int(buffer.split(":")[1])
+                        print(f"[INFO] Got frozen by player {freeze_user}")
+                        
+                        # Set freeze state on THIS player
+                        self.freeze_active = True
+                        self.freeze_start_time = time.time()
+                        
+                        # Remove the processed command from buffer
+                        buffer = buffer[len("GetFrozen:"):].split(":", 1)[-1] if ":" in buffer else ""
+                        continue
+                    
                     if buffer.startswith("AllReady"):
                         print("[INFO] All players are ready.")
                         self.all_ready = True
@@ -268,7 +281,7 @@ class Network:
                                 message = json.loads(json_str)
                                 if message.get("type") == "GameUpdate":
                                     self.game_state = message["players"]
-                                    #print("Game Update:", self.game_state)
+                                    print("Game Update:", self.game_state)
                             except Exception as e:
                                 print(f"Error parsing JSON message: {e}")
                             buffer = buffer[end_pos:]

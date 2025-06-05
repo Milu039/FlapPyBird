@@ -38,7 +38,7 @@ class Skill(Entity):
         if skill is None:
             return  # No skill in that slot
 
-        print(f"Using skill: {skill}")
+        print(f"Player {self.player.id} using skill: {skill}")
 
         if skill == "penetration":
             self.player.penetration_active = True
@@ -48,17 +48,15 @@ class Skill(Entity):
             self.player.speed_boost_active = True
             self.player.speed_boost_timer = 5.0 * self.player.config.fps
         elif skill == "time_freeze":
-            if hasattr(self.player, 'network') and self.player.network.game_state:
-                live_game_state = self.player.network.game_state
-                
-                first_player = max(live_game_state, key=lambda p: p.get("x", 0))
-                target_id = first_player.get("player_id")
-                
-                self.player.target_time_freeze = target_id
-                self.player.time_freeze_active = True
-                self.player.time_freeze_timer = 2.0 * self.config.fps
+            # Send freeze command to server - server will target player with highest X
+            if hasattr(self.player, 'network') and self.player.network and self.player.network.running:
+                room_num = self.player.network.room_num
+                user_id = self.player.network.id
+                self.player.network.send(f"UseFreeze:{room_num}:{user_id}")
+                print(f"DEBUG: Player {user_id} used freeze skill - will target player with highest X")
         elif skill == "teleport":
             pass
+            
         # Clear used skill
         self.available_skills[index] = None
     

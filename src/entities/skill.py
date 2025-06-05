@@ -8,6 +8,7 @@ class Skill(Entity):
     def __init__(self, config: GameConfig, player: Player) -> None:
         super().__init__(config)
         self.player = player
+        self.game_state = []
         self.skill_box = config.images.skills["skill_box"]
         self.skill_images = {
             #"speed_boost": config.images.skills["speed_boost"],
@@ -47,18 +48,9 @@ class Skill(Entity):
             self.player.speed_boost_active = True
             self.player.speed_boost_timer = 5.0 * self.player.config.fps
         elif skill == "time_freeze":
-            first_place_player = self.determine_first_place()
-            self.config.freeze_others = True  # This is just a placeholder, depends on your architecture
 
         # Clear used skill
         self.available_skills[index] = None
-
-    def determine_first_place(self, players):
-        """Return the player in first place based on highest x position."""
-        if not players:
-            return None  # Handle empty list safely
-
-        return max(players, key=lambda p: p['x'])
     
     def draw(self):
         pos_skill_box_1 = (50, 650)

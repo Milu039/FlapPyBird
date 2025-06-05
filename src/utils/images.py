@@ -134,6 +134,7 @@ class Images:
             "penetration": pygame.image.load("assets/sprites/penetration.png").convert_alpha(),
             "pipe_shift": pygame.image.load("assets/sprites/pipe_shift.png").convert_alpha(),
             "time_freeze": pygame.image.load("assets/sprites/time_freeze.png").convert_alpha(),
+            "freeze": pygame.image.load("assets/sprites/freeze.png").convert_alpha(),
             "teleport": pygame.image.load("assets/sprites/teleport.png").convert_alpha(),
         }
 

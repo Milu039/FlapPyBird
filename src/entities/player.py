@@ -221,6 +221,14 @@ class Player(Entity):
 
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
+        # Time freeze logic
+        if self.target_time_freeze == self.id:
+            if self.time_frozen:
+                self.freeze_timer -= 1
+                if self.freeze_timer <= 0:
+                    self.time_frozen = False
+                return
+
         # Reduce speed boost timer if active
         if self.speed_boost_active:
             self.speed_boost_timer -= 1  # or subtract delta time
@@ -238,12 +246,6 @@ class Player(Entity):
             self.flapped = False
         self.y = clamp(self.y + self.vel_y, self.min_y, self.max_y)
         self.rotate()
-
-        # Time freeze logic
-        if self.time_frozen:
-            self.freeze_timer -= 1
-            if self.freeze_timer <= 0:
-                self.time_frozen = False
 
         if self.penetration_active:
             self.penetration_timer -= 1 / self.config.fps
@@ -279,6 +281,9 @@ class Player(Entity):
             elif self.penetration_active:
                 rotated_image.set_alpha(128)
 
+            elif self.target_time_freeze == self.id and self.time_freeze_active:
+                
+
         rect = rotated_image.get_rect(center=self.rect.center)
         self.config.screen.blit(rotated_image, rect)
 
@@ -286,6 +291,7 @@ class Player(Entity):
         for player in players:
             if player is None:
                 continue
+            first_player = max(players, key=lambda p: p["x"])
             player_id = player.get("player_id")
             skin_id = player.get("skin_id")
             x = player.get("x")
@@ -304,6 +310,9 @@ class Player(Entity):
                         rotated_image.set_alpha(255)
                 elif player.get("penetration"):  # only if you're syncing skill states from server
                     rotated_image.set_alpha(128)
+                elif player.get("time_freeze"):
+                    
+
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)
 

@@ -13,7 +13,6 @@ class Skill(Entity):
         self.skill_images = {
             "speed_boost": config.images.skills["speed_boost"],
             "time_freeze": config.images.skills["time_freeze"],
-            "teleport": config.images.skills["teleport"],
             #"penetration": config.images.skills["penetration"]
         }
         self.available_skills = [None, None]
@@ -58,8 +57,6 @@ class Skill(Entity):
                 self.player.target_time_freeze = target_id
                 self.player.time_freeze_active = True
                 self.player.time_freeze_timer = 2.0 * self.config.fps
-        elif skill == "teleport":
-            pass
 
         # Clear used skill
         self.available_skills[index] = None

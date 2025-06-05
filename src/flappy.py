@@ -756,7 +756,6 @@ class Flappy:
         self.skill = Skill(self.config, self.player)
         self.player.network = self.network
         self.network.pipe_callback = self.on_pipe_received
-        self.player.network = self.network
         # Wait until lobby_state is received and includes this player
         while not self.network.lobby_state or not any(p["player_id"] == self.player.id for p in self.network.lobby_state):
             await asyncio.sleep(0.1)
@@ -831,8 +830,8 @@ class Flappy:
             self.skill.tick()
             self.player.tick()
             
-            x, y, rot, respawn, penetration, time_freeze = self.player.get_own_state()
-            self.network.send(f"{self.message.room_num}:{self.network.id}:{x}:{y}:{rot}:{respawn}:{penetration}:{time_freeze}")
+            x, y, rot, respawn, penetration = self.player.get_own_state()
+            self.network.send(f"{self.message.room_num}:{self.network.id}:{x}:{y}:{rot}:{respawn}:{penetration}")
             self.player.draw_other(self.network.game_state)
         
             pygame.display.update()

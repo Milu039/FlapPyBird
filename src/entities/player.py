@@ -6,7 +6,7 @@ from ..utils import GameConfig, clamp
 from .entity import Entity
 from .floor import Floor
 from .pipe import Pipe, Pipes
-"commad"
+
 
 class PlayerMode(Enum):
     SHM = "SHM"
@@ -46,9 +46,6 @@ class Player(Entity):
         self.speed_boost_timer = 0
 
         # Time freeze
-        self.time_frozen = False
-        self.freeze_timer = 0
-        self.target_time_freeze = -1
         self.time_freeze_active = False
         self.time_freeze_timer = 0
 
@@ -82,7 +79,7 @@ class Player(Entity):
             self.resume_wings()
 
     def get_own_state(self):
-        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active, self.time_frozen
+        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active
     
     def set_initial_position(self):
         self.x = int(self.config.window.width * 0.2)
@@ -232,18 +229,15 @@ class Player(Entity):
                 self.target_time_freeze = -1
          
         # Time freeze logic
-        if self.target_time_freeze == self.id and self.time_freeze_active:
-            if not self.time_frozen:
-                self.time_frozen = True
-                self.freeze_timer = 2.0 * self.config.fps
-                self.vel_x = -2
-                
-            if self.time_frozen:
-                self.freeze_timer -= 1
-                if self.freeze_timer <= 0:
-                    self.time_frozen = False
-                    self.vel_x = 0
-                return
+        if self.time_freeze_active:
+            # Decrement freeze timer
+            self.freeze_timer -= 1
+            if self.freeze_timer <= 0:
+                # Unfreeze player
+                self.time_freeze_active = False
+                self.target_time_freeze = None
+            # Skip movement updates while frozen
+            return
 
         # Reduce speed boost timer if active
         if self.speed_boost_active:
@@ -298,10 +292,8 @@ class Player(Entity):
                 rotated_image.set_alpha(128)
 
             elif self.target_time_freeze == self.id and self.time_freeze_active:
-                blue_surface = pygame.Surface(rotated_image.get_size())
-                blue_surface.fill((0, 150, 255))  # Light blue
-                blue_surface.set_alpha(100)
-                rotated_image.blit(blue_surface, (0, 0), special_flags=pygame.BLEND_ADD)
+                rotated_image.set_alpha(100)
+                
 
         rect = rotated_image.get_rect(center=self.rect.center)
         self.config.screen.blit(rotated_image, rect)
@@ -330,10 +322,7 @@ class Player(Entity):
                 elif player.get("penetration"):  # only if you're syncing skill states from server
                     rotated_image.set_alpha(128)
                 elif player.get("time_freeze"):
-                    blue_surface = pygame.Surface(rotated_image.get_size())
-                    blue_surface.fill((0, 150, 255))  # Light blue
-                    blue_surface.set_alpha(100)
-                    rotated_image.blit(blue_surface, (0, 0), special_flags=pygame.BLEND_ADD)
+                    rotated_image.set_alpha(100)
 
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)

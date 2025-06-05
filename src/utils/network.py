@@ -22,6 +22,7 @@ class Network:
         self.timer_callback = None
         self.lobby_listener_thread = None
         self.game_listener_thread = None
+        self.freeze_active = False
 
         try:
             self.client.connect(self.addr)
@@ -249,6 +250,14 @@ class Network:
                             print(f"Failed to handle pipe spawn: {e}")
                             buffer = ""
                             continue
+
+                    # New: Handle freeze message
+                    if buffer.startswith("freeze"):
+                        print("[INFO] Freeze command received.")
+                        self.freeze_active = True
+                        self.freeze_start_time = time.time()
+                        buffer = buffer[len("freeze"):]
+                        continue
 
                     if '{' in buffer:
                         start = buffer.index('{')

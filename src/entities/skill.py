@@ -1,18 +1,19 @@
 import pygame
 import random as Random
+import json
 from ..utils import GameConfig
 from .entity import Entity
 from .player import Player
 
 class Skill(Entity):
-    def __init__(self, config: GameConfig, player: Player) -> None:
+    def __init__(self, config: GameConfig, player: Player, network, room_num) -> None:
         super().__init__(config)
         self.player = player
         self.skill_box = config.images.skills["skill_box"]
         self.skill_images = {
             "speed_boost": config.images.skills["speed_boost"],
             "time_freeze": config.images.skills["time_freeze"],
-            #"teleport": config.images.skills["teleport"],
+            "teleport": config.images.skills["teleport"],
             #"penetration": config.images.skills["penetration"]
         }
         self.available_skills = [None, None]
@@ -59,6 +60,7 @@ class Skill(Entity):
                 self.player.time_freeze_timer = 2.0 * self.config.fps
         elif skill == "teleport":
             pass
+
         # Clear used skill
         self.available_skills[index] = None
     

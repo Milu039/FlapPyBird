@@ -754,6 +754,7 @@ class Flappy:
         self.player.id = int(self.network.id)
         self.pipes.set_mode("multi")
         self.skill = Skill(self.config, self.player, self.network, self.message.room_num)
+        self.skill.game_state = self.network.game_state
         self.network.pipe_callback = self.on_pipe_received
 
         # Wait until lobby_state is received and includes this player

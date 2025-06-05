@@ -388,18 +388,6 @@ def threaded_client(conn):
                         player["conn"].send(f"Pipe:{room_num}:{gap_y}:".encode())
                     except:
                         pass
-
-            elif command == "Freeze":
-                room_num = parts[1]  # The room name sent by client, e.g., "Room1"
-
-                if room_num in room_members:
-                    # Find player with max x (farthest)
-                    first_place_player = max(room_members[room_num], key=lambda m: m["game"]["x"])
-                    try:
-                        first_place_player["conn"].send("freeze".encode())
-                        print(f"Sent freeze to player {first_place_player['player_id']} in room {room_num}")
-                    except Exception as e:
-                        print(f"Failed to send freeze: {e}")
             
             elif command == "Restart":
                 if room_num in room_members:

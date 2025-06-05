@@ -31,6 +31,7 @@ class Images:
 
         self.icon = {
             "host": pygame.image.load("assets/sprites/host_icon.png").convert_alpha(),
+            "kick": pygame.image.load("assets/sprites/kick_icon.png").convert_alpha(),
             "ready": pygame.image.load("assets/sprites/ready_icon.png").convert_alpha()
         }
         # title sprite

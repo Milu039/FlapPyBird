@@ -14,6 +14,7 @@ class Network:
         self.game_state = []
         self.room_num = None
         self.running = True
+        self.kicked = False
         self.room_closed = False
         self.game_start = False
         self.restart = False
@@ -118,11 +119,12 @@ class Network:
             self.game_listener_thread.join(timeout=1)
             self.game_listener_thread = None
 
-    def handle_room_termination(self, reason="closed"):
+    def handle_room_termination(self, reason="kicked"):
         print(f"Handling room termination due to {reason}")
         self.running = False
         self.lobby_state = []
         self.room_num = None
+        self.kicked = (reason == "kicked")
         self.room_closed = (reason == "closed")
 
     def _listen_lobby_updates(self):
@@ -138,12 +140,27 @@ class Network:
                 buffer += data
 
                 while buffer:
-                    # Process special commands
-                    if data.startswith("UpdateID:"):
-                        new_id = data.split(":")[1]
-                        self.id = new_id
-                        print(f"Updated player ID to {new_id}")
+                    while "\n" in buffer:
+                        line, buffer = buffer.split("\n", 1)
 
+                        if line.startswith("UpdateID:"):
+                            # Extract ID part only
+                            id_part = line.split(":")[1]
+                            if "{" in id_part:
+                                id_part, leftover = id_part.split("{", 1)
+                                buffer = "{" + leftover + "\n" + buffer  # Put JSON back into buffer
+                            try:
+                                self.id = int(id_part.strip())
+                                print(f"[INFO] Updated player ID to {self.id}")
+                            except ValueError:
+                                print("[ERROR] Invalid ID received.")
+
+                        elif line == "Kicked":
+                            print("[INFO] You were kicked from the room.")
+                            self.handle_room_termination(reason="kicked")
+                            continue
+
+                    # Any leftover non-line-based commands (like Start, Restart)
                     if buffer.startswith("Start"):
                         print("[INFO] Host has started the game.")
                         self.game_start = True
@@ -155,6 +172,7 @@ class Network:
                         self.restart = True
                         buffer = buffer[len("Restart"):]
                         continue
+
 
                     # Process JSON messages
                     if '{' in buffer:

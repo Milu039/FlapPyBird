@@ -35,8 +35,33 @@ class Button(Entity):
         self.btnNextSkin = config.images.buttons["next"]
         self.btnPreSkin = config.images.buttons["previous"]
 
+        # kick button
+        self.btnKickPlayer = config.images.icon["kick"]
+        self.rectKicks = []
+        self.kick_targets = []
+
     def set_mode(self, mode) -> None:
         self.mode = mode
+
+    def update_kick_buttons(self, lobby_state):
+        kick_positions_map = {
+            2: [(515, 185)],
+            3: [(515, 185), (295, 345)],
+            4: [(515, 185), (295, 345), (515, 345)],
+        }
+
+        self.rectKicks = []
+        self.kick_targets = []
+
+        # Get the correct number of positions for other players (excluding self)
+        other_players = [p for p in lobby_state if p["player_id"] != int(self.player_id)]
+        positions = kick_positions_map.get(len(lobby_state), [])
+
+        for target, pos in zip(other_players, positions):
+            self.draw_button(self.btnKickPlayer, pos)
+            rect = self.btnrectCreate(pos, self.btnKickPlayer)
+            self.rectKicks.append(rect)
+            self.kick_targets.append(target["player_id"])
 
     def draw_enter_button(self):
         self.posEnter = (int(self.config.window.width - self.btnEnter.get_width()) // 2, 425)
@@ -86,7 +111,7 @@ class Button(Entity):
             self.draw_button(self.btnCreate, self.posCreate)
             self.rectCreate = self.btnrectCreate(self.posCreate, self.btnCreate)
 
-        if self.mode == "Room Lobby: host": # kick icon is ok but kick function not ok
+        if self.mode == "Room Lobby: host":
             self.posNext = (450, 215)
             self.posPrevious = (325, 215)
 
@@ -100,7 +125,7 @@ class Button(Entity):
                 1: self.btnStart_2_4,
                 2: self.btnStart_3_4
             }
-            '''
+            
             if self.ready_count in start_buttons:
                 button = start_buttons[self.ready_count]
                 button.set_alpha(191)
@@ -112,10 +137,10 @@ class Button(Entity):
                 self.draw_button(self.btnStart, self.posStart)
                 self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
             '''
-            if self.ready_count == 1:
+            if self.ready_count == 3:
                 self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnStart, self.posStart)
-                self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
+                self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)'''
 
             if self.show_name_prompt:
                 self.draw_enter_button()
@@ -145,9 +170,6 @@ class Button(Entity):
                 self.posReady = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnReady, self.posReady)
                 self.rectReady = self.btnrectCreate(self.posReady, self.btnReady)
-
-            if self.show_name_prompt:
-                self.draw_enter_button()
 
         if self.mode == "Leaderboard":
             if self.player_id == "0":

@@ -160,7 +160,7 @@ def threaded_client(conn):
                     for i, m in enumerate(others, start=1):
                         m["player_id"] = i
                         try:
-                            m["conn"].sendall(f"UpdateID:{i}".encode())
+                            m["conn"].sendall(f"UpdateID:{i}\n".encode())
                         except:
                             pass
 
@@ -193,7 +193,7 @@ def threaded_client(conn):
 
                     broadcast_lobby_update(room_num)
 
-            elif command == "Remove Room": # need test
+            elif command == "Remove Room":
                 room_num = parts[1]
                 # Notify all members before removing the room
                 notify_room_closed(room_num)
@@ -205,6 +205,65 @@ def threaded_client(conn):
                 # Remove room members
                 if room_num in room_members:
                     del room_members[room_num]
+
+            elif command == "Kick":
+                room_num, target_id = parts[1], int(parts[2])
+
+                if room_num in room_members:
+                    kicked_conn = None
+
+                    # Remove the target player and store their connection
+                    new_room = []
+                    for m in room_members[room_num]:
+                        if m["player_id"] == target_id:
+                            kicked_conn = m["conn"]
+                            try:
+                                kicked_conn.send("Kicked\n".encode())
+                            except:
+                                pass
+                        else:
+                            new_room.append(m)
+                    
+                    room_members[room_num] = new_room
+
+                    # Separate host and others
+                    host = None
+                    others = []
+                    for m in room_members[room_num]:
+                        if m["player_id"] == 0:
+                            host = m
+                        else:
+                            others.append(m)
+
+                    # Reassign IDs for non-hosts starting from 1
+                    for i, m in enumerate(others, start=1):
+                        old_id = m["player_id"]
+                        m["player_id"] = i
+                        try:
+                            m["conn"].sendall(f"UpdateID:{i}\n".encode())
+                        except:
+                            pass
+
+                    # Rebuild room member list
+                    room_members[room_num] = ([host] if host else []) + others
+
+                    new_capacity = len(room_members[room_num])
+                    # Update room_list
+                    for i in range(len(room_list)):
+                        room_id, name, password, capacity = room_list[i].split(":", 3)
+                        if name == room_num:
+                            room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
+                            break
+
+                    # Move from full_room_list to room_list if necessary
+                    for i in range(len(full_room_list)):
+                        room_id, name, password, capacity = full_room_list[i].split(":", 3)
+                        if name == room_num:
+                            full_room_list.pop(i)
+                            room_list.append(f"{room_id}:{name}:{password}:{new_capacity}")
+                            break
+
+                    broadcast_lobby_update(room_num)
 
             elif command == "Update":
                 room_num, pid, name, skin_id, ready_str = parts[1], int(parts[2]), parts[3], int(parts[4]), parts[5]
@@ -296,7 +355,6 @@ def threaded_client(conn):
                         # Save this player's early Ready
                         early_ready.setdefault(room_num, set()).add(player_id)
                         print(f"[INFO] Queued early Ready from player {player_id} (waiting turn)")
-
 
             elif parts[0] in room_members:
                 room_num = parts[0]

@@ -129,6 +129,7 @@ class Images:
         ]
 
         self.skills = {
+            "skill_box": pygame.image.load("assets/sprites/skill_box.png").convert_alpha(),
             "speed_boost": pygame.image.load("assets/sprites/speed_boost.png").convert_alpha(),
             "penetration": pygame.image.load("assets/sprites/penetration.png").convert_alpha(),
             "pipe_shift": pygame.image.load("assets/sprites/pipe_shift.png").convert_alpha(),

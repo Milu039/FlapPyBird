@@ -31,7 +31,7 @@ class Network:
 
     def send(self, data):
         try:
-            print(f"Sending: {data}")
+            #print(f"Sending: {data}")
             self.client.send(data.encode())
         except Exception as e:
             print(f"Failed to send data: {e}")
@@ -268,7 +268,7 @@ class Network:
                                 message = json.loads(json_str)
                                 if message.get("type") == "GameUpdate":
                                     self.game_state = message["players"]
-                                    print("Game Update:", self.game_state)
+                                    #print("Game Update:", self.game_state)
                             except Exception as e:
                                 print(f"Error parsing JSON message: {e}")
                             buffer = buffer[end_pos:]

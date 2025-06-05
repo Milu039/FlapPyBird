@@ -53,6 +53,9 @@ def broadcast_game_update(room_num):
                 "x": m["game"]["x"],
                 "y": m["game"]["y"],
                 "rot": m["game"]["rot"],
+                "respawn": m["game"]["res"],
+                "penetration": m["game"]["pen"],
+                "time_freeze": m["game"]["tf"]
             }
             for m in room_members[room_num]
         ]
@@ -82,7 +85,7 @@ def threaded_client(conn):
             data = conn.recv(2048).decode("utf-8")
             if not data:
                 break
-            #print("Received:", data)
+            print("Received:", data)
             parts = data.split(":")
             command = parts[0]
             reply = ""
@@ -101,7 +104,7 @@ def threaded_client(conn):
                     "name": "Player 1",
                     "skin_id": 0,
                     "lobby": {"ready": False, "host": True},
-                    "game": {"x": 0, "y": 0, "rot": 0.0}
+                    "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False, "tf": False}
                 }]
                 room_states[room_num] = {"default_initialized": False,}
                 conn.sendall(f"Joined:{room_num}:0:host".encode())
@@ -118,7 +121,7 @@ def threaded_client(conn):
                         "name":f"Player {player_id+1}", 
                         "skin_id":0, 
                         "lobby": {"ready": False, "host": False},
-                        "game": {"x": 0, "y": 0, "rot": 0.0}
+                        "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False, "tf": False}
                         })
 
                 # Update capacity in room_list
@@ -358,17 +361,26 @@ def threaded_client(conn):
             elif parts[0] in room_members:
                 room_num = parts[0]
                 player_id = int(parts[1])
+                respawn_str = parts[5]
+                penetration_str = parts[6]
+                time_freeze_str = parts[7]
                 
                 # After countdown, handle actual player game data
                 x = float(parts[2])
                 y = float(parts[3])
                 rot = float(parts[4])
+                respawn = respawn_str == "True"
+                penetration = penetration_str == "True"
+                time_freeze = time_freeze_str == "True"
 
                 for m in room_members[room_num]:
                     if m["player_id"] == player_id:
                         m["game"]["x"] = x
                         m["game"]["y"] = y
                         m["game"]["rot"] = rot
+                        m["game"]["res"] = respawn
+                        m["game"]["pen"] = penetration
+                        m["game"]["tf"] = time_freeze
                         break
 
                 broadcast_game_update(room_num)

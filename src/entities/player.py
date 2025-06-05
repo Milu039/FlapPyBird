@@ -41,6 +41,18 @@ class Player(Entity):
         self.crashed = False
         self.crash_entity = None
 
+        # Speed boost
+        self.speed_boost_active = False
+        self.speed_boost_timer = 0
+
+        # Time freeze
+        self.time_frozen = False
+        self.freeze_timer = 0
+
+        # Penetration
+        self.penetration_active = False
+        self.penetration_timer = 0
+
         self.set_mode(PlayerMode.SHM)
 
     def set_mode(self, mode: PlayerMode) -> None:
@@ -67,7 +79,7 @@ class Player(Entity):
             self.resume_wings()
 
     def get_own_state(self):
-        return self.x, self.y, self.rot
+        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active
     
     def set_initial_position(self):
         self.x = int(self.config.window.width * 0.2)
@@ -111,6 +123,11 @@ class Player(Entity):
         self.waiting_to_respawn = False
         self.respawn_grace_timer = 0
         self.just_respawned = False
+
+        self.speed_boost_active = False
+        self.speed_boost_timer = 0
+        self.penetration_active = False
+        self.penetration_timer = 0
 
         self.resume_wings()
         self.set_mode(PlayerMode.MULTI)
@@ -204,16 +221,34 @@ class Player(Entity):
 
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
+        # Reduce speed boost timer if active
+        if self.speed_boost_active:
+            self.speed_boost_timer -= 1  # or subtract delta time
+            if self.speed_boost_timer <= 0:
+                self.speed_boost_active = False
+                self.vel_x = 0  # Reset to normal speed
+
         # Apply horizontal velocity if in MULTI mode
-        if self.mode == PlayerMode.MULTI and hasattr(self, 'velocity_x'):
-            self.x += self.velocity_x
-        # Same physics as normal mode
+        if self.mode == PlayerMode.MULTI:
+            self.x += self.vel_x
+
         if self.vel_y < self.max_vel_y and not self.flapped:
             self.vel_y += self.acc_y
         if self.flapped:
             self.flapped = False
         self.y = clamp(self.y + self.vel_y, self.min_y, self.max_y)
         self.rotate()
+
+        # Time freeze logic
+        if self.time_frozen:
+            self.freeze_timer -= 1
+            if self.freeze_timer <= 0:
+                self.time_frozen = False
+
+        if self.penetration_active:
+            self.penetration_timer -= 1 / self.config.fps
+            if self.penetration_timer <= 0:
+                self.penetration_active = False
 
     def rotate(self):
         self.rot = clamp(self.rot + self.vel_rot, self.rot_min, self.rot_max)
@@ -235,11 +270,14 @@ class Player(Entity):
             return
 
         rotated_image = pygame.transform.rotate(self.image, self.rot)
-        if self.mode == PlayerMode.MULTI and self.just_respawned:
-            if (self.respawn_grace_timer // 10) % 2 == 0:
-                return
-            else:
-                rotated_image.set_alpha(255)
+        if self.mode == PlayerMode.MULTI:
+            if self.just_respawned:
+                if (self.respawn_grace_timer // 10) % 2 == 0:
+                    return
+                else:
+                    rotated_image.set_alpha(255)
+            elif self.penetration_active:
+                rotated_image.set_alpha(128)
 
         rect = rotated_image.get_rect(center=self.rect.center)
         self.config.screen.blit(rotated_image, rect)
@@ -259,6 +297,13 @@ class Player(Entity):
 
             if player_id != self.id:
                 rotated_image = pygame.transform.rotate(image, rot)
+                if player.get("respawn"):
+                    if (self.respawn_grace_timer // 10) % 2 == 0:
+                        return
+                    else:
+                        rotated_image.set_alpha(255)
+                elif player.get("penetration"):  # only if you're syncing skill states from server
+                    rotated_image.set_alpha(128)
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)
 
@@ -300,12 +345,13 @@ class Player(Entity):
         return False
 
     def collided_push(self, pipes: Pipes):
-        if self.mode != PlayerMode.MULTI or self.just_respawned:
+        if self.mode != PlayerMode.MULTI or self.just_respawned or self.penetration_active:
             return
         for pipe in pipes.upper + pipes.lower:
             if self.collide(pipe):
                 self.x = pipe.x - self.w - 5
                 return
+
 
     def respawn(self, config: GameConfig):
         if self.mode != PlayerMode.MULTI:

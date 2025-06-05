@@ -21,6 +21,7 @@ room_states = {}
 ready_players = {}
 ready_next_index = {}
 early_ready = {}
+start_room = {}
 default_pos = ["0:50:50:0", "1:100:100:0", "2:150:150:0","3:200:200:0"]
 
 def broadcast_lobby_update(room_num):
@@ -75,7 +76,7 @@ def notify_room_closed(room_num):
                 pass
 
 def threaded_client(conn):
-    global room_list, room_members, full_room_list, room_states, ready_players, ready_next_index, early_ready, default_pos
+    global room_list, room_members, full_room_list, room_states, ready_players, ready_next_index, early_ready, start_room, default_pos
 
     while True:
         try:
@@ -221,7 +222,15 @@ def threaded_client(conn):
                 broadcast_lobby_update(room_num)
             
             elif command == "Start":
+                # Save the room string from room_list before removing
+                for r in room_list:
+                    if room_num in r:
+                        start_room[room_num] = r
+                        break
+
+                # Remove the room from room_list
                 room_list = [r for r in room_list if room_num not in r]
+
                 # Reset ready info
                 ready_players[room_num] = set()
                 ready_next_index[room_num] = 0
@@ -344,6 +353,28 @@ def threaded_client(conn):
                     for m in room_members[room_num]:
                         m["game"] = {"x": 0, "y": 0, "rot": 0.0}
                         m["lobby"]["ready"] = False
+
+                    # Restore room string if it’s not in either list
+                    if (room_num not in "".join(room_list)) and (room_num not in "".join(full_room_list)):
+                        if room_num in start_room:
+                            room_list.append(start_room[room_num])
+                            print(f"[INFO] Room {room_num} re-added to room_list after restart.")
+                    
+                    new_capacity = len(room_members[room_num])
+                    # Update room_list
+                    for i in range(len(room_list)):
+                        room_id, name, password, capacity = room_list[i].split(":", 3)
+                        if name == room_num:
+                            room_list[i] = f"{room_id}:{name}:{password}:{new_capacity}"
+                            break
+
+                    # Move from full_room_list to room_list if necessary
+                    for i in range(len(full_room_list)):
+                        room_id, name, password, capacity = full_room_list[i].split(":", 3)
+                        if name == room_num:
+                            full_room_list.pop(i)
+                            room_list.append(f"{room_id}:{name}:{password}:{new_capacity}")
+                            break
 
                     # Reset room tracking
                     room_states[room_num]["default_initialized"] = False

@@ -603,6 +603,7 @@ class Flappy:
             self.skin.player_id = self.network.id
             self.message.player_id = self.network.id
             self.button.player_id = self.network.id
+
             if hasattr(self.network, "room_closed") and self.network.room_closed:
                 self.network.disconnect()
                 print("Room has been closed by the host.")
@@ -834,6 +835,15 @@ class Flappy:
                     await self.room_lobby_interface("member")
                 return
             
+            if hasattr(self.network, "room_closed") and self.network.room_closed:
+                self.network.disconnect()
+                print("Room has been closed by the host.")
+                self.network.stop_listeners()
+                self._lobby_listener_started = False
+                self.network.room_closed = False
+                await self.game_room_interface()
+                return
+            
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if hasattr(self.button, "rectRestart") and self.button.rectRestart.collidepoint(event.pos):
@@ -846,8 +856,16 @@ class Flappy:
                         self.timer.reset()
                         await self.room_lobby_interface("host")
                         return
+                    
                     elif hasattr(self.button, "rectQuit") and self.button.rectQuit.collidepoint(event.pos):
-                        self.restart()
+                        if self.network.id == "0":
+                            self.network.send(f"Remove Room:{self.message.room_num}")
+                            self.network.room_closed = True
+                        else:
+                            self.network.send(f"Leave Room:{self.message.room_num}:{self.network.id}")
+                        self.network.disconnect()
+                        self.network.stop_listeners()
+                        self._lobby_listener_started = False
                         await self.game_room_interface()
                         return
 

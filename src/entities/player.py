@@ -6,7 +6,7 @@ from ..utils import GameConfig, clamp
 from .entity import Entity
 from .floor import Floor
 from .pipe import Pipe, Pipes
-
+"commad"
 
 class PlayerMode(Enum):
     SHM = "SHM"

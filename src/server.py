@@ -54,7 +54,8 @@ def broadcast_game_update(room_num):
                 "y": m["game"]["y"],
                 "rot": m["game"]["rot"],
                 "respawn": m["game"]["res"],
-                "penetration": m["game"]["pen"]
+                "penetration": m["game"]["pen"],
+                "time_freeze": m["game"]["tf"]
             }
             for m in room_members[room_num]
         ]
@@ -103,7 +104,7 @@ def threaded_client(conn):
                     "name": "Player 1",
                     "skin_id": 0,
                     "lobby": {"ready": False, "host": True},
-                    "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False}
+                    "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False, "tf": False}
                 }]
                 room_states[room_num] = {"default_initialized": False,}
                 conn.sendall(f"Joined:{room_num}:0:host".encode())
@@ -120,7 +121,7 @@ def threaded_client(conn):
                         "name":f"Player {player_id+1}", 
                         "skin_id":0, 
                         "lobby": {"ready": False, "host": False},
-                        "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False}
+                        "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False, "tf": False}
                         })
 
                 # Update capacity in room_list

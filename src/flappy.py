@@ -756,6 +756,7 @@ class Flappy:
         self.skill = Skill(self.config, self.player)
         self.player.network = self.network
         self.network.pipe_callback = self.on_pipe_received
+        self.player.network = self.network
         # Wait until lobby_state is received and includes this player
         while not self.network.lobby_state or not any(p["player_id"] == self.player.id for p in self.network.lobby_state):
             await asyncio.sleep(0.1)

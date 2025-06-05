@@ -6,7 +6,7 @@ import time
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = "26.189.170.88"
+        self.host = "26.10.79.128"
         self.port = 5555
         self.addr = (self.host, self.port)
         self.id = "0"
@@ -22,7 +22,6 @@ class Network:
         self.timer_callback = None
         self.lobby_listener_thread = None
         self.game_listener_thread = None
-        self.freeze_active = False
 
         try:
             self.client.connect(self.addr)
@@ -250,14 +249,6 @@ class Network:
                             print(f"Failed to handle pipe spawn: {e}")
                             buffer = ""
                             continue
-
-                    # New: Handle freeze message
-                    if buffer.startswith("freeze"):
-                        print("[INFO] Freeze command received.")
-                        self.freeze_active = True
-                        self.freeze_start_time = time.time()
-                        buffer = buffer[len("freeze"):]
-                        continue
 
                     if '{' in buffer:
                         start = buffer.index('{')

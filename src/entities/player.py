@@ -6,7 +6,7 @@ from ..utils import GameConfig, clamp
 from .entity import Entity
 from .floor import Floor
 from .pipe import Pipe, Pipes
-
+"commad"
 
 class PlayerMode(Enum):
     SHM = "SHM"
@@ -232,15 +232,18 @@ class Player(Entity):
                 self.target_time_freeze = -1
          
         # Time freeze logic
-        if self.time_freeze_active:
-            # Decrement freeze timer
-            self.freeze_timer -= 1
-            if self.freeze_timer <= 0:
-                # Unfreeze player
-                self.time_freeze_active = False
-                self.target_time_freeze = None
-            # Skip movement updates while frozen
-            return
+        if self.target_time_freeze == self.id and self.time_freeze_active:
+            if not self.time_frozen:
+                self.time_frozen = True
+                self.freeze_timer = 2.0 * self.config.fps
+                self.vel_x = -2
+                
+            elif self.time_frozen:
+                self.freeze_timer -= 1
+                if self.freeze_timer <= 0:
+                    self.time_frozen = False
+                    self.vel_x = 0
+                return
 
         # Reduce speed boost timer if active
         if self.speed_boost_active:
@@ -299,7 +302,6 @@ class Player(Entity):
                 blue_surface.fill((0, 150, 255))  # Light blue
                 blue_surface.set_alpha(100)
                 rotated_image.blit(blue_surface, (0, 0), special_flags=pygame.BLEND_ADD)
-                
 
         rect = rotated_image.get_rect(center=self.rect.center)
         self.config.screen.blit(rotated_image, rect)

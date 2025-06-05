@@ -197,8 +197,8 @@ class Player(Entity):
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
         # Apply horizontal velocity if in MULTI mode
-        if self.mode == PlayerMode.MULTI and hasattr(self, 'velocity_x'):
-            self.x += self.velocity_x
+        if self.mode == PlayerMode.MULTI and hasattr(self, 'vel_x'):
+            self.x += self.vel_x
         # Same physics as normal mode
         if self.vel_y < self.max_vel_y and not self.flapped:
             self.vel_y += self.acc_y

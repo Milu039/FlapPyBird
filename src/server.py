@@ -56,7 +56,7 @@ def broadcast_game_update(room_num):
             }
             for m in room_members[room_num]
         ]
-        print(game_info)
+
         message = json.dumps({"type": "GameUpdate", "players": game_info})
         for m in room_members[room_num]:
             try:
@@ -68,7 +68,6 @@ def notify_room_closed(room_num):
     """Notify all members that the room has been closed"""
     if room_num in room_members:
         message = json.dumps({"type": "RoomClosed"})
-        print(message)
         for m in room_members[room_num]:
             try:
                 m["conn"].send(message.encode())
@@ -83,7 +82,7 @@ def threaded_client(conn):
             data = conn.recv(2048).decode("utf-8")
             if not data:
                 break
-            print("Received:", data)
+            #print("Received:", data)
             parts = data.split(":")
             command = parts[0]
             reply = ""
@@ -143,12 +142,29 @@ def threaded_client(conn):
             elif command == "Leave Room":
                 room_num, pid = parts[1], int(parts[2])
                 if room_num in room_members:
-                    # Remove player
-                    room_members[room_num] = [m for m in room_members[room_num] if not (m["conn"] == conn and m["player_id"] == pid)]
+                    # Remove based on connection only
+                    room_members[room_num] = [m for m in room_members[room_num] if m["conn"] != conn]
 
-                    # Reassign player IDs
-                    for i, m in enumerate(room_members[room_num]):
+                    # Separate host and non-hosts
+                    host = None
+                    others = []
+
+                    for m in room_members[room_num]:
+                        if m["player_id"] == 0:
+                            host = m
+                        else:
+                            others.append(m)
+
+                    # Reassign player IDs for non-hosts starting from 1
+                    for i, m in enumerate(others, start=1):
                         m["player_id"] = i
+                        try:
+                            m["conn"].sendall(f"UpdateID:{i}".encode())
+                        except:
+                            pass
+
+                    # Rebuild room_members list
+                    room_members[room_num] = ([host] if host else []) + others
 
                     new_capacity = len(room_members[room_num])
 
@@ -193,13 +209,15 @@ def threaded_client(conn):
                 room_num, pid, name, skin_id, ready_str = parts[1], int(parts[2]), parts[3], int(parts[4]), parts[5]
                 ready = ready_str == "True"
 
+                # Update the matching player in the room based on connection (safe from player_id shifts)
                 for m in room_members.get(room_num, []):
-                    if m["player_id"] == pid:
+                    if m["conn"] == conn:
                         m["name"] = name
                         m["skin_id"] = skin_id
-                        m["lobby"]["ready"] =  ready
+                        m["lobby"]["ready"] = ready
                         break
-                #print("Updated")
+
+                # Broadcast updated lobby state to all clients
                 broadcast_lobby_update(room_num)
             
             elif command == "Start":

@@ -131,6 +131,7 @@ class Network:
         while self.running:
             try:
                 data = self.client.recv(2048).decode()
+                print(data)
                 if not data:
                     continue
 
@@ -138,11 +139,10 @@ class Network:
 
                 while buffer:
                     # Process special commands
-                    if buffer.startswith("RoomClosed"):
-                        print("[INFO] Room was closed by host.")
-                        self.handle_room_termination(reason="closed")
-                        buffer = buffer[len("RoomClosed"):]
-                        continue
+                    if data.startswith("UpdateID:"):
+                        new_id = data.split(":")[1]
+                        self.id = new_id
+                        print(f"Updated player ID to {new_id}")
 
                     if buffer.startswith("Start"):
                         print("[INFO] Host has started the game.")
@@ -176,6 +176,9 @@ class Network:
                                 if message.get("type") == "LobbyUpdate":
                                     self.lobby_state = message["players"]
                                     # print("Lobby Update:", self.lobby_state)
+                                elif message.get("type") == "RoomClosed":
+                                    print("[INFO] Room was closed by host.")
+                                    self.handle_room_termination(reason="closed")
                             except Exception as e:
                                 print(f"Error parsing JSON message: {e}")
                             buffer = buffer[end_pos:]

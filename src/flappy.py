@@ -574,8 +574,6 @@ class Flappy:
         self.message.set_mode(self.mode.get_mode())
         self.container.set_mode(self.mode.get_mode())
         self.button.set_mode(self.mode.get_mode())
-        self.message.player_id = self.network.id
-        self.button.player_id = self.network.id
             
         # Initialize player name only if not already set
         if not hasattr(self.message, 'txtPlayerName') or not self.message.txtPlayerName:
@@ -601,7 +599,10 @@ class Flappy:
             self._lobby_listener_started = True  # set BEFORE starting
             self.network.start_lobby_listener()
 
-        while True:    
+        while True:
+            self.skin.player_id = self.network.id
+            self.message.player_id = self.network.id
+            self.button.player_id = self.network.id
             if hasattr(self.network, "room_closed") and self.network.room_closed:
                 self.network.disconnect()
                 print("Room has been closed by the host.")

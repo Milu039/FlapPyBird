@@ -46,8 +46,9 @@ class Player(Entity):
         self.speed_boost_timer = 0
 
         # Time freeze
-        self.time_frozen = False
-        self.freeze_timer = 0
+        self.time_freeze_active = False
+        self.freeze_timer = 0 
+        self.target_time_freeze = None
 
         # Penetration
         self.penetration_active = False
@@ -222,12 +223,15 @@ class Player(Entity):
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
         # Time freeze logic
-        if self.target_time_freeze == self.id:
-            if self.time_frozen:
-                self.freeze_timer -= 1
-                if self.freeze_timer <= 0:
-                    self.time_frozen = False
-                return
+        if self.time_freeze_active:
+            # Decrement freeze timer
+            self.freeze_timer -= 1
+            if self.freeze_timer <= 0:
+                # Unfreeze player
+                self.time_freeze_active = False
+                self.target_time_freeze = None
+            # Skip movement updates while frozen
+            return
 
         # Reduce speed boost timer if active
         if self.speed_boost_active:
@@ -282,6 +286,7 @@ class Player(Entity):
                 rotated_image.set_alpha(128)
 
             elif self.target_time_freeze == self.id and self.time_freeze_active:
+                rotated_image.set_alpha(100)
                 
 
         rect = rotated_image.get_rect(center=self.rect.center)
@@ -311,7 +316,7 @@ class Player(Entity):
                 elif player.get("penetration"):  # only if you're syncing skill states from server
                     rotated_image.set_alpha(128)
                 elif player.get("time_freeze"):
-                    
+                    rotated_image.set_alpha(100)
 
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)

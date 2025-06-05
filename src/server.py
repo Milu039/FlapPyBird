@@ -54,8 +54,7 @@ def broadcast_game_update(room_num):
                 "y": m["game"]["y"],
                 "rot": m["game"]["rot"],
                 "respawn": m["game"]["res"],
-                "penetration": m["game"]["pen"],
-                "time_freeze": m["game"]["tf"]
+                "penetration": m["game"]["pen"]
             }
             for m in room_members[room_num]
         ]
@@ -104,7 +103,7 @@ def threaded_client(conn):
                     "name": "Player 1",
                     "skin_id": 0,
                     "lobby": {"ready": False, "host": True},
-                    "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False, "tf": False}
+                    "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False}
                 }]
                 room_states[room_num] = {"default_initialized": False,}
                 conn.sendall(f"Joined:{room_num}:0:host".encode())
@@ -121,7 +120,7 @@ def threaded_client(conn):
                         "name":f"Player {player_id+1}", 
                         "skin_id":0, 
                         "lobby": {"ready": False, "host": False},
-                        "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False, "tf": False}
+                        "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False}
                         })
 
                 # Update capacity in room_list
@@ -363,7 +362,6 @@ def threaded_client(conn):
                 player_id = int(parts[1])
                 respawn_str = parts[5]
                 penetration_str = parts[6]
-                time_freeze_str = parts[7]
                 
                 # After countdown, handle actual player game data
                 x = float(parts[2])
@@ -371,7 +369,6 @@ def threaded_client(conn):
                 rot = float(parts[4])
                 respawn = respawn_str == "True"
                 penetration = penetration_str == "True"
-                time_freeze = time_freeze_str == "True"
 
                 for m in room_members[room_num]:
                     if m["player_id"] == player_id:
@@ -380,7 +377,6 @@ def threaded_client(conn):
                         m["game"]["rot"] = rot
                         m["game"]["res"] = respawn
                         m["game"]["pen"] = penetration
-                        m["game"]["tf"] = time_freeze
                         break
 
                 broadcast_game_update(room_num)
@@ -392,6 +388,18 @@ def threaded_client(conn):
                         player["conn"].send(f"Pipe:{room_num}:{gap_y}:".encode())
                     except:
                         pass
+
+            elif command == "Freeze":
+                room_num = parts[1]  # The room name sent by client, e.g., "Room1"
+
+                if room_num in room_members:
+                    # Find player with max x (farthest)
+                    first_place_player = max(room_members[room_num], key=lambda m: m["game"]["x"])
+                    try:
+                        first_place_player["conn"].send("freeze".encode())
+                        print(f"Sent freeze to player {first_place_player['player_id']} in room {room_num}")
+                    except Exception as e:
+                        print(f"Failed to send freeze: {e}")
             
             elif command == "Restart":
                 if room_num in room_members:

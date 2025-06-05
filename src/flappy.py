@@ -753,8 +753,7 @@ class Flappy:
     async def multi_gameplay(self):
         self.player.id = int(self.network.id)
         self.pipes.set_mode("multi")
-        self.skill = Skill(self.config, self.player)
-        self.skill.game_state = self.network.game_state
+        self.skill = Skill(self.config, self.player, self.network, self.message.room_num)
         self.network.pipe_callback = self.on_pipe_received
 
         # Wait until lobby_state is received and includes this player
@@ -831,8 +830,8 @@ class Flappy:
             self.skill.tick()
             self.player.tick()
             
-            x, y, rot, respawn, penetration, time_freeze = self.player.get_own_state()
-            self.network.send(f"{self.message.room_num}:{self.network.id}:{x}:{y}:{rot}:{respawn}:{penetration}:{time_freeze}")
+            x, y, rot, respawn, penetration = self.player.get_own_state()
+            self.network.send(f"{self.message.room_num}:{self.network.id}:{x}:{y}:{rot}:{respawn}:{penetration}")
             self.player.draw_other(self.network.game_state)
         
             pygame.display.update()

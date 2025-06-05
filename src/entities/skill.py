@@ -1,14 +1,17 @@
 import pygame
 import random as Random
+import json
 from ..utils import GameConfig
 from .entity import Entity
 from .player import Player
 
 class Skill(Entity):
-    def __init__(self, config: GameConfig, player: Player) -> None:
+    def __init__(self, config: GameConfig, player: Player, network, room_num) -> None:
         super().__init__(config)
         self.player = player
-        self.game_state = []
+        self.network = network
+        self.room_num = room_num
+
         self.skill_box = config.images.skills["skill_box"]
         self.skill_images = {
             #"speed_boost": config.images.skills["speed_boost"],

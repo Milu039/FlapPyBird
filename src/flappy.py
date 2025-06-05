@@ -604,6 +604,15 @@ class Flappy:
             self.message.player_id = self.network.id
             self.button.player_id = self.network.id
 
+            if hasattr(self.network, "kicked") and self.network.kicked:
+                self.network.disconnect()
+                print("You have been kicked from the room.")
+                self.network.stop_listeners()
+                self._lobby_listener_started = False
+                self.network.kicked = False
+                await self.game_room_interface()
+                return
+            
             if hasattr(self.network, "room_closed") and self.network.room_closed:
                 self.network.disconnect()
                 print("Room has been closed by the host.")
@@ -675,6 +684,13 @@ class Flappy:
                             else:
                                 self.message.name_error = True
 
+                    for i, rect in enumerate(self.button.rectKicks):
+                            if rect.collidepoint(event.pos):
+                                target_id = self.button.kick_targets[i]
+                                print(target_id)
+                                self.network.send(f"Kick:{self.message.room_num}:{target_id}")
+                                break
+
                     if int(self.network.id) > 0:
                         if not self.button.isReady and hasattr(self.button, "rectReady") and self.button.rectReady.collidepoint(event.pos):
                             self.message.isHost = False
@@ -719,6 +735,8 @@ class Flappy:
             self.config.screen.blit(btnBack, rectBack)
                 
             # Draw all players
+            if state == "host":
+                self.button.update_kick_buttons(self.network.lobby_state)
             self.skin.draw_other(self.network.lobby_state)
             self.message.draw_name(self.network.lobby_state)
             self.message.tick()

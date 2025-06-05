@@ -14,6 +14,7 @@ class Network:
         self.game_state = []
         self.room_num = None
         self.running = True
+        self.kicked = False
         self.room_closed = False
         self.game_start = False
         self.restart = False
@@ -118,11 +119,12 @@ class Network:
             self.game_listener_thread.join(timeout=1)
             self.game_listener_thread = None
 
-    def handle_room_termination(self, reason="closed"):
+    def handle_room_termination(self, reason="kicked"):
         print(f"Handling room termination due to {reason}")
         self.running = False
         self.lobby_state = []
         self.room_num = None
+        self.kicked = (reason == "kicked")
         self.room_closed = (reason == "closed")
 
     def _listen_lobby_updates(self):
@@ -144,6 +146,12 @@ class Network:
                         self.id = new_id
                         print(f"Updated player ID to {new_id}")
 
+                    if buffer.startswith("Kicked"):
+                        print("[INFO] You were kicked from the room.")
+                        self.handle_room_termination(reason="kicked")
+                        buffer = buffer[6:]
+                        continue
+                    
                     if buffer.startswith("Start"):
                         print("[INFO] Host has started the game.")
                         self.game_start = True

@@ -160,7 +160,7 @@ def threaded_client(conn):
                     for i, m in enumerate(others, start=1):
                         m["player_id"] = i
                         try:
-                            m["conn"].sendall(f"UpdateID:{i}".encode())
+                            m["conn"].sendall(f"UpdateID:{i}\n".encode())
                         except:
                             pass
 
@@ -218,7 +218,7 @@ def threaded_client(conn):
                         if m["player_id"] == target_id:
                             kicked_conn = m["conn"]
                             try:
-                                kicked_conn.send("Kicked".encode())
+                                kicked_conn.send("Kicked\n".encode())
                             except:
                                 pass
                         else:
@@ -240,7 +240,7 @@ def threaded_client(conn):
                         old_id = m["player_id"]
                         m["player_id"] = i
                         try:
-                            m["conn"].sendall(f"UpdateID:{i}".encode())
+                            m["conn"].sendall(f"UpdateID:{i}\n".encode())
                         except:
                             pass
 
@@ -355,7 +355,6 @@ def threaded_client(conn):
                         # Save this player's early Ready
                         early_ready.setdefault(room_num, set()).add(player_id)
                         print(f"[INFO] Queued early Ready from player {player_id} (waiting turn)")
-
 
             elif parts[0] in room_members:
                 room_num = parts[0]

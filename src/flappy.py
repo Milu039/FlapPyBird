@@ -850,6 +850,7 @@ class Flappy:
                 self.player.reset()
                 self.pipes.reset()
                 self.timer.reset()
+
                 if int(self.network.id) == 0:
                     await self.room_lobby_interface("host")
                 else:

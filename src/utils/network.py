@@ -140,18 +140,27 @@ class Network:
                 buffer += data
 
                 while buffer:
-                    # Process special commands
-                    if data.startswith("UpdateID:"):
-                        new_id = data.split(":")[1]
-                        self.id = new_id
-                        print(f"Updated player ID to {new_id}")
+                    while "\n" in buffer:
+                        line, buffer = buffer.split("\n", 1)
 
-                    if buffer.startswith("Kicked"):
-                        print("[INFO] You were kicked from the room.")
-                        self.handle_room_termination(reason="kicked")
-                        buffer = buffer[6:]
-                        continue
-                    
+                        if line.startswith("UpdateID:"):
+                            # Extract ID part only
+                            id_part = line.split(":")[1]
+                            if "{" in id_part:
+                                id_part, leftover = id_part.split("{", 1)
+                                buffer = "{" + leftover + "\n" + buffer  # Put JSON back into buffer
+                            try:
+                                self.id = int(id_part.strip())
+                                print(f"[INFO] Updated player ID to {self.id}")
+                            except ValueError:
+                                print("[ERROR] Invalid ID received.")
+
+                        elif line == "Kicked":
+                            print("[INFO] You were kicked from the room.")
+                            self.handle_room_termination(reason="kicked")
+                            continue
+
+                    # Any leftover non-line-based commands (like Start, Restart)
                     if buffer.startswith("Start"):
                         print("[INFO] Host has started the game.")
                         self.game_start = True
@@ -163,6 +172,7 @@ class Network:
                         self.restart = True
                         buffer = buffer[len("Restart"):]
                         continue
+
 
                     # Process JSON messages
                     if '{' in buffer:

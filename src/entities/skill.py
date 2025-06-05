@@ -11,9 +11,9 @@ class Skill(Entity):
         self.game_state = []
         self.skill_box = config.images.skills["skill_box"]
         self.skill_images = {
-            #"speed_boost": config.images.skills["speed_boost"],
+            "speed_boost": config.images.skills["speed_boost"],
             "time_freeze": config.images.skills["time_freeze"],
-            "teleport": config.images.skills["teleport"],
+            #"teleport": config.images.skills["teleport"],
             #"penetration": config.images.skills["penetration"]
         }
         self.available_skills = [None, None]

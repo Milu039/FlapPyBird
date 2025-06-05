@@ -46,6 +46,9 @@ class Player(Entity):
         self.speed_boost_timer = 0
 
         # Time freeze
+        self.time_frozen = False
+        self.freeze_timer = 0
+        self.target_time_freeze = -1
         self.time_freeze_active = False
         self.time_freeze_timer = 0
 
@@ -292,7 +295,10 @@ class Player(Entity):
                 rotated_image.set_alpha(128)
 
             elif self.target_time_freeze == self.id and self.time_freeze_active:
-                rotated_image.set_alpha(100)
+                blue_surface = pygame.Surface(rotated_image.get_size())
+                blue_surface.fill((0, 150, 255))  # Light blue
+                blue_surface.set_alpha(100)
+                rotated_image.blit(blue_surface, (0, 0), special_flags=pygame.BLEND_ADD)
                 
 
         rect = rotated_image.get_rect(center=self.rect.center)

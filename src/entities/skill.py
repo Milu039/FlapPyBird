@@ -8,7 +8,6 @@ class Skill(Entity):
     def __init__(self, config: GameConfig, player: Player) -> None:
         super().__init__(config)
         self.player = player
-        self.game_state = []
         self.skill_box = config.images.skills["skill_box"]
         self.skill_images = {
             "speed_boost": config.images.skills["speed_boost"],
@@ -49,13 +48,15 @@ class Skill(Entity):
             self.player.speed_boost_active = True
             self.player.speed_boost_timer = 5.0 * self.player.config.fps
         elif skill == "time_freeze":
-            if self.game_state:
-                first_player = max(self.game_state, key=lambda p: p.get("x", 0))
+            if hasattr(self.player, 'network') and self.player.network.game_state:
+                live_game_state = self.player.network.game_state
+                
+                first_player = max(live_game_state, key=lambda p: p.get("x", 0))
                 target_id = first_player.get("player_id")
-                # Set the target for time freeze
+                
                 self.player.target_time_freeze = target_id
                 self.player.time_freeze_active = True
-                self.player.freeze_timer = 2.0 * self.config.fps
+                self.player.time_freeze_timer = 2.0 * self.config.fps
         elif skill == "teleport":
             pass
         # Clear used skill

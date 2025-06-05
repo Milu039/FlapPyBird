@@ -50,6 +50,7 @@ class Player(Entity):
         self.freeze_timer = 0
         self.target_time_freeze = -1
         self.time_freeze_active = False
+        self.time_freeze_timer = 0
 
         # Penetration
         self.penetration_active = False
@@ -223,6 +224,13 @@ class Player(Entity):
 
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
+        # Time freeze countdown (for the caster)
+        if self.time_freeze_active:
+            self.time_freeze_timer -= 1
+            if self.time_freeze_timer <= 0:
+                self.time_freeze_active = False
+                self.target_time_freeze = -1
+         
         # Time freeze logic
         if self.target_time_freeze == self.id and self.time_freeze_active:
             if not self.time_frozen:

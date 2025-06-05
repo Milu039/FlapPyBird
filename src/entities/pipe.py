@@ -15,7 +15,6 @@ class Pipe(Entity):
         self.x += self.vel_x
         super().draw()
 
-
 class Pipes(Entity):
     upper: List[Pipe]
     lower: List[Pipe]

@@ -6,7 +6,7 @@ import time
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = "26.10.79.128"
+        self.host = "26.189.170.88"
         self.port = 5555
         self.addr = (self.host, self.port)
         self.id = "0"
@@ -31,7 +31,7 @@ class Network:
 
     def send(self, data):
         try:
-            #print(f"Sending: {data}")
+            print(f"Sending: {data}")
             self.client.send(data.encode())
         except Exception as e:
             print(f"Failed to send data: {e}")
@@ -193,7 +193,7 @@ class Network:
                                 message = json.loads(json_str)
                                 if message.get("type") == "LobbyUpdate":
                                     self.lobby_state = message["players"]
-                                    # print("Lobby Update:", self.lobby_state)
+                                    print("Lobby Update:", self.lobby_state)
                                 elif message.get("type") == "RoomClosed":
                                     print("[INFO] Room was closed by host.")
                                     self.handle_room_termination(reason="closed")
@@ -268,7 +268,7 @@ class Network:
                                 message = json.loads(json_str)
                                 if message.get("type") == "GameUpdate":
                                     self.game_state = message["players"]
-                                    #print("Game Update:", self.game_state)
+                                    print("Game Update:", self.game_state)
                             except Exception as e:
                                 print(f"Error parsing JSON message: {e}")
                             buffer = buffer[end_pos:]

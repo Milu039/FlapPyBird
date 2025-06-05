@@ -237,7 +237,6 @@ class SkillManager:
     
     def handle_key_press(self, key: int, player, game_state: Optional[Dict] = None) -> None:
         """Handle keyboard input for skills"""
-        # Use SPACE key to activate skill
         if key == pygame.K_1:
             self.activate_skill(player, game_state)
     

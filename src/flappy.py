@@ -192,7 +192,6 @@ class Flappy:
                 self.restart()
                 await self.main_interface()
 
-    #first interface 
     async def main_interface(self):
         while True:
             
@@ -753,7 +752,6 @@ class Flappy:
 
     # Modified multi_gameplay method with skill integration
     async def multi_gameplay(self):
-        self.pipes.resume()
         self.player.id = int(self.network.id)
         self.pipes.set_mode("multi")
         self.network.pipe_callback = self.on_pipe_received

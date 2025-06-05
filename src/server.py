@@ -22,7 +22,6 @@ ready_players = {}
 ready_next_index = {}
 early_ready = {}
 start_room = {}
-default_pos = ["0:50:50:0", "1:100:100:0", "2:150:150:0","3:200:200:0"]
 
 def broadcast_lobby_update(room_num):
     if room_num in room_members:
@@ -76,7 +75,7 @@ def notify_room_closed(room_num):
                 pass
 
 def threaded_client(conn):
-    global room_list, room_members, full_room_list, room_states, ready_players, ready_next_index, early_ready, start_room, default_pos
+    global room_list, room_members, full_room_list, room_states, ready_players, ready_next_index, early_ready, start_room
 
     while True:
         try:
@@ -359,34 +358,20 @@ def threaded_client(conn):
             elif parts[0] in room_members:
                 room_num = parts[0]
                 player_id = int(parts[1])
+                
+                # After countdown, handle actual player game data
+                x = float(parts[2])
+                y = float(parts[3])
+                rot = float(parts[4])
 
-                # On first call, send default positions (for countdown)
-                if not room_states[room_num]["default_initialized"]:
-                    for pos in default_pos:
-                        idx, x, y, rot = pos.split(":")
-                        idx = int(idx)
-                        if idx < len(room_members[room_num]):
-                            room_members[room_num][idx]["game"]["x"] = float(x)
-                            room_members[room_num][idx]["game"]["y"] = float(y)
-                            room_members[room_num][idx]["game"]["rot"] = float(rot)
+                for m in room_members[room_num]:
+                    if m["player_id"] == player_id:
+                        m["game"]["x"] = x
+                        m["game"]["y"] = y
+                        m["game"]["rot"] = rot
+                        break
 
-                    room_states[room_num]["default_initialized"] = True
-                    broadcast_game_update(room_num)
-
-                else:
-                    # After countdown, handle actual player game data
-                    x = float(parts[2])
-                    y = float(parts[3])
-                    rot = float(parts[4])
-
-                    for m in room_members[room_num]:
-                        if m["player_id"] == player_id:
-                            m["game"]["x"] = x
-                            m["game"]["y"] = y
-                            m["game"]["rot"] = rot
-                            break
-
-                    broadcast_game_update(room_num)
+                broadcast_game_update(room_num)
 
             elif command == "Pipe":
                 room_num, gap_y = parts[1], parts[2]

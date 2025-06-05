@@ -46,9 +46,10 @@ class Player(Entity):
         self.speed_boost_timer = 0
 
         # Time freeze
+        self.time_frozen = False
+        self.freeze_timer = 0
+        self.target_time_freeze = -1
         self.time_freeze_active = False
-        self.freeze_timer = 0 
-        self.target_time_freeze = None
 
         # Penetration
         self.penetration_active = False
@@ -80,7 +81,7 @@ class Player(Entity):
             self.resume_wings()
 
     def get_own_state(self):
-        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active
+        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active, self.time_frozen
     
     def set_initial_position(self):
         self.x = int(self.config.window.width * 0.2)
@@ -223,15 +224,12 @@ class Player(Entity):
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
         # Time freeze logic
-        if self.time_freeze_active:
-            # Decrement freeze timer
-            self.freeze_timer -= 1
-            if self.freeze_timer <= 0:
-                # Unfreeze player
-                self.time_freeze_active = False
-                self.target_time_freeze = None
-            # Skip movement updates while frozen
-            return
+        if self.target_time_freeze == self.id:
+            if self.time_frozen:
+                self.freeze_timer -= 1
+                if self.freeze_timer <= 0:
+                    self.time_frozen = False
+                return
 
         # Reduce speed boost timer if active
         if self.speed_boost_active:
@@ -286,7 +284,6 @@ class Player(Entity):
                 rotated_image.set_alpha(128)
 
             elif self.target_time_freeze == self.id and self.time_freeze_active:
-                rotated_image.set_alpha(100)
                 
 
         rect = rotated_image.get_rect(center=self.rect.center)
@@ -316,7 +313,7 @@ class Player(Entity):
                 elif player.get("penetration"):  # only if you're syncing skill states from server
                     rotated_image.set_alpha(128)
                 elif player.get("time_freeze"):
-                    rotated_image.set_alpha(100)
+                    
 
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)

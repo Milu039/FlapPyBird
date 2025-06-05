@@ -21,6 +21,8 @@ from .entities import (
     Timer,
     CountdownTimer,
     Skin,
+    SkillManager,
+    SkillType,
 )
 from .utils import GameConfig, Images, Sounds, Window, Mode, Network
     
@@ -728,6 +730,7 @@ class Flappy:
             await asyncio.sleep(0)
             self.config.tick()
 
+    # Modified multi_gameplay method with skill integration
     async def multi_gameplay(self):
         self.pipes.resume()
         self.player.id = int(self.network.id)
@@ -738,9 +741,12 @@ class Flappy:
         while not self.network.lobby_state or not any(p["player_id"] == self.player.id for p in self.network.lobby_state):
             await asyncio.sleep(0.1)
 
+        # Initialize skill manager for this player
+        self.skill_manager = SkillManager(self.config, self.player.id)
+
         # Start game listener BEFORE sending ready
         if not getattr(self, '_game_listener_started', False):
-            self._game_listener_started = True  # set BEFORE starting
+            self._game_listener_started = True
             self.network.start_game_listener()
 
         # Send ready signal to server
@@ -778,19 +784,46 @@ class Flappy:
                 self.network.send(f"Pipe:{self.message.room_num}:{gap_y}")
                 self.pipes.multi_spawn_new_pipes(gap_y)
 
-            if self.player.collided_push(self.pipes):
+            # Modified collision detection to check for penetration skill
+            if self.skill_manager.has_penetration_active():
+                # Skip collision with pipes if penetration is active
                 pass
+            else:
+                if self.player.collided_push(self.pipes):
+                    pass
+                    
             if self.player.respawn(self.config):
-                pass    
+                pass
+                
             if self.timer.time_up():
                 self.network.stop_listeners()
                 self._game_listener_started = False
                 await self.leaderboard_interface()
                 return
 
+            # Get base position
+            x, y, rot = self.player.get_own_state()
+            # Apply speed boost offset if active
+            if (self.skill_manager.current_skill and 
+                self.skill_manager.current_skill.skill_type == SkillType.SPEED_BOOST and
+                self.skill_manager.current_skill.is_active()):
+                # Calculate total offset based on how long skill has been active
+                active_frames = self.skill_manager.current_skill.duration - self.skill_manager.current_skill.active_timer
+                speed_offset = active_frames * self.skill_manager.current_skill.speed_boost_amount
+                x += speed_offset
+            
+            # Send modified position to server
+            self.network.send(f"{self.message.room_num}:{self.network.id}:{x}:{y}:{rot}")
+            
             for event in pygame.event.get():
                 if self.is_tap_event(event):
                     self.player.flap()
+                elif event.type == pygame.KEYDOWN:
+                    # Handle skill activation
+                    self.skill_manager.handle_key_press(event.key, self.player, self.network.game_state)
+
+            # Update skill manager
+            self.skill_manager.update(self.player, self.pipes, self.network.game_state)
 
             self.background.tick()
             self.floor.tick()
@@ -798,7 +831,11 @@ class Flappy:
             self.timer.update_timer()
             self.timer.tick()
             self.player.tick()
-            x,y,rot = self.player.get_own_state()
+            
+            # Draw skill UI
+            self.skill_manager.draw()
+            
+            x, y, rot = self.player.get_own_state()
             self.network.send(f"{self.message.room_num}:{self.network.id}:{x}:{y}:{rot}")
             self.player.draw_other(self.network.game_state)
         

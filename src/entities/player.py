@@ -32,6 +32,7 @@ class Player(Entity):
         self.respawn_timer = 0
         self.respawn_delay = 24
         self.waiting_to_respawn = False
+        self.vel_x = 0
         
         # Post-respawn transparency
         self.respawn_grace_period = 120  # 2 seconds of transparency after respawn
@@ -75,6 +76,7 @@ class Player(Entity):
         self.img_idx = 0
         self.img_gen = cycle([0, 1, 2, 1])
         self.flapped = False
+        self.vel_x = 0
         
         # Reset boundaries
         self.min_y = -2 * self.h
@@ -136,6 +138,7 @@ class Player(Entity):
         self.vel_y = -9  # player's velocity along Y axis
         self.max_vel_y = 10  # max vel along Y, max descend speed
         self.min_vel_y = -8  # min vel along Y, max ascend speed
+        self.vel_x = 0 # vel x 
         self.acc_y = 1  # players downward acceleration
 
         self.rot = 80  # player's current rotation
@@ -193,6 +196,9 @@ class Player(Entity):
 
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
+        # Apply horizontal velocity if in MULTI mode
+        if self.mode == PlayerMode.MULTI and hasattr(self, 'velocity_x'):
+            self.x += self.velocity_x
         # Same physics as normal mode
         if self.vel_y < self.max_vel_y and not self.flapped:
             self.vel_y += self.acc_y

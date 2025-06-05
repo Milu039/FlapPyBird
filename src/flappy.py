@@ -741,6 +741,9 @@ class Flappy:
             self.message.draw_name(self.network.lobby_state)
             self.message.tick()
             self.button.tick()
+            if self.message.show_name_prompt and self.button.show_name_prompt:
+                self.message.draw_name_message()
+                self.button.draw_enter_button()
 
             pygame.display.update()
             await asyncio.sleep(0)

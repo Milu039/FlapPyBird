@@ -125,7 +125,7 @@ class Button(Entity):
                 1: self.btnStart_2_4,
                 2: self.btnStart_3_4
             }
-            '''
+            
             if self.ready_count in start_buttons:
                 button = start_buttons[self.ready_count]
                 button.set_alpha(191)
@@ -140,7 +140,7 @@ class Button(Entity):
             if self.ready_count == 3:
                 self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnStart, self.posStart)
-                self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
+                self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)'''
 
             if self.show_name_prompt:
                 self.draw_enter_button()
@@ -170,9 +170,6 @@ class Button(Entity):
                 self.posReady = ((self.config.window.width - self.btnReady.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnReady, self.posReady)
                 self.rectReady = self.btnrectCreate(self.posReady, self.btnReady)
-
-            if self.show_name_prompt:
-                self.draw_enter_button()
 
         if self.mode == "Leaderboard":
             if self.player_id == "0":

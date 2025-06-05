@@ -322,7 +322,10 @@ class Player(Entity):
                 elif player.get("penetration"):  # only if you're syncing skill states from server
                     rotated_image.set_alpha(128)
                 elif player.get("time_freeze"):
-                    rotated_image.set_alpha(100)
+                    blue_surface = pygame.Surface(rotated_image.get_size())
+                    blue_surface.fill((0, 150, 255))  # Light blue
+                    blue_surface.set_alpha(100)
+                    rotated_image.blit(blue_surface, (0, 0), special_flags=pygame.BLEND_ADD)
 
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)

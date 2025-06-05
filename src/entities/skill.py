@@ -6,7 +6,7 @@ from .entity import Entity
 from .player import Player
 
 class Skill(Entity):
-    def __init__(self, config: GameConfig, player: Player, network, room_num) -> None:
+    def __init__(self, config: GameConfig, player: Player) -> None:
         super().__init__(config)
         self.player = player
         self.skill_box = config.images.skills["skill_box"]

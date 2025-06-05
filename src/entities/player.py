@@ -82,7 +82,7 @@ class Player(Entity):
             self.resume_wings()
 
     def get_own_state(self):
-        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active
+        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active, self.time_frozen
     
     def set_initial_position(self):
         self.x = int(self.config.window.width * 0.2)

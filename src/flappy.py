@@ -914,6 +914,7 @@ class Flappy:
             break
 
         while True:
+            self.skill.other_players = self.network.game_state
             if self.player.id == 0 and self.pipes.can_spawn_pipes():
                 # Only player 1 generates and sends pipe position
                 base_y = self.config.window.viewport_height

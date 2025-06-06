@@ -44,12 +44,9 @@ class Player(Entity):
         self.speed_boost_timer = 0
 
         # Time freeze
-        self.freeze_image = self.config.images.skills["freeze"]
-        self.time_frozen = False
+        self.freeze_image = config.images.skills["freeze"]
+        self.time_freeze = False
         self.freeze_timer = 0
-        self.target_time_freeze = -1
-        self.time_freeze_active = False
-        self.time_freeze_timer = 0
 
         # Penetration
         self.penetration_active = False
@@ -81,7 +78,7 @@ class Player(Entity):
             self.resume_wings()
 
     def get_own_state(self):
-        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active, self.time_frozen
+        return self.x, self.y, self.rot, self.just_respawned, self.penetration_active, self.time_freeze
     
     def set_initial_position(self):
         self.x = int(self.config.window.width * 0.2)
@@ -109,28 +106,36 @@ class Player(Entity):
 
     def reset(self) -> None:
         """Reset player to initial state before a new multiplayer game."""
-        self.vel_y = 0
-        self.rot = 0
-        self.frame = 0
         self.img_idx = 0
         self.img_gen = cycle([0, 1, 2, 1])
-        self.flapped = False
+        self.frame = 0
+        self.id = 0
+        self.skin_id = 0
         self.vel_x = 0
-
-        self.crashed = False
-        self.crash_entity = None
 
         self.respawn_timer = 0
         self.respawn_delay = 24
         self.waiting_to_respawn = False
+
+        self.respawn_grace_period = 120
         self.respawn_grace_timer = 0
         self.just_respawned = False
 
+        self.crashed = False
+        self.crash_entity = None
+
+        # Speed boost
         self.speed_boost_active = False
         self.speed_boost_timer = 0
+
+        # Time freeze
+        self.time_freeze = False
+        self.freeze_timer = 0
+
+        # Penetration
         self.penetration_active = False
         self.penetration_timer = 0
-
+        
         self.resume_wings()
         self.set_mode(PlayerMode.MULTI)
 
@@ -223,27 +228,37 @@ class Player(Entity):
 
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
-        # Time freeze countdown (for the caster)
-        if self.time_freeze_active:
-            self.time_freeze_timer -= 1
-            if self.time_freeze_timer <= 0:
-                self.time_freeze_active = False
-                self.target_time_freeze = -1
-         
-        # Time freeze logic
-        if self.time_freeze_active:
-            # Decrement freeze timer
-            self.freeze_timer -= 1
-            if self.freeze_timer <= 0:
-                # Unfreeze player
-                self.time_freeze_active = False
-                self.target_time_freeze = None
-            # Skip movement updates while frozen
-            return
+        if hasattr(self.network, 'teleport_active') and self.network.teleport_active:
+            self.teleport_to_position(self.network.teleport_x, self.network.teleport_y)
+            self.network.teleport_active = False
+            self._send_immediate_update()
+            
+        # Check if we received freeze from network (from another player)
+        if hasattr(self.network, 'freeze_active') and self.network.freeze_active:
+            if not hasattr(self, 'freeze_timer') or not self.time_freeze:
+                # Start freeze
+                self.time_freeze = True
+                self.freeze_timer = 2.0 * self.config.fps
+            
+            # Count down freeze timer
+            if self.time_freeze:
+                self.freeze_timer -= 1
+                self.vel_x = -2  # backward the flaappy
+                if self.freeze_timer <= 0:
+                    # End freeze
+                    self.time_freeze = False
+                    self.network.freeze_active = False
+                    self.vel_x = 0
+                    # Send immediate update to server
+                    self._send_immediate_update()
+            
+            # Skip movement while frozen
+            if self.time_freeze:
+                return
 
         # Reduce speed boost timer if active
         if self.speed_boost_active:
-            self.speed_boost_timer -= 1  # or subtract delta time
+            self.speed_boost_timer -= 1
             if self.speed_boost_timer <= 0:
                 self.speed_boost_active = False
                 self.vel_x = 0  # Reset to normal speed
@@ -263,7 +278,22 @@ class Player(Entity):
             self.penetration_timer -= 1 / self.config.fps
             if self.penetration_timer <= 0:
                 self.penetration_active = False
-
+    
+    def teleport_to_position(self, new_x, new_y):
+        """Teleport player to new position"""
+        self.x = new_x
+        self.y = new_y
+        self.vel_y = 0
+        self.vel_x = 0 
+    
+    def _send_immediate_update(self):
+        """Send immediate state update to server"""
+        if hasattr(self, 'network') and self.network and self.network.running:
+            x, y, rot, respawn, penetration, time_freeze = self.get_own_state()
+            if hasattr(self.network, 'room_num') and self.network.room_num:
+                message = f"{self.network.room_num}:{self.network.id}:{x}:{y}:{rot}:{respawn}:{penetration}:{time_freeze}"
+                self.network.send(message)
+            
     def rotate(self):
         self.rot = clamp(self.rot + self.vel_rot, self.rot_min, self.rot_max)
 
@@ -293,8 +323,8 @@ class Player(Entity):
             elif self.penetration_active:
                 rotated_image.set_alpha(128)
 
-            elif self.target_time_freeze == self.id and self.time_freeze_active:
-                rotated_image.blit(self.freeze_image, (0, 0))
+            elif self.time_freeze:
+                rotated_image.blit(self.freeze_image, (0,0))
 
         rect = rotated_image.get_rect(center=self.rect.center)
         self.config.screen.blit(rotated_image, rect)
@@ -323,7 +353,7 @@ class Player(Entity):
                 elif player.get("penetration"):  # only if you're syncing skill states from server
                     rotated_image.set_alpha(128)
                 elif player.get("time_freeze"):
-                    rotated_image.blit(self.freeze_image, (0, 0))
+                    rotated_image.blit(self.freeze_image, (0,0))
 
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)

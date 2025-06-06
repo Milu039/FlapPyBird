@@ -6,7 +6,7 @@ import time
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = "26.189.170.88"
+        self.host = "26.10.79.128"
         self.port = 5555
         self.addr = (self.host, self.port)
         self.id = "0"
@@ -22,7 +22,6 @@ class Network:
         self.timer_callback = None
         self.lobby_listener_thread = None
         self.game_listener_thread = None
-        self.freeze_active = False
 
         try:
             self.client.connect(self.addr)
@@ -229,6 +228,33 @@ class Network:
                 buffer += data
 
                 while buffer:
+                    if buffer.startswith("GetFrozen:"):
+                        # Extract who used the freeze skill
+                        freeze_user = int(buffer.split(":")[1])
+                        print(f"[INFO] Got frozen by player {freeze_user}")
+                        
+                        # Set freeze state on THIS player
+                        self.freeze_active = True
+                        self.freeze_start_time = time.time()
+                        
+                        # Remove the processed command from buffer
+                        buffer = buffer[len("GetFrozen:"):].split(":", 1)[-1] if ":" in buffer else ""
+                        continue
+                    
+                    if buffer.startswith("TeleportTo:"):
+                        parts = buffer.split(":")
+                        if len(parts) >= 3:
+                            new_x = float(parts[1])
+                            new_y = float(parts[2])
+                            print(f"[INFO] Received teleport to ({new_x}, {new_y})")
+                            
+                            self.teleport_active = True
+                            self.teleport_x = new_x
+                            self.teleport_y = new_y
+                            
+                            buffer = buffer[len(f"TeleportTo:{new_x}:{new_y}"):].lstrip(":")
+                            continue
+                    
                     if buffer.startswith("AllReady"):
                         print("[INFO] All players are ready.")
                         self.all_ready = True
@@ -260,13 +286,6 @@ class Network:
                             buffer = ""
                             continue
 
-                    if buffer.startswith("freeze"):
-                        print("[INFO] Freeze command received.")
-                        self.freeze_active = True
-                        self.freeze_start_time = time.time()
-                        buffer = buffer[len("freeze"):]
-                        continue
-
                     # Now handle JSON data only if there's no prefix
                     first_brace = buffer.find("{")
                     if first_brace != -1:
@@ -290,6 +309,7 @@ class Network:
                                 message = json.loads(json_str)
                                 if message.get("type") == "GameUpdate":
                                     self.game_state = message["players"]
+                                    print("Game Update:", self.game_state)
                             except Exception as e:
                                 print(f"Error parsing JSON message: {e}")
                             buffer = buffer[end_pos:]

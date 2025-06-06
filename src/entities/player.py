@@ -6,7 +6,6 @@ from ..utils import GameConfig, clamp
 from .entity import Entity
 from .floor import Floor
 from .pipe import Pipe, Pipes
-"commad"
 
 class PlayerMode(Enum):
     SHM = "SHM"
@@ -46,6 +45,7 @@ class Player(Entity):
         self.speed_boost_timer = 0
 
         # Time freeze
+        self.freeze_image = config.images.skills["freeze"]
         self.time_freeze = False
         self.freeze_timer = 0
         self.target_time_freeze = -1
@@ -280,7 +280,7 @@ class Player(Entity):
         self.x = new_x
         self.y = new_y
         self.vel_y = 0
-        self.vel_x = 0 if not self.speed_boost_active else self.vel_x
+        self.vel_x = 0 
     
     def _send_immediate_update(self):
         """Send immediate state update to server"""
@@ -320,10 +320,7 @@ class Player(Entity):
                 rotated_image.set_alpha(128)
 
             elif self.target_time_freeze == self.id and self.time_freeze_active:
-                blue_surface = pygame.Surface(rotated_image.get_size())
-                blue_surface.fill((0, 150, 255))  # Light blue
-                blue_surface.set_alpha(100)
-                rotated_image.blit(blue_surface, (0, 0), special_flags=pygame.BLEND_ADD)
+                rotated_image.blit(self.freeze_image, (0,0))
 
         rect = rotated_image.get_rect(center=self.rect.center)
         self.config.screen.blit(rotated_image, rect)
@@ -352,10 +349,7 @@ class Player(Entity):
                 elif player.get("penetration"):  # only if you're syncing skill states from server
                     rotated_image.set_alpha(128)
                 elif player.get("time_freeze"):
-                    blue_surface = pygame.Surface(rotated_image.get_size())
-                    blue_surface.fill((0, 150, 255))  # Light blue
-                    blue_surface.set_alpha(100)
-                    rotated_image.blit(blue_surface, (0, 0), special_flags=pygame.BLEND_ADD)
+                    rotated_image.blit(self.freeze_image, (0,0))
 
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)

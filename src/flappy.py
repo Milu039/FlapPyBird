@@ -223,16 +223,17 @@ class Flappy:
         self.skill_videos.clear()
 
     def start_skill_video(self, skill_id):
-        """Start playing video for a specific skill"""
+        """Start playing video for a specific skill - but keep it paused initially"""
         # Stop current video if playing
         if self.current_video:
             self.current_video.stop()
         
-        # Start new video
+        # Start new video but keep it paused
         if skill_id in self.skill_videos and self.skill_videos[skill_id]:
             self.current_video = self.skill_videos[skill_id]
-            # The video will be played in the main loop
-            self.current_video.play()
+            # Load the video but don't auto-play - keep it paused
+            self.current_video.play()  # This loads the video
+            self.current_video.pause()  # Immediately pause it
         else:
             self.current_video = None
 
@@ -266,7 +267,7 @@ class Flappy:
         return controls
 
     def draw_video_controls(self, controls, is_playing, is_paused):
-        """Draw video control buttons"""
+        """Draw video control buttons - modified to show play button when paused"""
         for control_id, control in controls.items():
             rect = control['rect']
             
@@ -280,6 +281,8 @@ class Flappy:
                 center_x, center_y = rect.center
                 icon_size = 12
                 
+                # Show play button if video is not playing or is paused
+                # Show pause button only if video is actively playing (not paused)
                 if not is_playing or is_paused:
                     # Draw play triangle
                     points = [
@@ -289,7 +292,7 @@ class Flappy:
                     ]
                     pygame.draw.polygon(self.config.screen, (255, 255, 255), points)
                 else:
-                    # Draw pause bars
+                    # Draw pause bars (only when actively playing)
                     bar_width = 3
                     bar_height = icon_size
                     bar_spacing = 4
@@ -302,7 +305,7 @@ class Flappy:
                                 (left_bar_x, bar_y, bar_width, bar_height))
                     pygame.draw.rect(self.config.screen, (255, 255, 255), 
                                 (right_bar_x, bar_y, bar_width, bar_height))
-    
+                    
     async def start(self):
         while True:
                 self.mode = Mode()
@@ -1119,20 +1122,19 @@ class Flappy:
                                 self.start_skill_video(skill_id)
 
                     # Handle video control clicks
-                    if video_controls and selected_skill:
+                    if video_controls and selected_skill and self.current_video:
                         for control_id, control in video_controls.items():
                             if control['rect'].collidepoint(event.pos):
                                 if control['type'] == 'play_pause':
-                                    if self.current_video:
+                                    if not self.current_video.is_playing or self.current_video.is_paused:
+                                        # Start/resume video
                                         if not self.current_video.is_playing:
-                                            # Start/resume video
                                             self.current_video.play()
-                                        elif self.current_video.is_paused:
-                                            # Resume video
-                                            self.current_video.resume()
                                         else:
-                                            # Pause video
-                                            self.current_video.pause()
+                                            self.current_video.resume()
+                                    else:
+                                        # Pause video
+                                        self.current_video.pause()
 
             self.background.tick()
             self.floor.tick()
@@ -1209,20 +1211,12 @@ class Flappy:
                 # Create video controls
                 video_controls = self.create_video_controls(video_rect)
                 
-                # Draw video or placeholder
+                # Draw video or leave blank
                 if self.current_video and self.current_video.is_playing and self.current_video.current_frame is not None:
                     # Draw the actual video
-                    try:
-                        self.current_video.draw(self.config.screen, video_rect)
-                        # Draw video border
-                        pygame.draw.rect(self.config.screen, (0, 0, 0), video_rect, width=2)
-                    except Exception as e:
-                        print(f"Error drawing video: {e}")
-                        # Fall back to placeholder
-                        self.draw_video_placeholder(video_rect)
-                else:
-                    # Draw placeholder
-                    self.draw_video_placeholder(video_rect)
+                    self.current_video.draw(self.config.screen, video_rect)
+                    # Draw video border
+                    pygame.draw.rect(self.config.screen, (0, 0, 0), video_rect, width=2)
                 
                 # Draw video controls
                 is_playing = self.current_video.is_playing if self.current_video else False
@@ -1251,22 +1245,3 @@ class Flappy:
             pygame.display.update()
             await asyncio.sleep(0)
             self.config.tick()
-
-    # Enhanced draw_video_placeholder method
-    def draw_video_placeholder(self, video_rect):
-        """Draw placeholder when video is not available"""
-        pygame.draw.rect(self.config.screen, (200, 200, 200), video_rect)
-        pygame.draw.rect(self.config.screen, (0, 0, 0), video_rect, width=2)
-        
-        # Add text
-        video_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 12)
-        video_text = video_font.render("VIDEO PREVIEW", True, (100, 100, 100))
-        video_text_rect = video_text.get_rect(center=video_rect.center)
-        self.config.screen.blit(video_text, video_text_rect)
-        
-        # Add smaller text
-        small_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 8)
-        small_text = small_font.render("Video not available", True, (150, 150, 150))
-        small_text_rect = small_text.get_rect(centerx=video_rect.centerx, 
-                                            y=video_text_rect.bottom + 10)
-        self.config.screen.blit(small_text, small_text_rect)

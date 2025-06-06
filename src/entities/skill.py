@@ -12,9 +12,9 @@ class Skill(Entity):
         self.other_players = None
         self.skill_images = {
             "speed_boost": config.images.skills["speed_boost"],
-            #"time_freeze": config.images.skills["time_freeze"],
+            "time_freeze": config.images.skills["time_freeze"],
             "teleport": config.images.skills["teleport"],
-            #"penetration": config.images.skills["penetration"]
+            "penetration": config.images.skills["penetration"]
         }
         self.available_skills = [None, None]
         self.last_skill_spawn_time = pygame.time.get_ticks()

@@ -1,5 +1,5 @@
 import pygame
-import random as Random
+import random
 from ..utils import GameConfig
 from .entity import Entity
 from .player import Player
@@ -9,6 +9,7 @@ class Skill(Entity):
         super().__init__(config)
         self.player = player
         self.skill_box = config.images.skills["skill_box"]
+        self.other_players = None
         self.skill_images = {
             "speed_boost": config.images.skills["speed_boost"],
             #"time_freeze": config.images.skills["time_freeze"],
@@ -20,13 +21,39 @@ class Skill(Entity):
 
     def update(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_skill_spawn_time >= 5000:
+        if current_time - self.last_skill_spawn_time >= 60000:
             self.add_random_skill()
             self.last_skill_spawn_time = current_time
 
     def add_random_skill(self):
-        import random
-        skill_name = random.choice(list(self.skill_images.keys()))
+        if not self.other_players:
+            return
+        # Sort players by x position (assuming further right == higher rank)
+        sorted_players = sorted(self.other_players, key=lambda p: p['x'], reverse=True)
+        player_ids_in_order = [p['player_id'] for p in sorted_players]
+
+        # Get this player's rank (1-based index)
+        try:
+            player_rank = player_ids_in_order.index(self.player.id) + 1
+        except ValueError:
+            return  # Player not found in ranking list
+
+        # Skill pool based on rank
+        rank_skill_pool = {
+            1: ['penetration'],  # Nerf or no buff for 1st
+            2: ['speed_boost', 'time_freeze', 'teleport', 'penetration'],
+            3: ['speed_boost', 'time_freeze', 'teleport', 'penetration'],
+            4: ['speed_boost', 'time_freeze', 'teleport', 'penetration'],
+        }
+
+        # Ensure we have skill images for the available skills
+        allowed_skills = [s for s in rank_skill_pool.get(player_rank, []) if s in self.skill_images]
+
+        if not allowed_skills:
+            return  # No usable skills for this rank
+
+        skill_name = random.choice(allowed_skills)
+
         if None in self.available_skills:
             empty_index = self.available_skills.index(None)
             self.available_skills[empty_index] = skill_name

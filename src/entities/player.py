@@ -235,11 +235,11 @@ class Player(Entity):
                 # Start freeze
                 self.time_freeze = True
                 self.freeze_timer = 2.0 * self.config.fps
-                self.vel_x = -2  # Stop horizontal movement
             
             # Count down freeze timer
             if self.time_freeze:
                 self.freeze_timer -= 1
+                self.vel_x = -2  # backward the flaappy
                 if self.freeze_timer <= 0:
                     # End freeze
                     self.time_freeze = False

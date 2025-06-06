@@ -465,6 +465,48 @@ def threaded_client(conn):
                             print(f"Failed to send freeze to player {target_id}: {e}")
                     else:
                         print(f"DEBUG SERVER: No valid target found for freeze from player {user_id}")
+                
+                # ADD after "UseFreeze" command handling:
+                elif command == "UseTeleport":
+                    room_num, user_id = parts[1], int(parts[2])
+                    print(f"DEBUG SERVER: Player {user_id} used teleport in room {room_num}")
+                    
+                    if room_num in room_members:
+                        # Find highest X player and user player
+                        highest_x = -999999
+                        target_player = None
+                        user_player = None
+                        
+                        for member in room_members[room_num]:
+                            player_id = member["player_id"]
+                            player_x = member["game"]["x"]
+                            
+                            if player_id == user_id:
+                                user_player = member
+                            elif player_x > highest_x:
+                                highest_x = player_x
+                                target_player = member
+                        
+                        if target_player and user_player:
+                            # Swap positions
+                            user_x = user_player["game"]["x"]
+                            user_y = user_player["game"]["y"]
+                            target_x = target_player["game"]["x"]
+                            target_y = target_player["game"]["y"]
+                            target_id = target_player["player_id"]
+                            
+                            user_player["game"]["x"] = target_x
+                            user_player["game"]["y"] = target_y
+                            target_player["game"]["x"] = user_x
+                            target_player["game"]["y"] = user_y
+                            
+                            # Send teleport commands
+                            try:
+                                user_player["conn"].send(f"TeleportTo:{target_x}:{target_y}".encode())
+                                target_player["conn"].send(f"TeleportTo:{user_x}:{user_y}".encode())
+                                print(f"DEBUG SERVER: Teleport swap completed between {user_id} and {target_id}")
+                            except Exception as e:
+                                print(f"Failed to send teleport commands: {e}")
         except Exception as e:
             print("Error:", e)
             break

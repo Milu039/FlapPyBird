@@ -224,14 +224,18 @@ class Player(Entity):
 
     def tick_multi(self) -> None:
         """Update player position and state in MULTI mode"""
+        if hasattr(self.network, 'teleport_active') and self.network.teleport_active:
+            self.teleport_to_position(self.network.teleport_x, self.network.teleport_y)
+            self.network.teleport_active = False
+            self._send_immediate_update()
+            
         # Check if we received freeze from network (from another player)
         if hasattr(self.network, 'freeze_active') and self.network.freeze_active:
             if not hasattr(self, 'freeze_timer') or not self.time_freeze:
                 # Start freeze
                 self.time_freeze = True
                 self.freeze_timer = 2.0 * self.config.fps
-                self.vel_x = 0  # Stop horizontal movement
-                print(f"DEBUG PLAYER {self.id}: Got frozen by another player")
+                self.vel_x = -2  # Stop horizontal movement
             
             # Count down freeze timer
             if self.time_freeze:
@@ -241,8 +245,6 @@ class Player(Entity):
                     self.time_freeze = False
                     self.network.freeze_active = False
                     self.vel_x = 0
-                    print(f"DEBUG PLAYER {self.id}: Freeze ended")
-                    
                     # Send immediate update to server
                     self._send_immediate_update()
             
@@ -273,6 +275,13 @@ class Player(Entity):
             if self.penetration_timer <= 0:
                 self.penetration_active = False
     
+    def teleport_to_position(self, new_x, new_y):
+        """Teleport player to new position"""
+        self.x = new_x
+        self.y = new_y
+        self.vel_y = 0
+        self.vel_x = 0 if not self.speed_boost_active else self.vel_x
+    
     def _send_immediate_update(self):
         """Send immediate state update to server"""
         if hasattr(self, 'network') and self.network and self.network.running:
@@ -280,7 +289,6 @@ class Player(Entity):
             if hasattr(self.network, 'room_num') and self.network.room_num:
                 message = f"{self.network.room_num}:{self.network.id}:{x}:{y}:{rot}:{respawn}:{penetration}:{time_freeze}"
                 self.network.send(message)
-                print(f"DEBUG: Sent immediate update - time_freeze={time_freeze}")
             
     def rotate(self):
         self.rot = clamp(self.rot + self.vel_rot, self.rot_min, self.rot_max)

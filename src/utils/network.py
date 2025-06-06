@@ -240,6 +240,20 @@ class Network:
                         buffer = buffer[len("GetFrozen:"):].split(":", 1)[-1] if ":" in buffer else ""
                         continue
                     
+                    if buffer.startswith("TeleportTo:"):
+                        parts = buffer.split(":")
+                        if len(parts) >= 3:
+                            new_x = float(parts[1])
+                            new_y = float(parts[2])
+                            print(f"[INFO] Received teleport to ({new_x}, {new_y})")
+                            
+                            self.teleport_active = True
+                            self.teleport_x = new_x
+                            self.teleport_y = new_y
+                            
+                            buffer = buffer[len(f"TeleportTo:{new_x}:{new_y}"):].lstrip(":")
+                            continue
+                    
                     if buffer.startswith("AllReady"):
                         print("[INFO] All players are ready.")
                         self.all_ready = True

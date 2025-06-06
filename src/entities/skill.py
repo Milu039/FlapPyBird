@@ -12,8 +12,8 @@ class Skill(Entity):
         self.skill_images = {
             "speed_boost": config.images.skills["speed_boost"],
             "time_freeze": config.images.skills["time_freeze"],
-            #"teleport": config.images.skills["teleport"],
-            #"penetration": config.images.skills["penetration"]
+            "teleport": config.images.skills["teleport"],
+            "penetration": config.images.skills["penetration"]
         }
         self.available_skills = [None, None]
         self.last_skill_spawn_time = pygame.time.get_ticks()
@@ -53,9 +53,11 @@ class Skill(Entity):
                 room_num = self.player.network.room_num
                 user_id = self.player.network.id
                 self.player.network.send(f"UseFreeze:{room_num}:{user_id}")
-                print(f"DEBUG: Player {user_id} used freeze skill - will target player with highest X")
         elif skill == "teleport":
-            pass
+            if hasattr(self.player, 'network') and self.player.network and self.player.network.running:
+                room_num = self.player.network.room_num
+                user_id = self.player.network.id
+                self.player.network.send(f"UseTeleport:{room_num}:{user_id}")
             
         # Clear used skill
         self.available_skills[index] = None

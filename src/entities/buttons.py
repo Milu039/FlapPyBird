@@ -137,7 +137,7 @@ class Button(Entity):
                 self.draw_button(self.btnStart, self.posStart)
                 self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
             '''
-            if self.ready_count == 0:
+            if self.ready_count == 1:
                 self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnStart, self.posStart)
                 self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)

@@ -706,9 +706,9 @@ class Flappy:
                         self.message.isReady = False
                         
                     if hasattr(self.button, "rectStart") and self.button.rectStart.collidepoint(event.pos):
+                        self.network.send("Start")
                         self.network.stop_listeners()
                         self._lobby_listener_started = False
-                        self.network.send(f"Start")
                         await self.multi_gameplay()
                         return
 
@@ -754,9 +754,7 @@ class Flappy:
         self.player.id = int(self.network.id)
         self.pipes.set_mode("multi")
         self.skill = Skill(self.config, self.player)
-        self.player.network = self.network
         self.network.pipe_callback = self.on_pipe_received
-        self.player.network = self.network
         # Wait until lobby_state is received and includes this player
         while not self.network.lobby_state or not any(p["player_id"] == self.player.id for p in self.network.lobby_state):
             await asyncio.sleep(0.1)

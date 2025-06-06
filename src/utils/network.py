@@ -222,6 +222,7 @@ class Network:
         while self.running:
             try:
                 data = self.client.recv(2048).decode()
+                print(data)
                 if not data:
                     continue
 
@@ -234,24 +235,31 @@ class Network:
                         buffer = buffer[len("AllReady"):]
                         continue
 
+                    if buffer.startswith("ReadyNext:"):
+                        try:
+                            player_id = buffer.split(":")[1]
+                            print(f"[INFO] ReadyNext for player {player_id}")
+                            self.ready_next_player = player_id
+                        except Exception as e:
+                            print(f"Failed to handle ReadyNext: {e}")
+                        buffer = buffer[len(f"ReadyNext:{player_id}"):]
+                        continue
+
                     if buffer.startswith("Pipe:"):
                         try:
                             parts = buffer.strip().split(":")
                             if len(parts) >= 3:
                                 gap_y = int(parts[2])
-                                # Only spawn pipe if this is NOT player 1
                                 if self.id != "0":
                                     if hasattr(self, "pipe_callback") and self.pipe_callback:
                                         self.pipe_callback(gap_y)
-                                # Trim the message to avoid duplication
-                                buffer = ""
-                                continue
+                            buffer = ""  # All done
+                            continue
                         except Exception as e:
                             print(f"Failed to handle pipe spawn: {e}")
                             buffer = ""
                             continue
 
-                    # New: Handle freeze message
                     if buffer.startswith("freeze"):
                         print("[INFO] Freeze command received.")
                         self.freeze_active = True
@@ -259,11 +267,15 @@ class Network:
                         buffer = buffer[len("freeze"):]
                         continue
 
-                    if '{' in buffer:
-                        start = buffer.index('{')
+                    # Now handle JSON data only if there's no prefix
+                    first_brace = buffer.find("{")
+                    if first_brace != -1:
+                        # Skip any leading junk before JSON
+                        buffer = buffer[first_brace:]
+
                         brace_count = 0
-                        end_pos = start
-                        for i in range(start, len(buffer)):
+                        end_pos = 0
+                        for i in range(len(buffer)):
                             if buffer[i] == '{':
                                 brace_count += 1
                             elif buffer[i] == '}':
@@ -271,21 +283,21 @@ class Network:
                                 if brace_count == 0:
                                     end_pos = i + 1
                                     break
-                        if brace_count == 0:
-                            json_str = buffer[start:end_pos]
+
+                        if brace_count == 0 and end_pos > 0:
+                            json_str = buffer[:end_pos]
                             try:
                                 message = json.loads(json_str)
                                 if message.get("type") == "GameUpdate":
                                     self.game_state = message["players"]
-                                    #print("Game Update:", self.game_state)
                             except Exception as e:
                                 print(f"Error parsing JSON message: {e}")
                             buffer = buffer[end_pos:]
-                        else:
-                            break
-                    else:
-                        buffer = ""
-                        break
+                            continue
+
+                    # If we get here and still have leftover junk, discard it
+                    buffer = ""
+
 
             except socket.timeout:
                 continue

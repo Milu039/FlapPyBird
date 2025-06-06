@@ -12,7 +12,7 @@ class Skill(Entity):
         self.skill_box = config.images.skills["skill_box"]
         self.skill_images = {
             "speed_boost": config.images.skills["speed_boost"],
-            "time_freeze": config.images.skills["time_freeze"],
+            #"time_freeze": config.images.skills["time_freeze"],
             #"penetration": config.images.skills["penetration"]
         }
         self.available_skills = [None, None]
@@ -20,7 +20,7 @@ class Skill(Entity):
 
     def update(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_skill_spawn_time >= 5000:
+        if current_time - self.last_skill_spawn_time >= 15000:
             self.add_random_skill()
             self.last_skill_spawn_time = current_time
 

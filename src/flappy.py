@@ -23,7 +23,7 @@ from .entities import (
     Skin,
     Skill
 )
-from .utils import GameConfig, Images, Sounds, Window, Mode, Network
+from .utils import GameConfig, Images, Sounds, Window, Mode, Network, Video
     
 class Flappy:
     def __init__(self):
@@ -42,6 +42,15 @@ class Flappy:
             images=images,
             sounds=Sounds(),
         )
+
+        self.skill_videos = {
+            "speed_boost": None,
+            "penetration": None,
+            "pipe_shift": None,
+            "time_freeze": None,
+            "teleport": None
+        }
+        self.current_video = None
         
          #create the solo button 
     def solo_button(self):
@@ -180,6 +189,58 @@ class Flappy:
         self.medal = Medal(self.config, self.score)
         self.button = Button(self.config, self.mode)
         self.timer = Timer(self.config)
+
+    def load_skill_videos(self):
+        """Load video files for each skill"""
+        try:
+            # Replace these paths with your actual video file paths
+            video_paths = {
+                "speed_boost": "assets/sprites/speed_boost.mp4",
+                "penetration": "assets/penetration.mp4",
+                "pipe_shift": "assets/pipe_shift.mp4",
+                "time_freeze": "assets/time_freeze.mp4",
+                "teleport": "assets/teleport.mp4"
+            }
+            
+            for skill_id, video_path in video_paths.items():
+                try:
+                    self.skill_videos[skill_id] = Video(video_path)
+                except Exception as e:
+                    print(f"Could not load video for {skill_id}: {e}")
+                    self.skill_videos[skill_id] = None
+        except Exception as e:
+            print(f"Error loading skill videos: {e}")
+
+    def cleanup_videos(self):
+        """Clean up all video resources"""
+        if self.current_video:
+            self.current_video.cleanup()
+            self.current_video = None
+        
+        for video in self.skill_videos.values():
+            if video:
+                video.cleanup()
+        self.skill_videos.clear()
+
+    def start_skill_video(self, skill_id):
+        """Start playing video for a specific skill"""
+        # Stop current video if playing
+        if self.current_video:
+            self.current_video.stop()
+        
+        # Start new video
+        if skill_id in self.skill_videos and self.skill_videos[skill_id]:
+            self.current_video = self.skill_videos[skill_id]
+            # The video will be played in the main loop
+            self.current_video.play()
+        else:
+            self.current_video = None
+
+    def stop_skill_video(self):
+        """Stop the currently playing video"""
+        if self.current_video:
+            self.current_video.stop()
+            self.current_video = None
     
     async def start(self):
         while True:
@@ -976,9 +1037,12 @@ class Flappy:
         return descriptions.get(skill_id, ["Skill not found"])
 
     async def main_skill_interface(self):
-        """Main skill interface with 5 skill buttons"""
+        """Main skill interface with video integration"""
         self.mode.set_mode("Main Skill")
-        selected_skill = None  # Track which skill is selected for description
+        selected_skill = None
+        
+        # Load skill videos when entering the interface
+        self.load_skill_videos()
 
         while True:
             back_button_surf, back_button_rect = self.back_button()
@@ -988,23 +1052,29 @@ class Flappy:
                 self.check_quit_event(event)
                 if self.is_tap_event(event):
                     if back_button_rect.collidepoint(event.pos):
+                        # Clean up videos before leaving
+                        self.cleanup_videos()
                         await self.main_interface()
+                        return
 
                     # Check which skill button was clicked
                     for img, img_rect, skill_id, skill_name, pos, frame_rect in skill_buttons:
                         if frame_rect.collidepoint(event.pos):
-                            # Toggle selection
+                            # Handle skill selection
                             if selected_skill == skill_id:
+                                # Deselect current skill
                                 selected_skill = None
+                                self.stop_skill_video()
                             else:
+                                # Select new skill
                                 selected_skill = skill_id
+                                self.start_skill_video(skill_id)
 
             self.background.tick()
             self.floor.tick()
 
-            # Draw skill ability title image (only once, smaller size)
+            # Draw skill ability title
             skill_ability_img = self.config.images.message["skill_ability"]
-            # Scale down the title image to make it smaller
             scaled_title = pygame.transform.scale(skill_ability_img, (350, 70))
             title_rect = scaled_title.get_rect(centerx=self.config.window.width // 2, y=50)
             self.config.screen.blit(scaled_title, title_rect)
@@ -1012,24 +1082,21 @@ class Flappy:
             # Create font for skill names
             skill_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 16)
 
-            # Draw skill buttons with frames, icons and names
+            # Draw skill buttons
             for img, img_rect, skill_id, skill_name, pos, frame_rect in skill_buttons:
-                # Determine if this skill is selected
                 is_selected = (selected_skill == skill_id)
                 
-                # Main frame colors (always the same)
-                main_frame_color = (221, 216, 148)  # Default color #DDD894
+                # Draw main frame
+                main_frame_color = (221, 216, 148)
                 border_radius = 15
-                
-                # Draw main frame behind the skill
                 pygame.draw.rect(self.config.screen, main_frame_color, frame_rect, border_radius=border_radius)
                 pygame.draw.rect(self.config.screen, (0, 0, 0), frame_rect, width=2, border_radius=border_radius)
                 
-                # Create smaller inner frame for content (icon + text area)
-                inner_padding_left = -2   # Distance from left edge of main frame
-                inner_padding_top = 2     # Distance from top edge of main frame
-                inner_padding_right = 13 # Distance from right edge of main frame  
-                inner_padding_bottom = 15 # Distance from bottom edge of main frame
+                # Draw inner frame
+                inner_padding_left = -2
+                inner_padding_top = 2
+                inner_padding_right = 13
+                inner_padding_bottom = 15
                 
                 inner_frame_x = pos[0] + inner_padding_left
                 inner_frame_y = pos[1] + inner_padding_top
@@ -1037,65 +1104,61 @@ class Flappy:
                 inner_frame_height = 80 - inner_padding_top - inner_padding_bottom
                 inner_frame_rect = pygame.Rect(inner_frame_x, inner_frame_y, inner_frame_width, inner_frame_height)
 
-                # Inner frame colors based on selection
                 if is_selected:
-                    inner_frame_color = (204, 192, 148)  # 25% blend of #533000 with original beige
-                    inner_border_width = 0
+                    inner_frame_color = (204, 192, 148)
                 else:
-                    inner_frame_color = main_frame_color  # Same as main frame (invisible effect)
-                    inner_border_width = 0  # No border when not selected
+                    inner_frame_color = main_frame_color
                 
-                # Draw inner frame
                 inner_border_radius = 10
                 pygame.draw.rect(self.config.screen, inner_frame_color, inner_frame_rect, border_radius=inner_border_radius)
-                if inner_border_width > 0:
-                    pygame.draw.rect(self.config.screen, (0, 0, 0), inner_frame_rect, width=inner_border_width, border_radius=inner_border_radius)
                 
-                # Draw skill icon (no tinting needed since we have inner frame)
+                # Draw skill icon
                 self.config.screen.blit(img, img_rect)
                 
-                # Draw skill name next to the icon
-                text_surf = skill_font.render(skill_name, True, (0, 0, 0))  # Always black text
-                text_x = pos[0] + img.get_width() + 20  # Position text to the right of icon
-                text_y = pos[1] + (img.get_height() - text_surf.get_height()) // 2  # Center vertically with icon
+                # Draw skill name
+                text_surf = skill_font.render(skill_name, True, (0, 0, 0))
+                text_x = pos[0] + img.get_width() + 20
+                text_y = pos[1] + (img.get_height() - text_surf.get_height()) // 2
                 self.config.screen.blit(text_surf, (text_x, text_y))
 
             # Draw video and description frame if a skill is selected
             if selected_skill:
-                # Main info frame position (beside the skill buttons)
-                info_frame_x = 520  # Right of skill buttons
-                info_frame_y = 200  # Same as first skill button
+                # Main info frame
+                info_frame_x = 520
+                info_frame_y = 200
                 info_frame_width = 480
                 info_frame_height = 480
                 
-                # Draw main info frame with same color
                 info_frame_rect = pygame.Rect(info_frame_x, info_frame_y, info_frame_width, info_frame_height)
-                frame_color = (221, 216, 148)  # Same color as skill buttons
+                frame_color = (221, 216, 148)
                 border_radius = 15
                 pygame.draw.rect(self.config.screen, frame_color, info_frame_rect, border_radius=border_radius)
                 pygame.draw.rect(self.config.screen, (0, 0, 0), info_frame_rect, width=2, border_radius=border_radius)
                 
-                # Video area (upper part of the frame)
+                # Video area
                 video_area_x = info_frame_x + 20
                 video_area_y = info_frame_y + 20
                 video_area_width = info_frame_width - 40
-                video_area_height = 180  # Space reserved for video
+                video_area_height = 180
+                video_rect = pygame.Rect(video_area_x, video_area_y, video_area_width, video_area_height)
                 
-                # Draw placeholder for video area (you can replace this with actual video rendering)
-                video_placeholder_rect = pygame.Rect(video_area_x, video_area_y, video_area_width, video_area_height)
-                pygame.draw.rect(self.config.screen, (200, 200, 200), video_placeholder_rect)  # Light gray placeholder
-                pygame.draw.rect(self.config.screen, (0, 0, 0), video_placeholder_rect, width=2)
+                # Draw video or placeholder
+                if self.current_video and self.current_video.is_playing and self.current_video.current_frame is not None:
+                    # Draw the actual video
+                    try:
+                        self.current_video.draw(self.config.screen, video_rect)
+                        # Draw video border
+                        pygame.draw.rect(self.config.screen, (0, 0, 0), video_rect, width=2)
+                    except Exception as e:
+                        print(f"Error drawing video: {e}")
+                        # Fall back to placeholder
+                        self.draw_video_placeholder(video_rect)
+                else:
+                    # Draw placeholder
+                    self.draw_video_placeholder(video_rect)
                 
-                # Add "VIDEO PREVIEW" text in the placeholder
-                video_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 12)
-                video_text = video_font.render("VIDEO PREVIEW", True, (100, 100, 100))
-                video_text_rect = video_text.get_rect(center=video_placeholder_rect.center)
-                self.config.screen.blit(video_text, video_text_rect)
-                
-                # Description area (lower part of the frame)
-                desc_start_y = video_area_y + video_area_height + 20  # Start below video area with some spacing
-                
-                # Get description text
+                # Description area
+                desc_start_y = video_area_y + video_area_height + 20
                 description_lines = self.get_skill_description(selected_skill)
                 
                 # Draw description text
@@ -1103,11 +1166,10 @@ class Flappy:
                 line_height = 25
                 
                 for i, line in enumerate(description_lines):
-                    if line:  # Skip empty lines for spacing
+                    if line:
                         text_surf = desc_font.render(line, True, (0, 0, 0))
-                        text_x = info_frame_x + 20  # Padding from left edge
+                        text_x = info_frame_x + 20
                         text_y = desc_start_y + (i * line_height)
-                        # Make sure text doesn't go outside the frame
                         if text_y + text_surf.get_height() < info_frame_y + info_frame_height - 20:
                             self.config.screen.blit(text_surf, (text_x, text_y))
 
@@ -1118,4 +1180,13 @@ class Flappy:
             await asyncio.sleep(0)
             self.config.tick()
 
+    def draw_video_placeholder(self, video_rect):
+        """Draw placeholder when video is not available"""
+        pygame.draw.rect(self.config.screen, (200, 200, 200), video_rect)
+        pygame.draw.rect(self.config.screen, (0, 0, 0), video_rect, width=2)
         
+        # Add text
+        video_font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 12)
+        video_text = video_font.render("VIDEO PREVIEW", True, (100, 100, 100))
+        video_text_rect = video_text.get_rect(center=video_rect.center)
+        self.config.screen.blit(video_text, video_text_rect)

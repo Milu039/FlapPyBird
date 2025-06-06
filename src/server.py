@@ -54,7 +54,8 @@ def broadcast_game_update(room_num):
                 "y": m["game"]["y"],
                 "rot": m["game"]["rot"],
                 "respawn": m["game"]["res"],
-                "penetration": m["game"]["pen"]
+                "penetration": m["game"]["pen"],
+                "time_freeze": m["game"]["tf"]
             }
             for m in room_members[room_num]
         ]
@@ -84,7 +85,7 @@ def threaded_client(conn):
             data = conn.recv(2048).decode("utf-8")
             if not data:
                 break
-            print("Received:", data)
+            #print("Received:", data)
             parts = data.split(":")
             command = parts[0]
             reply = ""
@@ -103,7 +104,7 @@ def threaded_client(conn):
                     "name": "Player 1",
                     "skin_id": 0,
                     "lobby": {"ready": False, "host": True},
-                    "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False}
+                    "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False, "tf": False}
                 }]
                 room_states[room_num] = {"default_initialized": False,}
                 conn.sendall(f"Joined:{room_num}:0:host".encode())
@@ -120,7 +121,7 @@ def threaded_client(conn):
                         "name":f"Player {player_id+1}", 
                         "skin_id":0, 
                         "lobby": {"ready": False, "host": False},
-                        "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False}
+                        "game": {"x": 0, "y": 0, "rot": 0.0, "res": False, "pen": False, "tf": False}
                         })
 
                 # Update capacity in room_list
@@ -432,7 +433,78 @@ def threaded_client(conn):
                     ready_players[room_num] = set()
                     ready_next_index[room_num] = 0
                     early_ready[room_num] = set()
-
+                    
+            elif command == "UseFreeze":
+                room_num, user_id = parts[1], int(parts[2])
+                print(f"DEBUG SERVER: Player {user_id} used freeze in room {room_num}")
+                
+                if room_num in room_members:
+                    # Find the player with the highest X coordinate (furthest ahead)
+                    highest_x = -999999
+                    target_player = None
+                    
+                    for member in room_members[room_num]:
+                        player_id = member["player_id"]
+                        player_x = member["game"]["x"]
+                        
+                        # Don't target the player who used the skill
+                        if player_id != user_id:
+                            if player_x > highest_x:
+                                highest_x = player_x
+                                target_player = member
+                    
+                    if target_player:
+                        target_id = target_player["player_id"]
+                        try:
+                            # Send freeze command only to the player with highest X
+                            target_player["conn"].send(f"GetFrozen:{user_id}".encode())
+                            print(f"DEBUG SERVER: Player {user_id} froze player {target_id} (highest X: {highest_x})")
+                        except Exception as e:
+                            print(f"Failed to send freeze to player {target_id}: {e}")
+                    else:
+                        print(f"DEBUG SERVER: No valid target found for freeze from player {user_id}")
+                
+            # ADD after "UseFreeze" command handling:
+            elif command == "UseTeleport":
+                room_num, user_id = parts[1], int(parts[2])
+                print(f"DEBUG SERVER: Player {user_id} used teleport in room {room_num}")
+                    
+                if room_num in room_members:
+                    # Find highest X player and user player
+                    highest_x = -999999
+                    target_player = None
+                    user_player = None
+                        
+                    for member in room_members[room_num]:
+                        player_id = member["player_id"]
+                        player_x = member["game"]["x"]
+                            
+                        if player_id == user_id:
+                            user_player = member
+                        elif player_x > highest_x:
+                            highest_x = player_x
+                            target_player = member
+                        
+                    if target_player and user_player:
+                        # Swap positions
+                        user_x = user_player["game"]["x"]
+                        user_y = user_player["game"]["y"]
+                        target_x = target_player["game"]["x"]
+                        target_y = target_player["game"]["y"]
+                        target_id = target_player["player_id"]
+                        
+                        user_player["game"]["x"] = target_x
+                        user_player["game"]["y"] = target_y
+                        target_player["game"]["x"] = user_x
+                        target_player["game"]["y"] = user_y
+                        
+                        # Send teleport commands
+                        try:
+                            user_player["conn"].send(f"TeleportTo:{target_x}:{target_y}".encode())
+                            target_player["conn"].send(f"TeleportTo:{user_x}:{user_y}".encode())
+                            print(f"DEBUG SERVER: Teleport swap completed between {user_id} and {target_id}")
+                        except Exception as e:
+                            print(f"Failed to send teleport commands: {e}")
         except Exception as e:
             print("Error:", e)
             break

@@ -47,9 +47,6 @@ class Player(Entity):
         self.freeze_image = config.images.skills["freeze"]
         self.time_freeze = False
         self.freeze_timer = 0
-        self.target_time_freeze = -1
-        self.time_freeze_active = False
-        self.time_freeze_timer = 0
 
         # Penetration
         self.penetration_active = False
@@ -109,28 +106,36 @@ class Player(Entity):
 
     def reset(self) -> None:
         """Reset player to initial state before a new multiplayer game."""
-        self.vel_y = 0
-        self.rot = 0
-        self.frame = 0
         self.img_idx = 0
         self.img_gen = cycle([0, 1, 2, 1])
-        self.flapped = False
+        self.frame = 0
+        self.id = 0
+        self.skin_id = 0
         self.vel_x = 0
-
-        self.crashed = False
-        self.crash_entity = None
 
         self.respawn_timer = 0
         self.respawn_delay = 24
         self.waiting_to_respawn = False
+
+        self.respawn_grace_period = 120
         self.respawn_grace_timer = 0
         self.just_respawned = False
 
+        self.crashed = False
+        self.crash_entity = None
+
+        # Speed boost
         self.speed_boost_active = False
         self.speed_boost_timer = 0
+
+        # Time freeze
+        self.time_freeze = False
+        self.freeze_timer = 0
+
+        # Penetration
         self.penetration_active = False
         self.penetration_timer = 0
-
+        
         self.resume_wings()
         self.set_mode(PlayerMode.MULTI)
 
@@ -318,7 +323,7 @@ class Player(Entity):
             elif self.penetration_active:
                 rotated_image.set_alpha(128)
 
-            elif self.target_time_freeze == self.id and self.time_freeze_active:
+            elif self.time_freeze:
                 rotated_image.blit(self.freeze_image, (0,0))
 
         rect = rotated_image.get_rect(center=self.rect.center)

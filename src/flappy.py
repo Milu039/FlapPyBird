@@ -195,11 +195,11 @@ class Flappy:
         try:
             # Replace these paths with your actual video file paths
             video_paths = {
-                "speed_boost": "assets/sprites/speed_boost.mp4",
-                "penetration": "assets/penetration.mp4",
-                "pipe_shift": "assets/pipe_shift.mp4",
-                "time_freeze": "assets/time_freeze.mp4",
-                "teleport": "assets/teleport.mp4"
+                "speed_boost": "assets/video/speed_boost.mp4",
+                "penetration": "assets/video/penetration.mp4",
+                "pipe_shift": "assets/video/pipe_shift.png",
+                "time_freeze": "assets/video/time_freeze.mp4",
+                "teleport": "assets/video/teleport.mp4"
             }
             
             for skill_id, video_path in video_paths.items():

@@ -1,7 +1,6 @@
 from ..utils import GameConfig
 from .entity import Entity
 
-
 class Floor(Entity):
     def __init__(self, config: GameConfig) -> None:
         super().__init__(config, config.images.base, 0, config.window.vh)

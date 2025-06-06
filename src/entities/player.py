@@ -343,6 +343,13 @@ class Player(Entity):
             frame_idx = self.img_idx
             image = self.config.images.skin[skin_id][frame_idx]
 
+            name = player.get("name")
+            if name:
+                font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 14)
+                name_surface = font.render(name, True, (0, 0, 0))
+                name_rect = name_surface.get_rect(center=(x + image.get_width() // 2, y + image.get_height() + 15))
+                self.config.screen.blit(name_surface, name_rect)
+
             if player_id != self.id:
                 rotated_image = pygame.transform.rotate(image, rot)
                 if player.get("respawn"):
@@ -357,13 +364,6 @@ class Player(Entity):
 
                 rect = rotated_image.get_rect(center=(x + image.get_width() // 2, y + image.get_height() // 2))
                 self.config.screen.blit(rotated_image, rect)
-
-            name = player.get("name")
-            if name:
-                font = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 14)
-                name_surface = font.render(name, True, (0, 0, 0))
-                name_rect = name_surface.get_rect(center=(x + image.get_width() // 2, y + image.get_height() + 15))
-                self.config.screen.blit(name_surface, name_rect)
 
     def stop_wings(self):
         self.img_gen = cycle([self.img_idx])
@@ -402,7 +402,6 @@ class Player(Entity):
             if self.collide(pipe):
                 self.x = pipe.x - self.w - 5
                 return
-
 
     def respawn(self, config: GameConfig):
         if self.mode != PlayerMode.MULTI:

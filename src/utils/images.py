@@ -5,7 +5,6 @@ import pygame
 
 from .constants import PLAYERS
 
-
 class Images:
     numbers: List[pygame.Surface]
     icon: dict

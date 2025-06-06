@@ -6,7 +6,7 @@ import time
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = "26.10.79.128"
+        self.host = "26.10.79.128" # ip address should same as server ip address
         self.port = 5555
         self.addr = (self.host, self.port)
         self.id = "0"
@@ -31,7 +31,7 @@ class Network:
 
     def send(self, data):
         try:
-            #print(f"Sending: {data}")
+            print(f"Sending: {data}")
             self.client.send(data.encode())
         except Exception as e:
             print(f"Failed to send data: {e}")
@@ -172,7 +172,6 @@ class Network:
                         self.restart = True
                         buffer = buffer[len("Restart"):]
                         continue
-
 
                     # Process JSON messages
                     if '{' in buffer:
@@ -317,7 +316,6 @@ class Network:
 
                     # If we get here and still have leftover junk, discard it
                     buffer = ""
-
 
             except socket.timeout:
                 continue

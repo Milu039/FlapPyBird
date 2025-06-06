@@ -6,7 +6,6 @@ from .images import Images
 from .sounds import Sounds
 from .window import Window
 
-
 class GameConfig:
     def __init__(
         self,

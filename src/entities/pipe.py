@@ -4,7 +4,6 @@ from typing import List
 from ..utils import GameConfig
 from .entity import Entity
 
-
 class Pipe(Entity):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

@@ -68,5 +68,3 @@ class Score(Entity):
 
             self.draw_score(self.score, self.y + 215)         # Gained score
             self.draw_score(self.best_score, self.y + 290)    # Best score
-
-

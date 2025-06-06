@@ -93,5 +93,3 @@ class Skin(Entity):
             # Draw the name
             name_surface = font.render(name, True, (0, 0, 0))
             self.config.screen.blit(name_surface, (name_x, name_y))
-
-        

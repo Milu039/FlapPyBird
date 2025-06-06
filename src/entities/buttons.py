@@ -125,7 +125,7 @@ class Button(Entity):
                 1: self.btnStart_2_4,
                 2: self.btnStart_3_4
             }
-            '''
+
             if self.ready_count in start_buttons:
                 button = start_buttons[self.ready_count]
                 button.set_alpha(191)
@@ -133,11 +133,6 @@ class Button(Entity):
                 self.draw_button(button, self.posStart)
                 
             elif self.ready_count == 3:
-                self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 175)
-                self.draw_button(self.btnStart, self.posStart)
-                self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
-            '''
-            if self.ready_count == 1:
                 self.posStart = ((self.config.window.width - self.btnStart.get_width()) // 2, self.config.window.height // 2 + 175)
                 self.draw_button(self.btnStart, self.posStart)
                 self.rectStart = self.btnrectCreate(self.posStart, self.btnStart)
@@ -185,7 +180,6 @@ class Button(Entity):
                 self.posQuit = (int(self.config.window.width - self.btnQuit.get_width()) // 2, self.config.window.height // 2 + 275)
                 self.draw_button(self.btnQuit, self.posQuit)
                 self.rectQuit = self.btnrectCreate(self.posQuit, self.btnQuit)
-
 
     def draw_button(self,image,pos) -> None:
         self.config.screen.blit(image, pos)

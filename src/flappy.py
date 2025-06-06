@@ -2,7 +2,6 @@ import asyncio
 import sys
 import pygame
 import random
-import time
 from pygame.locals import K_ESCAPE, K_SPACE, K_UP, KEYDOWN, QUIT
 
 from .entities import (
@@ -33,7 +32,6 @@ class Flappy:
         screen = pygame.display.set_mode((window.width, window.height))
         images = Images()
         
-        
         self.config = GameConfig(
             screen=screen,
             clock=pygame.time.Clock(),
@@ -52,7 +50,7 @@ class Flappy:
         }
         self.current_video = None
         
-         #create the solo button 
+    #create the solo button 
     def solo_button(self):
         FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
         WHITE = (255,255,255)
@@ -63,7 +61,7 @@ class Flappy:
         )
         return text_surf, text_rect
 
-     #create the solo button 
+    #create the solo button 
     def multi_button(self):
         FONT = pygame.font.Font("assets/font/PressStart2P-Regular.ttf", 24)
         WHITE = (255,255,255)
@@ -249,7 +247,6 @@ class Flappy:
         
         # Control button dimensions
         button_size = 40
-        button_spacing = 10
         
         # Position controls below the video
         controls_y = video_rect.bottom - 135

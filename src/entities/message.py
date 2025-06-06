@@ -3,7 +3,6 @@ import random as Random
 from ..utils import GameConfig, Mode
 from .entity import Entity
 
-
 class Message(Entity):
     def __init__(self, config: GameConfig, mode: Mode) -> None:
         super().__init__(config)

@@ -4,7 +4,6 @@ import pygame
 
 from ..utils import GameConfig, get_hit_mask, pixel_collision
 
-
 class Entity:
     def __init__(
         self,

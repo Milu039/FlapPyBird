@@ -2,7 +2,6 @@ import time
 import pygame
 from ..utils import GameConfig
 from .entity import Entity
-from .player import Player
 
 class Timer(Entity):
     def __init__(self, config: GameConfig) -> None:
@@ -81,7 +80,6 @@ class Timer(Entity):
         x_offset += digit_images[2].get_width()
 
         self.config.screen.blit(digit_images[3], (x_offset, y))
-
 
     def draw(self) -> None:
         self.draw_timer()

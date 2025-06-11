@@ -5,4 +5,4 @@ from .utils import clamp, get_hit_mask, pixel_collision
 from .window import Window
 from .network import Network
 from .mode import Mode
-from .video import Video
+from .Video import Video

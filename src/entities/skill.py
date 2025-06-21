@@ -21,7 +21,7 @@ class Skill(Entity):
 
     def update(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_skill_spawn_time >= 5000:
+        if current_time - self.last_skill_spawn_time >= 60000:
             self.add_random_skill()
             self.last_skill_spawn_time = current_time
 

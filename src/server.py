@@ -85,7 +85,7 @@ def threaded_client(conn):
             data = conn.recv(2048).decode("utf-8")
             if not data:
                 break
-            #print("Received:", data)
+            print("Received:", data)
             parts = data.split(":")
             command = parts[0]
             reply = ""
@@ -363,6 +363,7 @@ def threaded_client(conn):
                 player_id = int(parts[1])
                 respawn_str = parts[5]
                 penetration_str = parts[6]
+                timefreeze_str = parts[7]
                 
                 # After countdown, handle actual player game data
                 x = float(parts[2])
@@ -370,6 +371,7 @@ def threaded_client(conn):
                 rot = float(parts[4])
                 respawn = respawn_str == "True"
                 penetration = penetration_str == "True"
+                timefreeze = timefreeze_str == "True"
 
                 for m in room_members[room_num]:
                     if m["player_id"] == player_id:
@@ -378,6 +380,7 @@ def threaded_client(conn):
                         m["game"]["rot"] = rot
                         m["game"]["res"] = respawn
                         m["game"]["pen"] = penetration
+                        m["game"]["tf"] = timefreeze
                         break
 
                 broadcast_game_update(room_num)

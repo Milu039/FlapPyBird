@@ -831,6 +831,7 @@ class Flappy:
                         self.network.send("Start")
                         self.network.stop_listeners()
                         self._lobby_listener_started = False
+                        self.network.game_start = False
                         await self.multi_gameplay()
                         return
 
